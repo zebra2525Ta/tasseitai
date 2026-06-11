@@ -1,1 +1,211 @@
 <!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Gohan Dog Game</title>
+    <style>
+        body { text-align: center; background-color: #f0f0f0; font-family: sans-serif; overflow: hidden; }
+        canvas { background-color: #fff; border: 2px solid #333; display: block; margin: 20px auto; touch-action: none; }
+        .info { font-size: 20px; color: #333; }
+    </style>
+</head>
+<body>
+    <h1>いぬのごはんキャッチ</h1>
+    <div class="info">スコア: <span id="score">0</span></div>
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
+    <p>画面クリック または スペースキーでジャンプ！</p>
+
+    <script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+const scoreElement = document.getElementById("score");
+
+let score = 0;
+let gameActive = true;
+
+const dogImg = new Image();
+dogImg.src = 'dog.png'; 
+
+const dogSize = 100;
+
+const dog = {
+    x: 50, 
+    y: 400 - dogSize - 40,
+    width: dogSize, 
+    height: dogSize,
+    dy: 0, 
+    jumpForce: -10, 
+    gravity: 0.4,
+    jumpCount: 0,   
+    maxJumps: 2,    
+    isInvincible: false,   
+    invincibleTimer: 0     
+};
+
+const objects = [];
+let obstacleCount = 0; 
+let flashTimer = 0; 
+
+function spawnObject() {
+    let isObstacle;
+
+    if (obstacleCount >= 2) {
+        isObstacle = false;
+        obstacleCount = 0; 
+    } else {
+        isObstacle = Math.random() > 0.5;
+        if (isObstacle) {
+            obstacleCount++; 
+        } else {
+            obstacleCount = 0; 
+        }
+    }
+
+    let isSuperFood = false;
+    if (!isObstacle) {
+        isSuperFood = Math.random() < 0.1; 
+    }
+
+    // ★サボテンとスーパーお肉は「45」、通常お肉は「25」で判定を定義します
+    const baseSize = isObstacle ? 45 : (isSuperFood ? 45 : 25);
+
+    objects.push({
+        x: canvas.width,
+        // ★サイズが大きくなった分、地面にいるサボテンの高さ（y）を調整
+        y: isObstacle ? (360 - baseSize) : 120 + Math.random() * 100,
+        width: baseSize,  
+        height: baseSize, 
+        speed: 5 + (score / 10),
+        type: isObstacle ? "obstacle" : (isSuperFood ? "superFood" : "food"),
+        color: isObstacle ? "red" : "orange"
+    });
+}
+
+function update() {
+    if (!gameActive) return;
+    
+    if (dog.isInvincible) {
+        dog.invincibleTimer--;
+        if (dog.invincibleTimer <= 0) {
+            dog.isInvincible = false; 
+        }
+    }
+
+    if (flashTimer > 0) {
+        flashTimer--; 
+    }
+
+    dog.dy += dog.gravity;
+    dog.y += dog.dy;
+
+    const groundY = canvas.height - dog.height - 40;
+    if (dog.y > groundY) {
+        dog.y = groundY;
+        dog.dy = 0;
+        dog.jumpCount = 0; 
+    }
+
+    for (let i = objects.length - 1; i >= 0; i--) {
+        const o = objects[i];
+        
+        let currentSpeed = dog.isInvincible ? o.speed * 1.5 : o.speed;
+        o.x -= currentSpeed;
+
+        if (dog.x < o.x + o.width && dog.x + dog.width > o.x &&
+            dog.y < o.y + o.height && dog.y + dog.height > o.y) {
+            
+            if (o.type === "food") {
+                score += 1;
+                scoreElement.innerText = score;
+                objects.splice(i, 1);
+            } 
+            else if (o.type === "superFood") {
+                score += 5; 
+                scoreElement.innerText = score;
+                dog.isInvincible = true;
+                dog.invincibleTimer = 300; 
+                flashTimer = 10; 
+                objects.splice(i, 1);
+            } 
+            else if (o.type === "obstacle") {
+                if (dog.isInvincible) {
+                    objects.splice(i, 1); 
+                } else {
+                    gameOver();
+                }
+            }
+        }
+        if (o.x + o.width < 0) objects.splice(i, 1);
+    }
+    if (Math.random() < 0.02) spawnObject();
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#8bc34a";
+    ctx.fillRect(0, 360, canvas.width, 40);
+
+    if (dog.isInvincible) {
+        ctx.font = "30px Arial";
+        ctx.fillText("🔥", dog.x - 10, dog.y + 50);
+        ctx.fillText("🔥", dog.x + dog.width - 20, dog.y + 50);
+    }
+
+    if (dogImg.complete) {
+        ctx.drawImage(dogImg, dog.x, dog.y, dog.width, dog.height);
+    } else {
+        ctx.font = "80px Arial"; 
+        ctx.fillText(dog.isInvincible ? "🐶⚡" : "🐶", dog.x, dog.y + 80);
+    }
+
+    objects.forEach(o => {
+        // ★通常お肉だけフォントサイズを小さくする処理を追加
+        if (o.type === "food") {
+            ctx.font = "25px Arial"; // ★通常お肉は25px
+            ctx.fillText("🍖", o.x, o.y + 22); // 位置も微調整
+        } else {
+            ctx.font = "45px Arial"; // ★サボテンとスーパーお肉は45px
+            let icon = o.type === "obstacle" ? "🌵" : "🌟";
+            ctx.fillText(icon, o.x, o.y + 40);
+        }
+    });
+
+    if (dog.isInvincible) {
+        ctx.fillStyle = "red";
+        ctx.font = "bold 24px sans-serif";
+        let timeLeft = Math.ceil(dog.invincibleTimer / 60); 
+        ctx.fillText("🌟 スーパー無敵モード！ あと " + timeLeft + " 秒 🌟", canvas.width / 2 - 200, 50);
+    }
+
+    if (flashTimer > 0) {
+        ctx.fillStyle = "rgba(255, 165, 0, 0.5)"; 
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+}
+
+function gameOver() {
+    gameActive = false;
+    alert("ゲームオーバー！ スコア: " + score);
+    location.reload();
+}
+
+function jump() {
+    if (dog.jumpCount < dog.maxJumps) { 
+        dog.dy = dog.jumpForce;
+        dog.jumpCount++; 
+    }
+}
+
+window.addEventListener("keydown", (e) => { if (e.code === "Space") jump(); });
+canvas.addEventListener("touchstart", (e) => { e.preventDefault(); jump(); });
+canvas.addEventListener("mousedown", jump);
+
+function gameLoop() {
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+gameLoop();
+    </script>
+</body>
+</html>
