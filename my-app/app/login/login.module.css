@@ -1,0 +1,70 @@
+body{
+    margin:0;
+    background:#f2f2f2;
+    display:flex;
+    justify-content:center;
+}
+.container{
+    min-height: 100vh;
+    background-color: #f8fafc;
+    padding: 16px;
+    color: #334155;
+    font-family: sans-serif;
+    max-width: 430px; /* スマホサイズに固定 */
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-sizing: border-box;
+}
+.card {
+  width: 100%;
+  padding: 32px 24px;
+  background: white;
+  border-radius: 24px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+  text-align: center;
+}
+
+.logoWrapper {
+  margin-bottom: 24px;
+}
+
+.logo {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 14px;
+  border-radius: 20px;
+  background: #111827;
+  color: white;
+  font-size: 28px;
+  font-weight: bold;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: bold;
+  color: #0f172a;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.8;
+  margin-bottom: 28px;
+}
+
+.loginButton {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 16px;
+  background: #3376f1;
+  color: white;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+}
