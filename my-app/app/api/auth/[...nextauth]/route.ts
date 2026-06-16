@@ -1,49 +1,75 @@
 import NextAuth from "next-auth";
 
 const handler = NextAuth({
+  debug: true,
+
   providers: [
     {
       id: "notion",
       name: "Notion",
       type: "oauth",
 
+      clientId: process.env.NOTION_CLIENT_ID!,
+      clientSecret: process.env.NOTION_CLIENT_SECRET!,
+
       authorization: {
         url: "https://api.notion.com/v1/oauth/authorize",
         params: {
           owner: "user",
+          response_type: "code",
         },
       },
 
-      token: "https://api.notion.com/v1/oauth/token",
-      userinfo: "https://api.notion.com/v1/users/me",
+      token: {
+        async request({ params }) {
+          const response = await fetch(
+            "https://api.notion.com/v1/oauth/token",
+            {
+              method: "POST",
+              headers: {
+                Authorization:
+                  "Basic " +
+                  Buffer.from(
+                    `${process.env.NOTION_CLIENT_ID}:${process.env.NOTION_CLIENT_SECRET}`
+                  ).toString("base64"),
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                grant_type: "authorization_code",
+                code: params.code,
+                redirect_uri:
+                  "http://localhost:3000/api/auth/callback/notion",
+              }),
+            }
+          );
 
-      clientId: process.env.NOTION_CLIENT_ID!,
-      clientSecret: process.env.NOTION_CLIENT_SECRET!,
+          const tokens = await response.json();
+
+          return {
+            tokens,
+          };
+        },
+      },
+
+      userinfo: {
+        async request({ tokens }) {
+          return {
+            id: tokens.access_token || "notion-user",
+            name: "Notion User",
+          };
+        },
+      },
 
       profile(profile) {
         return {
           id: profile.id,
-          name: profile.name || "Notion User",
+          name: profile.name,
         };
       },
     },
   ],
 
-  callbacks: {
-    async jwt({ token, account, profile }) {
-      if (account) {
-        token.accessToken = account.access_token;
-        token.userId = (profile as any)?.id;
-      }
-      return token;
-    },
-
-    async session({ session, token }) {
-      session.accessToken = token.accessToken;
-      session.userId = token.userId;
-      return session;
-    },
-  },
+  secret: process.env.NEXTAUTH_SECRET,
 });
 
 export { handler as GET, handler as POST };
