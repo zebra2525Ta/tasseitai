@@ -1,8 +1,8 @@
 .container {
     min-height: 100vh;
-    background-color: #f8fafc;
+    background-color: var(--background) !important; 
+    color: var(--foreground) !important;   
     padding: 16px;
-    color: #334155;
     font-family: sans-serif;
     max-width: 430px; /* スマホサイズに固定 */
     margin: 0 auto;
@@ -23,7 +23,7 @@
   .iconBtn {
     background: none;
     border: none;
-    color: #334155;
+    color: var(--foreground); /* アイコンボタンの色をモードに連動 */
     cursor: pointer;
     display: flex;
     flex-direction: column;
@@ -42,7 +42,7 @@
   .hamburger span {
     display: block;
     height: 2px;
-    background-color: #334155;
+    background-color: var(--foreground); /* 三本線の色もモードに連動 */
     width: 100%;
   }
   
@@ -61,6 +61,7 @@
     font-weight: bold;
     margin: 0;
     padding: 0 4px;
+    color: var(--foreground); /* タイトル色を連動 */
   }
   
   /* 上段：2カラムのグリッド */
@@ -74,7 +75,7 @@
   .card {
     border-radius: 16px;
     padding: 16px;
-    color: #ffffff;
+    color: #ffffff; /* カード内のテキストは白背景に映えるよう白のままキープ */
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     display: flex;
     flex-direction: column;
@@ -179,7 +180,7 @@
     background: linear-gradient(135deg, #5c9ce6, #3b82f6);
     padding: 12px;
     font-size: 0.75rem;
-    justify-content: flex-start; /* 上詰めでメンバーを並べる */
+    justify-content: flex-start; /* 上詰目でメンバーを並べる */
     gap: 10px;
   }
   

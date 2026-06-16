@@ -17,9 +17,11 @@ export default function HomePage() {
           </div>
           <span className={styles.menuText}>MENU</span>
         </button>
-        <button className={styles.iconBtn}>
+        
+        {/* ⭕ 綺麗に修正：無駄なbuttonタグを削除し、Linkタグ一本にまとめました */}
+        <Link href="/settings" className={styles.iconBtn}>
           <span className={styles.gearIcon}>⚙️</span>
-        </button>
+        </Link>
       </div>
 
       <h1 className={styles.title}>ホーム画面</h1>
@@ -51,7 +53,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* 中段：ニュース（シンプルに2件表示） */}
+      {/* 中段：ニュース */}
       <div className={styles.newsCard}>
         <p className={styles.cardTitle} style={{ fontSize: '1rem', opacity: 1 }}>ニュース</p>
         <ul className={styles.newsList}>
