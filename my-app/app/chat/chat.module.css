@@ -22,15 +22,34 @@
     margin-bottom: 16px;
   }
   
-  .backBtn {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    color: var(--foreground); /* モード連動 */
-    cursor: pointer;
-    padding: 0;
-    text-decoration: none;
-  }
+.backBtn {
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: var(--card-bg);
+  color: var(--foreground);
+
+  font-size: 1.3rem;
+  cursor: pointer;
+  text-decoration: none;
+
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  transition: transform 0.15s ease;
+}
+
+.backBtn:hover {
+  transform: scale(1.05);
+}
+
+.backBtn:active {
+  transform: scale(0.92);
+}
   
   .title {
     font-size: 1.25rem;
