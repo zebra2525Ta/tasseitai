@@ -97,28 +97,29 @@ export default function HomePage() {
         setNewsArticles(['ニュースの読み込みに失敗しました', '⚠️ リクエスト上限の可能性があります']);
       });
 
-    // ⭕ 3. 指定したリポジトリ（tasseitai）のイベントを取得
-    fetch('https://api.github.com/repos/haru200453/tasseitai/events')
+    // ⭕ 3. 指定したリポジトリ（tasseitai）のコミット履歴を確実に取得
+    fetch('https://api.github.com/repos/haru200453/tasseitai/commits')
       .then((res) => res.json())
-      .then((events) => {
-        if (events && events.length > 0) {
-          // 最新の5件のアクティビティを抽出して整形
-          const formattedActivities = events.slice(0, 5).map((event: any) => {
+      .then((commits) => {
+        if (commits && commits.length > 0) {
+          // 最新の5件のコミットを抽出して整形
+          const formattedActivities = commits.slice(0, 5).map((item: any) => {
             return {
-              name: event.actor.login, // アクションを起こしたユーザー名
-              action: translateGithubEvent(event.type), // 操作内容
-              time: formatLastActivity(event.created_at), // 経過時間
+              // 💡 GitHubアカウントがある場合はその名前、ない場合はコミット作成者の名前
+              name: item.author ? item.author.login : item.commit.author.name, 
+              action: 'コードをコミット', // コマンド内容を固定
+              time: formatLastActivity(item.commit.author.date), // コミット日時
               status: 'online'
             };
           });
           setProjectActivities(formattedActivities);
         } else {
-          setProjectActivities([{ name: 'アクティビティなし', action: '', time: '--', status: 'offline' }]);
+          setProjectActivities([{ name: 'コミット履歴なし', action: '', time: '--', status: 'offline' }]);
         }
       })
       .catch((err) => {
         console.error('GitHubデータの取得に失敗:', err);
-        setProjectActivities([{ name: '読み込み失敗', action: 'API制限の可能性があります', time: '--', status: 'offline' }]);
+        setProjectActivities([{ name: '読み込み失敗', action: 'API制限または非公開リポジトリです', time: '--', status: 'offline' }]);
       });
 
     setIsMounted(true);
