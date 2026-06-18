@@ -8,7 +8,7 @@ export default function HomePage() {
   // 画面がブラウザに完全に読み込まれたかを管理するフラグ
   const [isMounted, setIsMounted] = useState(false);
 
-  // タスクの状態（初期値は初期表示させたい状態にしておきます）
+  // タスクの状態
   const [tasks, setTasks] = useState({
     healthCheck: true,
     jobHunting: true,
@@ -16,17 +16,14 @@ export default function HomePage() {
 
   // 画面起動時に一度だけ実行
   useEffect(() => {
-    // LocalStorageからデータを取得
     const savedHealthCheck = localStorage.getItem('task_healthCheck');
     const savedJobHunting = localStorage.getItem('task_jobHunting');
 
     setTasks({
-      // 過去に保存された値があればそれを使い、なければ初期値（true）にする
       healthCheck: savedHealthCheck !== null ? JSON.parse(savedHealthCheck) : true,
       jobHunting: savedJobHunting !== null ? JSON.parse(savedJobHunting) : true,
     });
 
-    // ブラウザへの読み込みが完了したことをマーク
     setIsMounted(true);
   }, []);
 
@@ -36,7 +33,6 @@ export default function HomePage() {
     localStorage.setItem(`task_${taskKey}`, JSON.stringify(checked));
   };
 
-  // ⚠️重要: ブラウザへの読み込みが完了するまでは、バグ防止のため一瞬表示を待つ
   if (!isMounted) {
     return <div className={styles.container} style={{ background: '#ffffff' }}></div>; 
   }
@@ -52,7 +48,15 @@ export default function HomePage() {
 
       <h1 className={styles.title}>ホーム画面</h1>
 
-      {/* 上段：予定 ＆ 天気 */}
+      {/* ⭕ 【新設】一番上に移動：ニュースと同じ幅（ワイドサイズ）のAIチャット */}
+      <Link href="/chat" className={styles.aiChatFullCard}>
+        <div className={styles.chatLinkContentRow}>
+          <span className={styles.chatTextLarge}>AIチャット</span>
+          <span className={styles.chatEmojiLarge}>🤖</span>
+        </div>
+      </Link>
+
+      {/* 上段：予定 ＆ 天気 （2つのカードが綺麗に横に並びます） */}
       <div className={styles.topGrid}>
         <div className={`${styles.card} ${styles.scheduleCard}`}>
           <div>
@@ -83,7 +87,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* 以下、天気・ニュース・GitHub・AIチャットのコードはそのまま */}
+        {/* 天気予報 */}
         <div className={`${styles.card} ${styles.weatherCard}`}>
           <div>
             <p className={styles.cardTitle}>天気予報</p>
@@ -93,6 +97,7 @@ export default function HomePage() {
         </div>
       </div>
 
+      {/* 中段：ニュース */}
       <div className={styles.newsCard}>
         <p className={styles.cardTitle} style={{ fontSize: '1rem', opacity: 1 }}>ニュース</p>
         <ul className={styles.newsList}>
@@ -101,34 +106,27 @@ export default function HomePage() {
         </ul>
       </div>
 
-      <div className={styles.bottomGrid}>
-        <div className={`${styles.card} ${styles.githubCard}`}>
-          <p className={styles.githubTitle}>GitHubチーム</p>
-          <div className={styles.memberList}>
-            <div className={styles.memberItem}>
-              <div className={styles.memberMain}>
-                <span className={`${styles.statusDot} ${styles.online}`}></span>
-                <span>田中</span>
-              </div>
-              <span className={styles.lastActivity}>Last activity: 5 min ago</span>
+      {/* 下段：GitHubチーム（ここも横いっぱいに綺麗に収まる構成に変更します） */}
+      <div className={styles.githubFullCard}>
+        <p className={styles.githubTitle}>GitHubチーム</p>
+        <div className={styles.memberList}>
+          <div className={styles.memberItem}>
+            <div className={styles.memberMain}>
+              <span className={`${styles.statusDot} ${styles.online}`}></span>
+              <span>田中</span>
             </div>
-            <div className={styles.memberItem}>
-              <div className={styles.memberMain}>
-                <span className={`${styles.statusDot} ${styles.away}`}></span>
-                <span>佐藤</span>
-              </div>
-              <span className={styles.lastActivity}>Last activity: 1 hour ago</span>
+            <span className={styles.lastActivity}>Last activity: 5 min ago</span>
+          </div>
+          <div className={styles.memberItem}>
+            <div className={styles.memberMain}>
+              <span className={`${styles.statusDot} ${styles.away}`}></span>
+              <span>佐藤</span>
             </div>
+            <span className={styles.lastActivity}>Last activity: 1 hour ago</span>
           </div>
         </div>
-
-        <Link href="/chat" className={`${styles.card} ${styles.chatLinkCard}`}>
-          <div className={styles.chatLinkContent}>
-            <span className={styles.chatText}>AIチャット</span>
-            <span className={styles.chatEmoji}>🤖</span>
-          </div>
-        </Link>
       </div>
+
     </div>
   );
 }

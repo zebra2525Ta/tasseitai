@@ -1,262 +1,246 @@
 .container {
-    min-height: 100vh;
-    background-color: var(--background) !important; 
-    color: var(--foreground) !important;   
-    padding: 16px;
-    font-family: sans-serif;
-    max-width: 430px; /* スマホサイズに固定 */
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    box-sizing: border-box;
-  }
-  
-  /* ヘッダーエリア */
-  .header {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    padding: 4px 4px;
-  }
-  
-  .iconBtn {
-    background: none;
-    border: none;
-    font-size: 24px;
-    color: var(--foreground); /* アイコンボタンの色をモードに連動 */
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    padding: 4px;
-  }
-  
-  .hamburger {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    width: 24px;
-  }
-  
-  .hamburger span {
-    display: block;
-    height: 2px;
-    background-color: var(--foreground); /* 三本線の色もモードに連動 */
-    width: 100%;
-  }
-  
-  .menuText {
-    font-size: 0.6rem;
-    font-weight: bold;
-    letter-spacing: 0.05em;
-  }
-  
-  .gearIcon {
-    font-size: 1.5rem;
-  }
-  
-  .title {
-    font-size: 1.25rem;
-    font-weight: bold;
-    margin: 0;
-    padding: 0 4px;
-    color: var(--foreground); /* タイトル色を連動 */
-  }
-  
-  /* 上段：2カラムのグリッド */
-  .topGrid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-  }
-  
-  /* 共通のカード基盤 */
-  .card {
-    border-radius: 16px;
-    padding: 16px;
-    color: #ffffff; /* カード内のテキストは白背景に映えるよう白のままキープ */
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    min-height: 144px;
-    box-sizing: border-box;
-  }
-  
-  .scheduleCard {
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
-  }
-  
-  .weatherCard {
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-  }
-  
-  .cardTitle {
-    font-size: 0.875rem;
-    font-weight: 500;
-    margin: 0 0 8px 0;
-    opacity: 0.9;
-  }
-  
-  /* スケジュール内のチェックボックス一覧 */
-  .todoList {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  
-  .todoLabel {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.875rem;
-    cursor: pointer;
-  }
-  
-  .todoLabel input {
-    width: 16px;
-    height: 16px;
-    cursor: pointer;
-    appearance: checkbox;
-    accent-color: #22c55e; /* 背景をきれいな緑にする */
-  }
-  
-  .completed {
-    text-decoration: line-through;
-    opacity: 0.6;
-  }
-  
-  /* 天気情報のテキスト */
-  .weatherInfo {
-    font-size: 1.125rem;
-    font-weight: bold;
-    margin: 4px 0;
-  }
-  
-  .weatherDetail {
-    font-size: 0.75rem;
-    opacity: 0.8;
-    margin: 0;
-  }
-  
-  /* 中段：ニュースカード */
-  .newsCard {
-    background: linear-gradient(135deg, #5c9ce6, #3b82f6);
-    color: #ffffff;
-    border-radius: 16px;
-    padding: 20px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    min-height: 160px;
-    box-sizing: border-box;
-  }
-  
-  .newsList {
-    list-style: none;
-    padding: 0;
-    margin: 12px 0 0 0;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    font-size: 0.875rem;
-  }
-  
-  .newsItem {
-    display: flex;
-    gap: 6px;
-    align-items: flex-start;
-    opacity: 0.95;
-  }
-  
-  /* 下段：2カラムのグリッド */
-  .bottomGrid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-  }
-  
-  /* ★新設：左下のGitHubカード */
-  .githubCard {
-    background: linear-gradient(135deg, #5c9ce6, #3b82f6);
-    padding: 12px;
-    font-size: 0.75rem;
-    justify-content: flex-start; /* 上詰目でメンバーを並べる */
-    gap: 10px;
-  }
-  
-  .githubTitle {
-    font-size: 0.8rem;
-    opacity: 0.9;
-    margin: 0;
-  }
-  
-  .memberList {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  
-  .memberItem {
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-  }
-  
-  .memberMain {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-weight: bold;
-  }
-  
-  /* オンライン状態を示す丸（インライン要素） */
-  .statusDot {
-    display: inline-block;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-  }
-  
-  .online { background-color: #22c55e; }  /* 緑 */
-  .away { background-color: #eab308; }    /* 黄 */
-  .offline { background-color: #94a3b8; } /* グレー */
-  
-  .lastActivity {
-    font-size: 0.65rem;
-    opacity: 0.75;
-    padding-left: 16px; /* 丸の幅ぶん右に寄せる */
-  }
-  
-  /* 右下：AIチャットリンクカード */
-  .chatLinkCard {
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-    text-decoration: none;
-    transition: transform 0.1s ease, opacity 0.1s ease;
-    cursor: pointer;
-  }
-  
-  .chatLinkCard:active {
-    transform: scale(0.96);
-    opacity: 0.9;
-  }
-  
-  .chatLinkContent {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    width: 100%;
-    gap: 6px;
-  }
-  
-  .chatText {
-    font-size: 1.125rem;
-    font-weight: bold;
-    color: #ffffff;
-  }
-  
-  .chatEmoji {
-    font-size: 1.5rem;
-  }
+  min-height: 100vh;
+  background-color: var(--background) !important; 
+  color: var(--foreground) !important;   
+  padding: 16px;
+  font-family: sans-serif;
+  max-width: 430px; /* スマホサイズに固定 */
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-sizing: border-box;
+}
+
+/* ヘッダーエリア */
+.header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 4px 4px;
+}
+
+.iconBtn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--foreground);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+}
+
+.gearIcon {
+  font-size: 1.5rem;
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin: 0 0 4px 0;
+  padding: 0 4px;
+  color: var(--foreground);
+}
+
+/* ⭕ 【新設】ニュースと同じ幅・余白にするAIチャット用カード */
+.aiChatFullCard {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  text-decoration: none;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  transition: transform 0.1s ease;
+}
+
+.aiChatFullCard:active {
+  transform: scale(0.98);
+}
+
+.chatLinkContentRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.chatTextLarge {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.chatEmojiLarge {
+  font-size: 2rem;
+}
+
+/* 上段：2カラムのグリッド（予定と天気用） */
+.topGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* 共通のカード基盤 */
+.card {
+  border-radius: 16px;
+  padding: 16px;
+  color: #ffffff;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 144px;
+  box-sizing: border-box;
+}
+
+.scheduleCard {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+}
+
+.weatherCard {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+
+.cardTitle {
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin: 0 0 8px 0;
+  opacity: 0.9;
+}
+
+/* スケジュール内のチェックボックス一覧 */
+.todoList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.todoLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.todoLabel input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  appearance: checkbox;
+  accent-color: #22c55e;
+}
+
+.completed {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+/* 天気情報のテキスト */
+.weatherInfo {
+  font-size: 1.125rem;
+  font-weight: bold;
+  margin: 4px 0;
+}
+
+.weatherDetail {
+  font-size: 0.75rem;
+  opacity: 0.8;
+  margin: 0;
+}
+
+/* 中段：ニュースカード（横幅いっぱい） */
+.newsCard {
+  background: linear-gradient(135deg, #5c9ce6, #3b82f6);
+  color: #ffffff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  min-height: 120px;
+  box-sizing: border-box;
+}
+
+.newsList {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.875rem;
+}
+
+.newsItem {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  opacity: 0.95;
+}
+
+/* ⭕ 【変更】GitHubカード（単体で美しくニュースと同じ幅にするための設定） */
+.githubFullCard {
+  background: linear-gradient(135deg, #5c9ce6, #3b82f6);
+  color: #ffffff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+}
+
+.githubTitle {
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin: 0 0 12px 0;
+  opacity: 0.9;
+}
+
+.memberList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.memberItem {
+  display: flex;
+  justify-content: space-between; /* 左右に綺麗に散らす（名前と時間を端と端にする） */
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* 軽い区切り線 */
+  padding-bottom: 6px;
+}
+
+.memberItem:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.memberMain {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: bold;
+  font-size: 0.875rem;
+}
+
+.statusDot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.online { background-color: #22c55e; }
+.away { background-color: #eab308; }
+.offline { background-color: #94a3b8; }
+
+.lastActivity {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
