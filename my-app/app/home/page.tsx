@@ -16,15 +16,43 @@ const decodeWeather = (code: number) => {
   return { text: '不明', emoji: '❓' };
 };
 
+// GitHubのイベントタイプを分かりやすい日本語に変換する関数
+const translateGithubEvent = (type: string) => {
+  if (type === 'PushEvent') return 'コードをPush';
+  if (type === 'IssuesEvent') return 'Issueを更新';
+  if (type === 'IssueCommentEvent') return 'コメントを投稿';
+  if (type === 'PullRequestEvent') return 'PRを更新';
+  if (type === 'CreateEvent') return 'リポジトリ/ブランチを作成';
+  return 'アクティビティ';
+};
+
+// 経過時間を計算する関数
+const formatLastActivity = (dateString: string) => {
+  const now = new Date();
+  const past = new Date(dateString);
+  const diffMs = now.getTime() - past.getTime();
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins} min ago`;
+  if (diffHours < 24) return `${diffHours} hour ago`;
+  return `${diffDays} day ago`;
+};
+
 export default function HomePage() {
   const [isMounted, setIsMounted] = useState(false);
   const [tasks, setTasks] = useState({ healthCheck: true, jobHunting: true });
   const [weather, setWeather] = useState({ text: '読み込み中...', emoji: '⏳', temp: '--' });
-
-  // ⭕ 1. ニュースデータを管理するStateを追加（初期状態は読み込み中）
   const [newsArticles, setNewsArticles] = useState<string[]>([
     'ニュースを読み込み中...',
     'しばらくお待ちください...'
+  ]);
+
+  // ⭕ プロジェクトのアクティビティを管理するState（初期状態は読み込み中）
+  const [projectActivities, setProjectActivities] = useState<any[]>([
+    { name: '読み込み中...', action: '', time: '--', status: 'offline' }
   ]);
 
   useEffect(() => {
@@ -51,24 +79,46 @@ export default function HomePage() {
       })
       .catch(() => setWeather({ text: 'エラー', emoji: '⚠️', temp: '--' }));
 
-    // ⭕ 2. The News API から日本のトップニュースを取得
-    // ⚠️【重要】 YOUR_API_TOKEN の部分をご自身のAPIキーに書き換えてください！
+    // GNews APIの取得
     const NEWS_API_KEY = '8a87edcbd181c83a254c14aa438f0ca6'; 
     const newsUrl = `https://gnews.io/api/v4/top-headlines?category=general&lang=ja&country=jp&max=2&apikey=${NEWS_API_KEY}`;
     fetch(newsUrl)
-    .then((res) => res.json())
-    .then((data) => {
-      // 💡 GNewsは「data.articles」の中に記事の配列が入っています
-      if (data && data.articles && data.articles.length > 0) {
-        const titles = data.articles.map((article: any) => article.title);
-        setNewsArticles(titles);
-      } else {
-        setNewsArticles(['ニュースが見つかりませんでした', '']);
-      }
-    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.articles && data.articles.length > 0) {
+          const titles = data.articles.map((article: any) => article.title);
+          setNewsArticles(titles);
+        } else {
+          setNewsArticles(['ニュースが見つかりませんでした', '']);
+        }
+      })
       .catch((err) => {
         console.error('ニュースの取得に失敗:', err);
         setNewsArticles(['ニュースの読み込みに失敗しました', '⚠️ リクエスト上限の可能性があります']);
+      });
+
+    // ⭕ 3. 指定したリポジトリ（tasseitai）のイベントを取得
+    fetch('https://api.github.com/repos/haru200453/tasseitai/events')
+      .then((res) => res.json())
+      .then((events) => {
+        if (events && events.length > 0) {
+          // 最新の5件のアクティビティを抽出して整形
+          const formattedActivities = events.slice(0, 5).map((event: any) => {
+            return {
+              name: event.actor.login, // アクションを起こしたユーザー名
+              action: translateGithubEvent(event.type), // 操作内容
+              time: formatLastActivity(event.created_at), // 経過時間
+              status: 'online'
+            };
+          });
+          setProjectActivities(formattedActivities);
+        } else {
+          setProjectActivities([{ name: 'アクティビティなし', action: '', time: '--', status: 'offline' }]);
+        }
+      })
+      .catch((err) => {
+        console.error('GitHubデータの取得に失敗:', err);
+        setProjectActivities([{ name: '読み込み失敗', action: 'API制限の可能性があります', time: '--', status: 'offline' }]);
       });
 
     setIsMounted(true);
@@ -83,8 +133,8 @@ export default function HomePage() {
     return <div className={styles.container} style={{ background: '#ffffff' }}></div>; 
   }
 
-    return (
-      <div className={styles.container}>
+  return (
+    <div className={styles.container}>
       <div className={styles.header}>
         <Link href="/settings" className={styles.iconBtn}>
           <span className={styles.gearIcon}>⚙️</span>
@@ -141,7 +191,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* ⭕ 中段：ニュース（取得した配列データをループ表示） */}
+      {/* 中段：ニュース */}
       <div className={styles.newsCard}>
         <p className={styles.cardTitle} style={{ fontSize: '1rem', opacity: 1 }}>ニュース</p>
         <ul className={styles.newsList}>
@@ -154,24 +204,20 @@ export default function HomePage() {
         </ul>
       </div>
 
-      {/* GitHubチーム */}
+      {/* ⭕ 下段：GitHubプロジェクトアクティビティ（tasseitai の最新の動き） */}
       <div className={styles.githubFullCard}>
-        <p className={styles.githubTitle}>GitHubチーム</p>
+        <p className={styles.githubTitle}>GitHubプロジェクト (tasseitai)</p>
         <div className={styles.memberList}>
-          <div className={styles.memberItem}>
-            <div className={styles.memberMain}>
-              <span className={`${styles.statusDot} ${styles.online}`}></span>
-              <span>田中</span>
+          {projectActivities.map((activity, index) => (
+            <div key={index} className={styles.memberItem}>
+              <div className={styles.memberMain}>
+                <span className={`${styles.statusDot} ${styles[activity.status]}`}></span>
+                <span>{activity.name}</span>
+                {activity.action && <span style={{ fontSize: '0.75rem', fontWeight: 'normal', opacity: 0.8 }}>({activity.action})</span>}
+              </div>
+              <span className={styles.lastActivity}>Last activity: {activity.time}</span>
             </div>
-            <span className={styles.lastActivity}>Last activity: 5 min ago</span>
-          </div>
-          <div className={styles.memberItem}>
-            <div className={styles.memberMain}>
-              <span className={`${styles.statusDot} ${styles.away}`}></span>
-              <span>佐藤</span>
-            </div>
-            <span className={styles.lastActivity}>Last activity: 1 hour ago</span>
-          </div>
+          ))}
         </div>
       </div>
     </div>
