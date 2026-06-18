@@ -15,7 +15,7 @@
   /* ヘッダーエリア */
   .header {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
     padding: 4px 4px;
   }
@@ -23,6 +23,7 @@
   .iconBtn {
     background: none;
     border: none;
+    font-size: 24px;
     color: var(--foreground); /* アイコンボタンの色をモードに連動 */
     cursor: pointer;
     display: flex;

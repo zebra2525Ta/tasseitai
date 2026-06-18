@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { signOut } from 'next-auth/react'; // 👈 NextAuthのログアウト関数をインポート
 import { useTheme } from '../theme-provider';
 import styles from './settings.module.css';
 
@@ -36,6 +37,13 @@ export default function SettingsPage() {
     localStorage.setItem(`setting_${key}`, JSON.stringify(value));
   };
 
+  // 👈 ログアウト処理用の関数を追加
+  const handleLogout = async () => {
+    // アラートを出したあと、NextAuthの認証セッションを破棄して /login へ遷移させる
+    alert('ログアウトしました');
+    await signOut({ callbackUrl: '/login' }); 
+  };
+
   // ハイドレーションバグ防止
   if (!isMounted) {
     return <div className={styles.container}></div>;
@@ -48,7 +56,6 @@ export default function SettingsPage() {
     <div className={containerClass}>
       {/* ヘッダー */}
       <div className={styles.header}>
-        {/* リンク先が「/home」になっていたので、先ほどのホーム画面のパスに合わせておきます */}
         <Link href="/home" className={styles.backBtn} style={{ textDecoration: 'none' }}>
           ←
         </Link>
@@ -124,7 +131,8 @@ export default function SettingsPage() {
 
       {/* アカウント操作エリア */}
       <div className={styles.dangerSection}>
-        <button className={styles.dangerBtn} onClick={() => alert('ログアウトしました')}>
+        {/* ⭕ onClickで上で定義したhandleLogoutを呼び出すように修正 */}
+        <button className={styles.dangerBtn} onClick={handleLogout}>
           ログアウト
         </button>
       </div>
