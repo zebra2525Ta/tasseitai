@@ -47,7 +47,7 @@
 
 /* ⭕ 【新設】ニュースと同じ幅・余白にするAIチャット用カード */
 .aiChatFullCard {
-  background: linear-gradient(135deg, #ff0015, #1d4ed8);
+  background: linear-gradient(135deg, #da0214, #1d4ed8);
   text-decoration: none;
   border-radius: 16px;
   padding: 20px;
