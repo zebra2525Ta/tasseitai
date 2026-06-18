@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { ThemeProvider } from "./theme-provider"; // テーマプロバイダー
 import "./globals.css";
 
 const geistSans = Geist({
@@ -24,13 +23,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ja" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      {/* ⭕ htmlタグのすぐ内側、bodyタグの「外側」をThemeProviderで完全に包みます */}
-      <ThemeProvider>
-        <body className="min-h-full flex flex-col">
-          {children}
-        </body>
-      </ThemeProvider>
+    <html lang="ja" className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body className="min-h-full flex flex-col">
+        {/* ➔ 邪魔だったProviderを消してすっきり */}
+        {children}
+      </body>
     </html>
   );
 }
