@@ -3,6 +3,11 @@ import NextAuth from "next-auth";
 const handler = NextAuth({
   debug: true,
 
+  pages: {
+    signIn: "/login",
+    error: "/login",
+  },
+
   providers: [
     {
       id: "notion",

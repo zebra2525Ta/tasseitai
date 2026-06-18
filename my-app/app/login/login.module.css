@@ -1,22 +1,33 @@
-body{
-    margin:0;
-    background:#f2f2f2;
-    display:flex;
-    justify-content:center;
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
 }
-.container{
-    min-height: 100vh;
-    background-color: #f8fafc;
-    padding: 16px;
-    color: #334155;
-    font-family: sans-serif;
-    max-width: 430px; /* スマホサイズに固定 */
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    box-sizing: border-box;
+
+body {
+  background: #f2f2f2;
+  display: flex;
+  justify-content: center; /* 横中央 */
+  align-items: center;     /* 縦中央 */
 }
+
+.container {
+  width: 100%;
+  max-width: 430px; /* スマホサイズ固定 */
+  min-height: 100vh;
+  background-color: #f8fafc;
+  padding: 16px;
+  color: #334155;
+  font-family: sans-serif;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+  box-sizing: border-box;
+}
+
 .card {
   width: 100%;
   padding: 32px 24px;
@@ -24,6 +35,7 @@ body{
   border-radius: 24px;
   box-shadow: 0 10px 40px rgba(0,0,0,0.05);
   text-align: center;
+  box-sizing: border-box;
 }
 
 .logoWrapper {
