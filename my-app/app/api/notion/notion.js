@@ -1,3 +1,12 @@
+// 使い方：このファイルから必要な関数をインポートして使用します。
+// 例：
+// import { getSavedNotionTestData, queryNotionDatabase, searchNotionPages } from "./notion.js";
+//
+// getSavedNotionTestData() - テスト用の保存済みNotionデータを取得します。
+// queryNotionDatabase(apiKey, databaseId) - Notionデータベースを検索します。
+// searchNotionPages(apiKey, query) - Notionページ検索を実行します。
+// collectNotionPageInfo(page) - Notionページのメタ情報／プロパティ一覧を整形します。
+
 const defaultNotionVersion = "2022-06-28";
 
 const apiKey = process.env.NOTION_API_KEY;
@@ -74,6 +83,108 @@ export function extractNotionProperties(properties = {}) {
   }, {});
 }
 
+function formatNotionPropertyValue(value) {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => {
+        if (item === null || item === undefined) return "";
+        return typeof item === "object" ? JSON.stringify(item) : String(item);
+      })
+      .filter((item) => item !== "")
+      .join(", ");
+  }
+  if (typeof value === "object") {
+    return JSON.stringify(value);
+  }
+  return String(value);
+}
+
+export function formatNotionPropertiesList(properties = {}) {
+  const simplified = extractNotionProperties(properties);
+  return Object.entries(simplified).map(([name, value]) => `${name}: ${formatNotionPropertyValue(value)}`);
+}
+
+function parseInput(argv, name, envName) {
+  const prefix = `${name}=`;
+  const arg = argv.find((value) => value.startsWith(prefix));
+  if (arg) {
+    return arg.slice(prefix.length);
+  }
+  return process.env[envName] || undefined;
+}
+
+export function getNotionFetchOptions(argv = process.argv, env = process.env) {
+  const apiKeyValue = parseInput(argv, "apiKey", "NOTION_API_KEY");
+  const databaseIdValue = parseInput(argv, "databaseId", "NOTION_DATABASE_ID");
+  const query = parseInput(argv, "query", "NOTION_QUERY") || "";
+  const searchType = parseInput(argv, "searchType", "NOTION_SEARCH_TYPE") === "search" ? "search" : "database";
+  const pageSize = Number(parseInput(argv, "pageSize", "NOTION_PAGE_SIZE") || 10);
+  const maxPages = Number(parseInput(argv, "maxPages", "NOTION_MAX_PAGES") || 2);
+
+  return {
+    apiKeyValue,
+    databaseIdValue,
+    query,
+    searchType,
+    pageSize,
+    maxPages,
+  };
+}
+
+export async function getNotionPagesOutput(options = {}) {
+  const {
+    apiKeyValue,
+    databaseIdValue,
+    query = "",
+    searchType = "database",
+    pageSize = 50,
+    maxPages = 3,
+  } = options;
+
+  const formatted = await fetchNotionPages({
+    apiKeyValue,
+    databaseIdValue,
+    query,
+    searchType,
+    pageSize,
+    maxPages,
+  });
+
+  return formatted;
+}
+
+export async function runNotionFetchTest(argv = process.argv, env = process.env) {
+  const options = getNotionFetchOptions(argv, env);
+  if (!options.apiKeyValue) {
+    throw new Error("apiKey が必要です。例: node test.js apiKey=your-token");
+  }
+  if (options.searchType === "database" && !options.databaseIdValue) {
+    throw new Error("databaseId が必要です。例: node test.js databaseId=your-database-id");
+  }
+  if (options.searchType === "search" && !options.query) {
+    throw new Error("query が必要です。例: node test.js searchType=search query=検索語");
+  }
+
+  const result = await getNotionPagesOutput(options);
+  console.log(JSON.stringify(result, null, 2));
+  return result;
+}
+
+export function getSavedNotionTestData() {
+  const savedNotionProperties = {
+    Name: { type: "title", title: [{ plain_text: "テストタスク" }] },
+    Description: { type: "rich_text", rich_text: [{ plain_text: "これは参照用のNotionデータです。" }] },
+    Status: { type: "select", select: { name: "In progress" } },
+    Assignee: { type: "rich_text", rich_text: [{ plain_text: "太郎" }] },
+    Due: { type: "date", date: "2026-06-30" },
+  };
+  return formatNotionPropertiesList(savedNotionProperties);
+}
+
 export function extractNotionTitle(page) {
   const titleProperty = Object.values(page.properties || {}).find(
     (property) => property?.type === "title"
@@ -96,6 +207,7 @@ export function collectNotionPageInfo(page) {
     icon: page.icon ?? null,
     cover: page.cover ?? null,
     properties: extractNotionProperties(page.properties),
+    propertiesList: formatNotionPropertiesList(page.properties),
   };
 }
 
@@ -135,6 +247,7 @@ async function fetchNotionJson(url, apiKey, body) {
     throw new Error(`Notion API error: ${response.status} ${response.statusText} - ${errorText}`);
   }
 
+  console.log(response);
   return response.json();
 }
 
@@ -200,6 +313,32 @@ export async function searchNotionPages(apiKeyValue, query, pageSize = 50, maxPa
   } while (nextCursor && results.length < safePageSize * safeMaxPages);
 
   return results;
+}
+
+export async function fetchNotionPages({
+  apiKeyValue,
+  databaseIdValue,
+  query = "",
+  searchType = "database",
+  pageSize = 50,
+  maxPages = 3,
+}) {
+  if (!apiKeyValue) {
+    throw new Error("apiKeyValue is required to fetch Notion pages.");
+  }
+
+  const source = searchType === "search" ? "search" : "database";
+  const pages =
+    source === "search"
+      ? await searchNotionPages(apiKeyValue, query, pageSize, maxPages)
+      : await queryNotionDatabase(apiKeyValue, databaseIdValue, pageSize, maxPages);
+
+  const results = pages.map((page) => collectNotionPageInfo(page));
+  return {
+    source,
+    count: results.length,
+    results,
+  };
 }
 
 export { apiKey, databaseId };
