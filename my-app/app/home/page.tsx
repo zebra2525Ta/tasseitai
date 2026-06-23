@@ -16,16 +16,6 @@ const decodeWeather = (code: number) => {
   return { text: '不明', emoji: '❓' };
 };
 
-// GitHubのイベントタイプを分かりやすい日本語に変換する関数
-const translateGithubEvent = (type: string) => {
-  if (type === 'PushEvent') return 'コードをPush';
-  if (type === 'IssuesEvent') return 'Issueを更新';
-  if (type === 'IssueCommentEvent') return 'コメントを投稿';
-  if (type === 'PullRequestEvent') return 'PRを更新';
-  if (type === 'CreateEvent') return 'リポジトリ/ブランチを作成';
-  return 'アクティビティ';
-};
-
 // 経過時間を計算する関数
 const formatLastActivity = (dateString: string) => {
   const now = new Date();
@@ -44,13 +34,27 @@ const formatLastActivity = (dateString: string) => {
 export default function HomePage() {
   const [isMounted, setIsMounted] = useState(false);
   const [tasks, setTasks] = useState({ healthCheck: true, jobHunting: true });
-  const [weather, setWeather] = useState({ text: '読み込み中...', emoji: '⏳', temp: '--' });
+  
+  // ⭕ 天気のStateを1つに統合して整理
+  const [weather, setWeather] = useState({ 
+    text: '読み込み中...', 
+    emoji: '⏳', 
+    temp: '--',
+    windSpeed: '--', 
+    pop: '--', 
+    tomorrow: {
+      text: '',
+      emoji: '',
+      temp: '--',
+      pop: '--'
+    }
+  });
+  
   const [newsArticles, setNewsArticles] = useState<any[]>([
     { title: 'ニュースを読み込み中...', url: '#' },
     { title: 'しばらくお待ちください...', url: '#' }
   ]);
 
-  // プロジェクトのアクティビティを管理するState
   const [projectActivities, setProjectActivities] = useState<any[]>([
     { name: '読み込み中...', action: '', time: '--', status: 'offline' }
   ]);
@@ -65,19 +69,43 @@ export default function HomePage() {
     });
 
     // 天気APIの取得
-    fetch('https://api.open-meteo.com/v1/forecast?latitude=34.6937&longitude=135.5023&current=temperature_2m,weather_code&timezone=Asia%2FTokyo')
+    const weatherUrl = 'https://api.open-meteo.com/v1/forecast?latitude=34.6937&longitude=135.5023&current=temperature_2m,weather_code,surface_pressure,wind_speed_10m&hourly=precipitation_probability&daily=weather_code,temperature_2m_max,precipitation_probability_max&timezone=Asia%2FTokyo&forecast_days=2';
+    
+    fetch(weatherUrl)
       .then((res) => res.json())
       .then((data) => {
         if (data && data.current) {
-          const decoded = decodeWeather(data.current.weather_code);
+          const currentDecoded = decodeWeather(data.current.weather_code);
+          
+          // 今日の降水確率（現在の時間帯）
+          const currentHour = new Date().getHours();
+          const currentPop = data.hourly?.precipitation_probability?.[currentHour] ?? '--';
+
+          // 明日の天気データを抽出
+          const tomorrowWeatherCode = data.daily?.weather_code?.[1] ?? 0;
+          const tomorrowDecoded = decodeWeather(tomorrowWeatherCode);
+          const tomorrowMaxTemp = data.daily?.temperature_2m_max?.[1] ?? '--';
+          const tomorrowPop = data.daily?.precipitation_probability_max?.[1] ?? '--';
+
           setWeather({
-            text: decoded.text,
-            emoji: decoded.emoji,
+            text: currentDecoded.text,
+            emoji: currentDecoded.emoji,
             temp: `${Math.round(data.current.temperature_2m)}℃`,
+            windSpeed: `${data.current.wind_speed_10m} m/s`,
+            pop: `${currentPop}%`,
+            tomorrow: {
+              text: tomorrowDecoded.text,
+              emoji: tomorrowDecoded.emoji,
+              temp: `${Math.round(tomorrowMaxTemp)}℃`,
+              pop: `${tomorrowPop}%`
+            }
           });
         }
       })
-      .catch(() => setWeather({ text: 'エラー', emoji: '⚠️', temp: '--' }));
+      .catch(() => setWeather({ 
+        text: 'エラー', emoji: '⚠️', temp: '--', windSpeed: '--', pop: '--', 
+        tomorrow: { text: 'エラー', emoji: '⚠️', temp: '--', pop: '--' } 
+      })); // ⭕ 重複していた2つ目のcatchを削除
 
     // GNews APIの取得
     const NEWS_API_KEY = '8a87edcbd181c83a254c14aa438f0ca6'; 
@@ -104,7 +132,6 @@ export default function HomePage() {
       });
 
     // 指定したリポジトリ（tasseitai）のコミット履歴を取得
-    // 💡 プライベートリポジトリの場合は、ここに前のトークン (const GITHUB_ACCESS_TOKEN = 'ghp_...') を追加してfetch内ヘッダーを記述してください
     fetch('https://api.github.com/repos/haru200453/tasseitai/commits')
       .then((res) => res.json())
       .then((commits) => {
@@ -149,10 +176,10 @@ export default function HomePage() {
 
       <h1 className={styles.title}>ホーム画面</h1>
 
-      {/* AIチャット */}
+      {/* AIチャットカード「Noir」 */}
       <Link href="/chat" className={styles.aiChatFullCard}>
         <div className={styles.chatLinkContentRow}>
-          <span className={styles.chatTextLarge}>AIチャット</span>
+          <span className={styles.chatTextLarge}>Noir</span>
           <span className={styles.chatEmojiLarge}>🤖</span>
         </div>
       </Link>
@@ -184,20 +211,42 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* 天気予報 */}
+        {/* 天気予報：詳細 ＆ 明日の天気 */}
         <div className={`${styles.card} ${styles.weatherCard}`}>
-          <div>
-            <p className={styles.cardTitle}>天気予報</p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '2rem' }}>{weather.emoji}</span>
-              <p className={styles.weatherInfo}>{weather.text}</p>
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
+            <div>
+              <p className={styles.cardTitle}>天気予報</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '1.75rem' }}>{weather.emoji}</span>
+                <p className={styles.weatherInfo}>{weather.text}</p>
+              </div>
+              <p className={styles.weatherDetail} style={{ fontSize: '1rem', fontWeight: 'bold', margin: '2px 0 6px 0' }}>{weather.temp}</p>
             </div>
-            <p className={styles.weatherDetail}>現在気温: {weather.temp}</p>
+            
+            {/* 今日の詳細パラメーター */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '4px', paddingBottom: '4px' }}>
+              <p className={styles.weatherDetail}>💧 降水確率: {weather.pop}</p>
+              <p className={styles.weatherDetail}>🌀 風速: {weather.windSpeed}</p>
+            </div>
+
+            {/* 明日の天気予報 */}
+            {weather.tomorrow.text && (
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '6px', marginTop: '2px' }}>
+                <p className={styles.weatherDetail} style={{ opacity: 0.6, fontSize: '0.65rem', marginBottom: '2px' }}>明日の予報</p>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span>{weather.tomorrow.emoji}</span>
+                    <span>{weather.tomorrow.text}</span>
+                  </span>
+                  <span>{weather.tomorrow.temp} (💧{weather.tomorrow.pop})</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* 中段：ニュース (リンク付きに綺麗に一本化) */}
+      {/* 中段：ニュース */}
       <div className={styles.newsCard}>
         <p className={styles.cardTitle} style={{ fontSize: '1rem', opacity: 1 }}>ニュース</p>
         <ul className={styles.newsList}>

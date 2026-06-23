@@ -4,7 +4,7 @@
     color: var(--foreground) !important;
     padding: 16px; /* ⭕ ホーム画面（home.module.css）と完全に同じ「16px」に統一します */
     font-family: sans-serif;
-    max-width: 430px; /* これで最大横幅がホームと100%一致します */
+    max-width: 530px; /* これで最大横幅がホームと100%一致します */
     margin: 0 auto;
     display: flex;
     flex-direction: column;

@@ -15,7 +15,7 @@ body {
 
 .container {
   width: 100%;
-  max-width: 430px; /* スマホサイズ固定 */
+  max-width: 530px; /* スマホサイズ固定 */
   min-height: 100vh;
   background-color: #f8fafc;
   padding: 16px;

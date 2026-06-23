@@ -6,7 +6,7 @@
     color: var(--foreground) !important;           /* モード連動 */
     padding: 16px 16px 0 16px; /* 下部の入力エリアを固定するため下パディングを0に */
     font-family: sans-serif;
-    max-width: 430px; /* スマホサイズに固定 */
+    max-width: 530; /* スマホサイズに固定 */
     margin: 0 auto;
     display: flex;
     flex-direction: column;

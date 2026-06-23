@@ -4,7 +4,7 @@
   color: var(--foreground) !important;   
   padding: 16px;
   font-family: sans-serif;
-  max-width: 430px; /* スマホサイズに固定 */
+  max-width: 530px; /* スマホサイズに固定 */
   margin: 0 auto;
   display: flex;
   flex-direction: column;
