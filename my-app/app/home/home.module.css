@@ -185,6 +185,11 @@
   opacity: 0.95;
 }
 
+.newsLink:hover {
+  text-decoration: underline !important; /* マウスを乗せると下線を表示 */
+  opacity: 0.8; /* ちょっと薄くする */
+}
+
 /* ⭕ 【変更】GitHubカード（単体で美しくニュースと同じ幅にするための設定） */
 .githubFullCard {
   background: linear-gradient(135deg, #5c9ce6, #3b82f6);

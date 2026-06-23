@@ -45,12 +45,12 @@ export default function HomePage() {
   const [isMounted, setIsMounted] = useState(false);
   const [tasks, setTasks] = useState({ healthCheck: true, jobHunting: true });
   const [weather, setWeather] = useState({ text: '読み込み中...', emoji: '⏳', temp: '--' });
-  const [newsArticles, setNewsArticles] = useState<string[]>([
-    'ニュースを読み込み中...',
-    'しばらくお待ちください...'
+  const [newsArticles, setNewsArticles] = useState<any[]>([
+    { title: 'ニュースを読み込み中...', url: '#' },
+    { title: 'しばらくお待ちください...', url: '#' }
   ]);
 
-  // ⭕ プロジェクトのアクティビティを管理するState（初期状態は読み込み中）
+  // プロジェクトのアクティビティを管理するState
   const [projectActivities, setProjectActivities] = useState<any[]>([
     { name: '読み込み中...', action: '', time: '--', status: 'offline' }
   ]);
@@ -86,29 +86,34 @@ export default function HomePage() {
       .then((res) => res.json())
       .then((data) => {
         if (data && data.articles && data.articles.length > 0) {
-          const titles = data.articles.map((article: any) => article.title);
-          setNewsArticles(titles);
+          const articles = data.articles.map((article: any) => ({
+            title: article.title,
+            url: article.url
+          }));
+          setNewsArticles(articles);
         } else {
-          setNewsArticles(['ニュースが見つかりませんでした', '']);
+          setNewsArticles([{ title: 'ニュースが見つかりませんでした', url: '#' }]);
         }
       })
       .catch((err) => {
         console.error('ニュースの取得に失敗:', err);
-        setNewsArticles(['ニュースの読み込みに失敗しました', '⚠️ リクエスト上限の可能性があります']);
+        setNewsArticles([
+          { title: 'ニュースの読み込みに失敗しました', url: '#' },
+          { title: '⚠️ リクエスト上限の可能性があります', url: '#' }
+        ]);
       });
 
-    // ⭕ 3. 指定したリポジトリ（tasseitai）のコミット履歴を確実に取得
+    // 指定したリポジトリ（tasseitai）のコミット履歴を取得
+    // 💡 プライベートリポジトリの場合は、ここに前のトークン (const GITHUB_ACCESS_TOKEN = 'ghp_...') を追加してfetch内ヘッダーを記述してください
     fetch('https://api.github.com/repos/haru200453/tasseitai/commits')
       .then((res) => res.json())
       .then((commits) => {
-        if (commits && commits.length > 0) {
-          // 最新の5件のコミットを抽出して整形
+        if (commits && commits.length > 0 && Array.isArray(commits)) {
           const formattedActivities = commits.slice(0, 5).map((item: any) => {
             return {
-              // 💡 GitHubアカウントがある場合はその名前、ない場合はコミット作成者の名前
               name: item.author ? item.author.login : item.commit.author.name, 
-              action: 'コードをコミット', // コマンド内容を固定
-              time: formatLastActivity(item.commit.author.date), // コミット日時
+              action: 'コードをコミット', 
+              time: formatLastActivity(item.commit.author.date), 
               status: 'online'
             };
           });
@@ -192,20 +197,32 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* 中段：ニュース */}
+      {/* 中段：ニュース (リンク付きに綺麗に一本化) */}
       <div className={styles.newsCard}>
         <p className={styles.cardTitle} style={{ fontSize: '1rem', opacity: 1 }}>ニュース</p>
         <ul className={styles.newsList}>
-          {newsArticles.map((title, index) => (
+          {newsArticles.map((article, index) => (
             <li key={index} className={styles.newsItem}>
-              {title && <span style={{ marginRight: '6px' }}>•</span>}
-              {title}
+              {article.title && <span style={{ marginRight: '6px' }}>•</span>}
+              {article.url && article.url !== '#' ? (
+                <a 
+                  href={article.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className={styles.newsLink}
+                  style={{ color: 'inherit', textDecoration: 'none' }}
+                >
+                  {article.title}
+                </a>
+              ) : (
+                <span>{article.title}</span>
+              )}
             </li>
           ))}
         </ul>
       </div>
 
-      {/* ⭕ 下段：GitHubプロジェクトアクティビティ（tasseitai の最新の動き） */}
+      {/* 下段：GitHubプロジェクトアクティビティ */}
       <div className={styles.githubFullCard}>
         <p className={styles.githubTitle}>GitHubプロジェクト (tasseitai)</p>
         <div className={styles.memberList}>
