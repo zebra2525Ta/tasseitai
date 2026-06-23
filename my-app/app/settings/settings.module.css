@@ -186,3 +186,38 @@
   .dangerBtn:active {
     opacity: 0.6;
   }
+  /* ⭕ GitHub入力フォーム用のスタイル */
+.inputRow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.textField {
+  width: 100%;
+  padding: 10px 12px;
+  background-color: rgba(255, 255, 255, 0.05); /* ほんのり透けるダーク背景 */
+  border: 1px solid rgba(255, 255, 255, 0.15); /* 主張しすぎない境界線 */
+  border-radius: 6px;
+  color: var(--foreground);
+  font-size: 0.95rem;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/* 入力欄をクリック（フォーカス）した時のネオンエフェクト */
+.textField:focus {
+  outline: none;
+  border-color: #3b82f6; /* 青文字OFFなどと色相を合わせたクールブルー */
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
+}
+
+/* ヒントテキストの装飾 */
+.inputHelp {
+  font-size: 0.75rem;
+  color: var(--foreground);
+  opacity: 0.5;
+  margin: 0;
+  padding-left: 2px;
+}

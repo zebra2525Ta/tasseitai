@@ -35,7 +35,7 @@ export default function HomePage() {
   const [isMounted, setIsMounted] = useState(false);
   const [tasks, setTasks] = useState({ healthCheck: true, jobHunting: true });
   
-  // ⭕ 天気のStateを1つに統合して整理
+  // 天気のStateを1つに統合して整理
   const [weather, setWeather] = useState({ 
     text: '読み込み中...', 
     emoji: '⏳', 
@@ -58,6 +58,9 @@ export default function HomePage() {
   const [projectActivities, setProjectActivities] = useState<any[]>([
     { name: '読み込み中...', action: '', time: '--', status: 'offline' }
   ]);
+
+  // 現在表示中のリポジトリ名を画面（JSX）に反映するためのStateを追加
+  const [currentRepoName, setCurrentRepoName] = useState('tasseitai');
 
   useEffect(() => {
     // タスクの復元
@@ -105,7 +108,7 @@ export default function HomePage() {
       .catch(() => setWeather({ 
         text: 'エラー', emoji: '⚠️', temp: '--', windSpeed: '--', pop: '--', 
         tomorrow: { text: 'エラー', emoji: '⚠️', temp: '--', pop: '--' } 
-      })); // ⭕ 重複していた2つ目のcatchを削除
+      }));
 
     // GNews APIの取得
     const NEWS_API_KEY = '8a87edcbd181c83a254c14aa438f0ca6'; 
@@ -131,28 +134,49 @@ export default function HomePage() {
         ]);
       });
 
-    // 指定したリポジトリ（tasseitai）のコミット履歴を取得
-    fetch('https://api.github.com/repos/haru200453/tasseitai/commits')
-      .then((res) => res.json())
-      .then((commits) => {
-        if (commits && commits.length > 0 && Array.isArray(commits)) {
-          const formattedActivities = commits.slice(0, 5).map((item: any) => {
-            return {
-              name: item.author ? item.author.login : item.commit.author.name, 
-              action: 'コードをコミット', 
-              time: formatLastActivity(item.commit.author.date), 
-              status: 'online'
-            };
-          });
-          setProjectActivities(formattedActivities);
-        } else {
-          setProjectActivities([{ name: 'コミット履歴なし', action: '', time: '--', status: 'offline' }]);
-        }
-      })
-      .catch((err) => {
-        console.error('GitHubデータの取得に失敗:', err);
-        setProjectActivities([{ name: '読み込み失敗', action: 'API制限または非公開リポジトリです', time: '--', status: 'offline' }]);
-      });
+    // 1. LocalStorageから設定されたGitHubリポジトリ名を取得（無い場合はデフォルト値）
+    const savedRepo = localStorage.getItem('setting_githubRepo') || 'haru200453/tasseitai';
+        
+    // 表示用カードのタイトルに反映するため、スラッシュ以降のリポジトリ名だけを切り出して保存
+    const repoTitle = savedRepo.includes('/') ? savedRepo.split('/')[1] : savedRepo;
+    setCurrentRepoName(repoTitle);
+
+    // エラー対策：「ユーザー名/リポジトリ名」の形式（スラッシュが含まれているか）をチェック
+    if (savedRepo.includes('/') && savedRepo.split('/')[0] && savedRepo.split('/')[1]) {
+      // 2. 動的に設定されたリポジトリURLを構築してフェッチ
+      fetch(`https://api.github.com/repos/${savedRepo}/commits`)
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+          }
+          return res.json();
+        })
+        .then((commits) => {
+          if (commits && Array.isArray(commits) && commits.length > 0) {
+            const formattedActivities = commits.slice(0, 5).map((item: any) => {
+              const authorName = item.author?.login || item.commit?.author?.name || 'Unknown';
+              const commitDate = item.commit?.author?.date || new Date().toISOString();
+              
+              return {
+                name: authorName, 
+                action: 'コードをコミット', 
+                time: formatLastActivity(commitDate), 
+                status: 'online'
+              };
+            });
+            setProjectActivities(formattedActivities);
+          } else {
+            setProjectActivities([{ name: 'コミット履歴なし', action: '', time: '--', status: 'offline' }]);
+          }
+        })
+        .catch((err) => {
+          console.error('GitHubデータの取得に失敗:', err);
+          setProjectActivities([{ name: '読み込み失敗', action: 'API制限またはリポジトリが見つかりません', time: '--', status: 'offline' }]);
+        });
+    } else {
+      // 設定が不完全な場合の表示
+      setProjectActivities([{ name: '設定不完全', action: '設定画面で正しく入力してください', time: '--', status: 'offline' }]);
+    }
 
     setIsMounted(true);
   }, []);
@@ -273,7 +297,7 @@ export default function HomePage() {
 
       {/* 下段：GitHubプロジェクトアクティビティ */}
       <div className={styles.githubFullCard}>
-        <p className={styles.githubTitle}>GitHubプロジェクト (tasseitai)</p>
+        <p className={styles.githubTitle}>GitHubプロジェクト ({currentRepoName})</p>
         <div className={styles.memberList}>
           {projectActivities.map((activity, index) => (
             <div key={index} className={styles.memberItem}>

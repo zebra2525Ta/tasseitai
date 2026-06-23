@@ -12,16 +12,27 @@ export default function SettingsPage() {
   const [aiBusiness, setAiBusiness] = useState(true);
   const [aiDaily, setAiDaily] = useState(true);
   const [notifications, setNotifications] = useState(true);
+  
+  // ⭕ GitHubリポジトリ名の状態管理を追加
+  const [githubRepo, setGithubRepo] = useState('haru200453/tasseitai'); // 初期値（デフォルト）
 
   // 起動時にLocalStorageから設定を復元
   useEffect(() => {
     const savedBusiness = localStorage.getItem('setting_aiBusiness');
     const savedDaily = localStorage.getItem('setting_aiDaily');
     const savedNotif = localStorage.getItem('setting_notifications');
+    
+    // ⭕ ローカルストレージから保存されたリポジトリ名を取得
+    const savedRepo = localStorage.getItem('setting_githubRepo');
 
     setAiBusiness(savedBusiness !== null ? JSON.parse(savedBusiness) : true);
     setAiDaily(savedDaily !== null ? JSON.parse(savedDaily) : true);
     setNotifications(savedNotif !== null ? JSON.parse(savedNotif) : true);
+    
+    // ⭕ 保存された値があればセット
+    if (savedRepo !== null) {
+      setGithubRepo(savedRepo);
+    }
 
     setIsMounted(true);
   }, []);
@@ -32,6 +43,12 @@ export default function SettingsPage() {
     if (key === 'notifications') setNotifications(value);
 
     localStorage.setItem(`setting_${key}`, JSON.stringify(value));
+  };
+
+  // ⭕ GitHubリポジトリ名をLocalStorageに保存する関数
+  const handleRepoChange = (value: string) => {
+    setGithubRepo(value);
+    localStorage.setItem('setting_githubRepo', value);
   };
 
   const handleLogout = async () => {
@@ -91,6 +108,27 @@ export default function SettingsPage() {
                 </label>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ⭕ 新設：GitHub連携設定セクション */}
+      <div className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <span className={styles.sectionTitle}>外部連携</span>
+          <div className={styles.rowContainer}>
+            <div className={styles.inputRow}>
+              <label className={styles.subLabel} htmlFor="githubRepoInput">GitHub リポジトリ</label>
+              <input
+                id="githubRepoInput"
+                type="text"
+                className={styles.textField}
+                placeholder="ユーザー名/リポジトリ名"
+                value={githubRepo}
+                onChange={(e) => handleRepoChange(e.target.value)}
+              />
+            </div>
+            <p className={styles.inputHelp}>※ 「アカウント名/リポジトリ名」の形式で入力してください</p>
           </div>
         </div>
       </div>
