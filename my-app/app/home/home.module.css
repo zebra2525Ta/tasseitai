@@ -45,23 +45,31 @@
   color: var(--foreground);
 }
 
-/* ⭕ 【新設】ニュースと同じ幅・余白にするAIチャット用カード */
+/* ⭕ 【デザイン変更】サイズはそのまま、AIチャットだけをネオン風に主役化 */
 .aiChatFullCard {
-  background: linear-gradient(135deg, #da0214, #1d4ed8);
+  /* 深い宇宙のような青紫グラデーション */
+  background: linear-gradient(135deg, #1e1b4b, #311042);
   text-decoration: none;
   border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  min-height: 80px;
+  padding: 20px; /* サイズ維持 */
+  /* 妖しく光るグロウ効果をプラス */
+  box-shadow: 0 0 15px rgba(99, 102, 241, 0.4), 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+  min-height: 80px; /* サイズ維持 */
   display: flex;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  transition: transform 0.1s ease;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(129, 140, 248, 0.3); /* 光る極細の枠線 */
+}
+
+.aiChatFullCard:hover {
+  box-shadow: 0 0 25px rgba(139, 92, 246, 0.6);
+  border-color: rgba(167, 139, 250, 0.6);
 }
 
 .aiChatFullCard:active {
-  transform: scale(0.98);
+  transform: scale(0.98); /* サイズ維持 */
 }
 
 .chatLinkContentRow {
@@ -72,13 +80,21 @@
 }
 
 .chatTextLarge {
-  font-size: 1.5rem;
+  font-size: 1.5rem; /* サイズ維持 */
   font-weight: bold;
   color: #ffffff;
 }
 
 .chatEmojiLarge {
-  font-size: 2rem;
+  font-size: 2rem; /* サイズ維持 */
+  animation: float 3s ease-in-out infinite; /* ロボットが浮遊する遊び心 */
+}
+
+/* ロボットの浮遊アニメーション */
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-4px); }
+  100% { transform: translateY(0px); }
 }
 
 /* 上段：2カラムのグリッド（予定と天気用） */
@@ -88,32 +104,34 @@
   gap: 16px;
 }
 
-/* 共通のカード基盤 */
+/* 共通のカード基盤（脇役として高級感のあるダークグレーに） */
 .card {
   border-radius: 16px;
-  padding: 16px;
-  color: #ffffff;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  padding: 16px; /* サイズ維持 */
+  background: linear-gradient(135deg, #121212, #1a1a1a) !important; /* 少し引いた黒 */
+  color: #e2e8f0; /* 目に優しいオフホワイト */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 144px;
+  min-height: 144px; /* サイズ維持 */
   box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.05); /* 上品な細い枠線 */
 }
 
 .scheduleCard {
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  /* 基盤側で一括管理するため指定なし */
 }
 
 .weatherCard {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  /* 基盤側で一括管理するため指定なし */
 }
 
 .cardTitle {
   font-size: 0.875rem;
   font-weight: 500;
   margin: 0 0 8px 0;
-  opacity: 0.9;
+  opacity: 0.8;
 }
 
 /* スケジュール内のチェックボックス一覧 */
@@ -141,7 +159,7 @@
 
 .completed {
   text-decoration: line-through;
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
 /* 天気情報のテキスト */
@@ -153,19 +171,20 @@
 
 .weatherDetail {
   font-size: 0.75rem;
-  opacity: 0.8;
+  opacity: 0.7;
   margin: 0;
 }
 
 /* 中段：ニュースカード（横幅いっぱい） */
 .newsCard {
-  background: linear-gradient(135deg, #5c9ce6, #3b82f6);
-  color: #ffffff;
+  background: linear-gradient(135deg, #121212, #1a1a1a) !important;
+  color: #e2e8f0;
   border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  min-height: 120px;
+  padding: 20px; /* サイズ維持 */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+  min-height: 120px; /* サイズ維持 */
   box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .newsList {
@@ -182,29 +201,30 @@
   display: flex;
   gap: 6px;
   align-items: flex-start;
-  opacity: 0.95;
+  opacity: 0.9;
 }
 
 .newsLink:hover {
-  text-decoration: underline !important; /* マウスを乗せると下線を表示 */
-  opacity: 0.8; /* ちょっと薄くする */
+  text-decoration: underline !important;
+  opacity: 0.7;
 }
 
-/* ⭕ 【変更】GitHubカード（単体で美しくニュースと同じ幅にするための設定） */
+/* GitHubカード */
 .githubFullCard {
-  background: linear-gradient(135deg, #5c9ce6, #3b82f6);
-  color: #ffffff;
+  background: linear-gradient(135deg, #121212, #1a1a1a) !important;
+  color: #e2e8f0;
   border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  padding: 20px; /* サイズ維持 */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
   box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .githubTitle {
   font-size: 0.875rem;
   font-weight: 500;
   margin: 0 0 12px 0;
-  opacity: 0.9;
+  opacity: 0.8;
 }
 
 .memberList {
@@ -215,9 +235,9 @@
 
 .memberItem {
   display: flex;
-  justify-content: space-between; /* 左右に綺麗に散らす（名前と時間を端と端にする） */
+  justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* 軽い区切り線 */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   padding-bottom: 6px;
 }
 
@@ -247,5 +267,5 @@
 
 .lastActivity {
   font-size: 0.75rem;
-  opacity: 0.8;
+  opacity: 0.7;
 }

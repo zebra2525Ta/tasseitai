@@ -137,7 +137,7 @@
     border: none;
     border-radius: 50%; /* 完全な丸ボタンに */
     cursor: pointer;
-    background: #22c55e; /* ホームのチェックやONボタンとお揃いのきれいな緑に */
+    background: #000000; /* ホームのチェックやONボタンとお揃いのきれいな緑に */
     color: #fff;
     font-size: 1.2rem;
     display: flex;
