@@ -31,6 +31,16 @@ const formatLastActivity = (dateString: string) => {
   return `${diffDays} day ago`;
 };
 
+// ジャンルIDから表示名にマッピングするオブジェクト
+const CATEGORY_NAMES: { [key: string]: string } = {
+  general: '総合',
+  technology: 'テクノロジー',
+  business: 'ビジネス',
+  science: 'サイエンス',
+  sports: 'スポーツ',
+  entertainment: 'エンタメ'
+};
+
 export default function HomePage() {
   const [isMounted, setIsMounted] = useState(false);
   const [tasks, setTasks] = useState({ healthCheck: true, jobHunting: true });
@@ -49,6 +59,12 @@ export default function HomePage() {
       pop: '--'
     }
   });
+
+  // 画面に選択された地域名を表示するためのStateを追加（デフォルトは大阪）
+  const [currentRegionName, setCurrentRegionName] = useState('大阪');
+
+  // ⭕ 画面に選択されたジャンル名を表示するためのStateを追加
+  const [currentCategoryName, setCurrentCategoryName] = useState('総合');
   
   const [newsArticles, setNewsArticles] = useState<any[]>([
     { title: 'ニュースを読み込み中...', url: '#' },
@@ -59,7 +75,7 @@ export default function HomePage() {
     { name: '読み込み中...', action: '', time: '--', status: 'offline' }
   ]);
 
-  // 現在表示中のリポジトリ名を画面（JSX）に反映するためのStateを追加
+  // 現在表示中のリポジトリ名を画面（JSX）に反映するためのState
   const [currentRepoName, setCurrentRepoName] = useState('tasseitai');
 
   useEffect(() => {
@@ -71,8 +87,15 @@ export default function HomePage() {
       jobHunting: savedJobHunting !== null ? JSON.parse(savedJobHunting) : true,
     });
 
-    // 天気APIの取得
-    const weatherUrl = 'https://api.open-meteo.com/v1/forecast?latitude=34.6937&longitude=135.5023&current=temperature_2m,weather_code,surface_pressure,wind_speed_10m&hourly=precipitation_probability&daily=weather_code,temperature_2m_max,precipitation_probability_max&timezone=Asia%2FTokyo&forecast_days=2';
+    // LocalStorageから設定された地域データ（緯度・経度・名前）を取得
+    const savedRegionName = localStorage.getItem('setting_weatherName') || '大阪';
+    const savedLat = localStorage.getItem('setting_weatherLat') || '34.6937';
+    const savedLon = localStorage.getItem('setting_weatherLon') || '135.5023';
+
+    setCurrentRegionName(savedRegionName);
+
+    // 取得した緯度・経度を埋め込んで天気URLを構築
+    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${savedLat}&longitude=${savedLon}&current=temperature_2m,weather_code,surface_pressure,wind_speed_10m&hourly=precipitation_probability&daily=weather_code,temperature_2m_max,precipitation_probability_max&timezone=Asia%2FTokyo&forecast_days=2`;
     
     fetch(weatherUrl)
       .then((res) => res.json())
@@ -110,31 +133,55 @@ export default function HomePage() {
         tomorrow: { text: 'エラー', emoji: '⚠️', temp: '--', pop: '--' } 
       }));
 
-    // GNews APIの取得
-    const NEWS_API_KEY = '8a87edcbd181c83a254c14aa438f0ca6'; 
-    const newsUrl = `https://gnews.io/api/v4/top-headlines?category=general&lang=ja&country=jp&max=2&apikey=${NEWS_API_KEY}`;
-    fetch(newsUrl)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data && data.articles && data.articles.length > 0) {
-          const articles = data.articles.map((article: any) => ({
-            title: article.title,
-            url: article.url
-          }));
-          setNewsArticles(articles);
-        } else {
-          setNewsArticles([{ title: 'ニュースが見つかりませんでした', url: '#' }]);
-        }
-      })
-      .catch((err) => {
-        console.error('ニュースの取得に失敗:', err);
-        setNewsArticles([
-          { title: 'ニュースの読み込みに失敗しました', url: '#' },
-          { title: '⚠️ リクエスト上限の可能性があります', url: '#' }
-        ]);
-      });
+    // ⭕ GNews APIの取得（ジャンル連動 ＆ キャッシュ制限回避）
+    const savedCategory = localStorage.getItem('setting_newsCategory') || 'general';
+    setCurrentCategoryName(CATEGORY_NAMES[savedCategory] || '総合');
 
-    // 1. LocalStorageから設定されたGitHubリポジトリ名を取得（無い場合はデフォルト値）
+    const cacheData = localStorage.getItem('cache_newsData');
+    const cacheTimestamp = localStorage.getItem('cache_newsTimestamp');
+    const now = new Date().getTime();
+    
+    // 💡 キャッシュが存在し、かつ1時間（3,600,000ミリ秒）未満であればキャッシュを使う
+    const CACHE_LIMIT = 60 * 60 * 1000; 
+    if (cacheData && cacheTimestamp && now - parseInt(cacheTimestamp) < CACHE_LIMIT) {
+      setNewsArticles(JSON.parse(cacheData));
+    } else {
+      // キャッシュがない、または1時間以上経っている場合は新しくAPIを叩く
+      const NEWS_API_KEY = '8a87edcbd181c83a254c14aa438f0ca6'; 
+      const newsUrl = `https://gnews.io/api/v4/top-headlines?category=${savedCategory}&lang=ja&country=jp&max=2&apikey=${NEWS_API_KEY}`;
+      
+      fetch(newsUrl)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.articles && data.articles.length > 0) {
+            const articles = data.articles.map((article: any) => ({
+              title: article.title,
+              url: article.url
+            }));
+            setNewsArticles(articles);
+            
+            // 💡 取得データをLocalStorageにキャッシュ保存
+            localStorage.setItem('cache_newsData', JSON.stringify(articles));
+            localStorage.setItem('cache_newsTimestamp', now.toString());
+          } else {
+            setNewsArticles([{ title: 'ニュースが見つかりませんでした', url: '#' }]);
+          }
+        })
+        .catch((err) => {
+          console.error('ニュースの取得に失敗:', err);
+          // エラー時でも、もし古いキャッシュがあれば気休めとして表示させる
+          if (cacheData) {
+            setNewsArticles(JSON.parse(cacheData));
+          } else {
+            setNewsArticles([
+              { title: 'ニュースの読み込みに失敗しました', url: '#' },
+              { title: '⚠️ リクエスト上限の可能性があります', url: '#' }
+            ]);
+          }
+        });
+    }
+
+    // LocalStorageから設定されたGitHubリポジトリ名を取得（無い場合はデフォルト値）
     const savedRepo = localStorage.getItem('setting_githubRepo') || 'haru200453/tasseitai';
         
     // 表示用カードのタイトルに反映するため、スラッシュ以降のリポジトリ名だけを切り出して保存
@@ -143,7 +190,7 @@ export default function HomePage() {
 
     // エラー対策：「ユーザー名/リポジトリ名」の形式（スラッシュが含まれているか）をチェック
     if (savedRepo.includes('/') && savedRepo.split('/')[0] && savedRepo.split('/')[1]) {
-      // 2. 動的に設定されたリポジトリURLを構築してフェッチ
+      // 動的に設定されたリポジトリURLを構築してフェッチ
       fetch(`https://api.github.com/repos/${savedRepo}/commits`)
         .then((res) => {
           if (!res.ok) {
@@ -239,7 +286,7 @@ export default function HomePage() {
         <div className={`${styles.card} ${styles.weatherCard}`}>
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
             <div>
-              <p className={styles.cardTitle}>天気予報</p>
+              <p className={styles.cardTitle}>天気予報 ({currentRegionName})</p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{ fontSize: '1.75rem' }}>{weather.emoji}</span>
                 <p className={styles.weatherInfo}>{weather.text}</p>
@@ -272,7 +319,8 @@ export default function HomePage() {
 
       {/* 中段：ニュース */}
       <div className={styles.newsCard}>
-        <p className={styles.cardTitle} style={{ fontSize: '1rem', opacity: 1 }}>ニュース</p>
+        {/* ⭕ タイトルに選択中のジャンル名が入るように変更 */}
+        <p className={styles.cardTitle} style={{ fontSize: '1rem', opacity: 1 }}>ニュース ({currentCategoryName})</p>
         <ul className={styles.newsList}>
           {newsArticles.map((article, index) => (
             <li key={index} className={styles.newsItem}>
