@@ -147,26 +147,7 @@ export default function HomePage() {
       setNewsArticles(JSON.parse(cacheData));
     } else {
       // キャッシュがない、または1時間以上経っている場合は新しくAPIを叩く
-      const NEWS_API_KEY = process.env.NEXT_PUBLIC_GNEWS_API_KEY;
-      const newsUrl = `https://gnews.io/api/v4/top-headlines?category=${savedCategory}&lang=ja&country=jp&max=2&apikey=${NEWS_API_KEY}`;
-      
-      fetch(newsUrl)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data && data.articles && data.articles.length > 0) {
-            const articles = data.articles.map((article: any) => ({
-              title: article.title,
-              url: article.url
-            }));
-            setNewsArticles(articles);
-            
-            // 💡 取得データをLocalStorageにキャッシュ保存
-            localStorage.setItem('cache_newsData', JSON.stringify(articles));
-            localStorage.setItem('cache_newsTimestamp', now.toString());
-          } else {
-            setNewsArticles([{ title: 'ニュースが見つかりませんでした', url: '#' }]);
-          }
-        })
+      fetch(`/api/news?category=${savedCategory}`)
         .catch((err) => {
           console.error('ニュースの取得に失敗:', err);
           // エラー時でも、もし古いキャッシュがあれば気休めとして表示させる
