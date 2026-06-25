@@ -27,7 +27,7 @@ async function fetchNotionData() {
 // Node標準fetchを使う
 //入力: promptText (string) - ユーザからの質問や指示
 //出力: 生成されたテキスト (string) - GROQ APIからの応答
-export async function generateText(promptText,) {
+export async function generateText(promptText) {
   if (typeof promptText !== "string" || promptText.trim() === "") {
     throw new Error("generateText requires a non-empty string promptText argument");
   }

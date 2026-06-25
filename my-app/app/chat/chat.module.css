@@ -72,3 +72,14 @@ body{
     border-radius:20px 20px 4px 20px;
     word-break:break-word;
 }
+
+.assistantBubble{
+    align-self:flex-start;
+    max-width:70%;
+    padding:12px 16px;
+    margin-bottom:12px;
+    background:#e5e7eb;
+    color:#111;
+    border-radius:20px 20px 20px 4px;
+    word-break:break-word;
+}

@@ -10,12 +10,12 @@ export async function POST(request: Request) {
 
     let content;
 
-    if (question && Array.isArray(databaseItems)) {
+    if (question) {
       content = await generateTextFromNotionData(question, databaseItems);
     } else if (prompt) {
       content = await generateText(prompt);
     } else {
-      return NextResponse.json({ error: "prompt または question + databaseItems が必要です" }, { status: 400 });
+      return NextResponse.json({ error: "prompt または question が必要です" }, { status: 400 });
     }
 
     return NextResponse.json({ content });
