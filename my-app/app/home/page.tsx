@@ -63,7 +63,7 @@ export default function HomePage() {
   // 画面に選択された地域名を表示するためのStateを追加（デフォルトは大阪）
   const [currentRegionName, setCurrentRegionName] = useState('大阪');
 
-  // ⭕ 画面に選択されたジャンル名を表示するためのStateを追加
+  // 画面に選択されたジャンル名を表示するためのStateを追加
   const [currentCategoryName, setCurrentCategoryName] = useState('総合');
   
   const [newsArticles, setNewsArticles] = useState<any[]>([
@@ -133,7 +133,7 @@ export default function HomePage() {
         tomorrow: { text: 'エラー', emoji: '⚠️', temp: '--', pop: '--' } 
       }));
 
-    // ⭕ GNews APIの取得（ジャンル連動 ＆ キャッシュ制限回避）
+    // ⭕ 自作APIルート（/api/news）を利用したニュース取得処理
     const savedCategory = localStorage.getItem('setting_newsCategory') || 'general';
     setCurrentCategoryName(CATEGORY_NAMES[savedCategory] || '総合');
 
@@ -141,22 +141,40 @@ export default function HomePage() {
     const cacheTimestamp = localStorage.getItem('cache_newsTimestamp');
     const now = new Date().getTime();
     
-    // 💡 キャッシュが存在し、かつ1時間（3,600,000ミリ秒）未満であればキャッシュを使う
+    // キャッシュが存在し、かつ1時間（3,600,000ミリ秒）未満であればキャッシュを使う
     const CACHE_LIMIT = 60 * 60 * 1000; 
     if (cacheData && cacheTimestamp && now - parseInt(cacheTimestamp) < CACHE_LIMIT) {
       setNewsArticles(JSON.parse(cacheData));
     } else {
-      // キャッシュがない、または1時間以上経っている場合は新しくAPIを叩く
+      // キャッシュがない、または1時間以上経っている場合は自作APIルートを叩く
       fetch(`/api/news?category=${savedCategory}`)
+        .then((res) => {
+          if (!res.ok) throw new Error('API request failed');
+          return res.json();
+        })
+        .then((data) => {
+          if (data && data.articles && data.articles.length > 0) {
+            const articles = data.articles.map((article: any) => ({
+              title: article.title,
+              url: article.url
+            }));
+            setNewsArticles(articles);
+            
+            // フロントエンド側のLocalStorageにキャッシュ保存
+            localStorage.setItem('cache_newsData', JSON.stringify(articles));
+            localStorage.setItem('cache_newsTimestamp', now.toString());
+          } else {
+            setNewsArticles([{ title: 'ニュースが見つかりませんでした', url: '#' }]);
+          }
+        })
         .catch((err) => {
           console.error('ニュースの取得に失敗:', err);
-          // エラー時でも、もし古いキャッシュがあれば気休めとして表示させる
           if (cacheData) {
             setNewsArticles(JSON.parse(cacheData));
           } else {
             setNewsArticles([
               { title: 'ニュースの読み込みに失敗しました', url: '#' },
-              { title: '⚠️ リクエスト上限の可能性があります', url: '#' }
+              { title: '⚠️ リクエスト上限、または環境変数の設定エラーです', url: '#' }
             ]);
           }
         });
@@ -202,7 +220,6 @@ export default function HomePage() {
           setProjectActivities([{ name: '読み込み失敗', action: 'API制限またはリポジトリが見つかりません', time: '--', status: 'offline' }]);
         });
     } else {
-      // 設定が不完全な場合の表示
       setProjectActivities([{ name: '設定不完全', action: '設定画面で正しく入力してください', time: '--', status: 'offline' }]);
     }
 
@@ -263,7 +280,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* 天気予報：詳細 ＆ 明日の天気 */}
+        {/* 天気予報 */}
         <div className={`${styles.card} ${styles.weatherCard}`}>
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
             <div>
@@ -275,13 +292,11 @@ export default function HomePage() {
               <p className={styles.weatherDetail} style={{ fontSize: '1rem', fontWeight: 'bold', margin: '2px 0 6px 0' }}>{weather.temp}</p>
             </div>
             
-            {/* 今日の詳細パラメーター */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '4px', paddingBottom: '4px' }}>
               <p className={styles.weatherDetail}>💧 降水確率: {weather.pop}</p>
               <p className={styles.weatherDetail}>🌀 風速: {weather.windSpeed}</p>
             </div>
 
-            {/* 明日の天気予報 */}
             {weather.tomorrow.text && (
               <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '6px', marginTop: '2px' }}>
                 <p className={styles.weatherDetail} style={{ opacity: 0.6, fontSize: '0.65rem', marginBottom: '2px' }}>明日の予報</p>
@@ -300,7 +315,6 @@ export default function HomePage() {
 
       {/* 中段：ニュース */}
       <div className={styles.newsCard}>
-        {/* ⭕ タイトルに選択中のジャンル名が入るように変更 */}
         <p className={styles.cardTitle} style={{ fontSize: '1rem', opacity: 1 }}>ニュース ({currentCategoryName})</p>
         <ul className={styles.newsList}>
           {newsArticles.map((article, index) => (
