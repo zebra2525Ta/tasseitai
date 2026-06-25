@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation"; //
 import styles from "./chat.module.css";
 
 type ChatMessage = {
@@ -9,6 +10,7 @@ type ChatMessage = {
 };
 
 export default function ChatPage() {
+  const router = useRouter(); // 追加
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
 
@@ -47,6 +49,15 @@ export default function ChatPage() {
 
   return (
     <main className={styles.container}>
+<div className={styles.header}>
+  <button
+    className={styles.backBtn}
+    onClick={() => router.back()}
+  >
+    ←
+  </button>
+
+</div>
       <div className={styles.chatArea}>
         {messages.map((msg, index) => (
           <div

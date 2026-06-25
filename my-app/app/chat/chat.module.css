@@ -1,85 +1,151 @@
-body{
-    margin:0;
-    background:#f2f2f2;
-    display:flex;
-    justify-content:center;
-}
-.container{
+/* ※ bodyのスタイルは globals.css にあるため、ここでは .container から記述します */
+
+.container {
     min-height: 100vh;
-    background-color: #f8fafc;
-    padding: 16px;
-    color: #334155;
+    background-color: var(--background) !important; /* モード連動 */
+    color: var(--foreground) !important;           /* モード連動 */
+    padding: 16px 16px 0 16px; /* 下部の入力エリアを固定するため下パディングを0に */
     font-family: sans-serif;
-    max-width: 430px; /* スマホサイズに固定 */
+    max-width: 530; /* スマホサイズに固定 */
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 16px;
     box-sizing: border-box;
-}
-.chatArea{
-    flex:1;
-    overflow-y:auto;
-    display:flex;
-    flex-direction:column;
-    align-items:flex-end;
-    padding:20px;
-    padding-bottom:100px;
-}
-.chatArea h1{
-    font-size:24px;
-    color:#222;
-    font-weight:600;
-}
-.inputArea{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    padding:16px;
-    border-top:1px solid #e5e5e5;
-    background:#fff;
-}
-.inputArea input{
-    flex:1;
-    height:52px;
-    border:1px solid #dcdcdc;
-    border-radius:16px;
-    padding:0 16px;
-    font-size:16px;
-    color:#222;
-    outline:none;
-}
-.inputArea input::placeholder{
-    color:#999;
-}
-.inputArea button{
-    width:52px;
-    height:52px;
-    border:none;
-    border-radius:16px;
-    cursor:pointer;
-    background:#111;
-    color:#fff;
-    font-size:18px;
-}
-.userBubble{
-    align-self:flex-end;
-    max-width:70%;
-    padding:12px 16px;
-    margin-bottom:12px;
-    background:#b9bdc0;
-    color:white;
-    border-radius:20px 20px 4px 20px;
-    word-break:break-word;
+  }
+  
+  /* ヘッダーエリア */
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 4px 4px;
+    margin-bottom: 16px;
+  }
+  
+.backBtn {
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: var(--card-bg);
+  color: var(--foreground);
+
+  font-size: 1.3rem;
+  cursor: pointer;
+  text-decoration: none;
+
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  transition: transform 0.15s ease;
 }
 
-.assistantBubble{
-    align-self:flex-start;
-    max-width:70%;
-    padding:12px 16px;
-    margin-bottom:12px;
-    background:#e5e7eb;
-    color:#111;
-    border-radius:20px 20px 20px 4px;
-    word-break:break-word;
+.backBtn:hover {
+  transform: scale(1.05);
 }
+
+.backBtn:active {
+  transform: scale(0.92);
+}
+  
+  .title {
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin: 0;
+  }
+  
+  /* チャット表示エリア */
+  .chatArea {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    padding: 12px 4px;
+    gap: 12px;
+    /* スクロールバーを非表示にする設定（すっきり見せるため） */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .chatArea::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* 👤 ユーザーのメッセージ（右側） */
+  .userBubble {
+    align-self: flex-end;
+    max-width: 70%;
+    padding: 12px 16px;
+    background: #3b82f6; /* 綺麗でおしゃれなブルーに変更 */
+    color: white;
+    border-radius: 20px 20px 4px 20px;
+    word-break: break-word;
+    font-size: 0.95rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  }
+  
+  /* 🤖 AI（用務員のおじさんなど）のメッセージ（左側・新設） */
+  .aiBubble {
+    align-self: flex-start;
+    max-width: 70%;
+    padding: 12px 16px;
+    background: var(--card-bg); /* モードに合わせて自動で白 or 暗いグレーに切り替わり */
+    color: var(--foreground);    /* モードに合わせて自動で黒文字 or 白文字に切り替わり */
+    border-radius: 20px 20px 20px 4px;
+    word-break: break-word;
+    font-size: 0.95rem;
+    border: 1px solid rgba(128, 128, 128, 0.2); /* 境界線をうっすら敷く */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  }
+  
+  /* ⌨️ 下部入力エリア */
+  .inputArea {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 0; /* 左右の余白はcontainerに任せるため0に */
+    background: transparent; /* 背景に馴染ませる */
+  }
+  
+  .inputArea input {
+    flex: 1;
+    height: 48px;
+    border: 1px solid rgba(128, 128, 128, 0.3);
+    border-radius: 24px; /* より丸みを持たせてモダンに */
+    padding: 0 18px;
+    font-size: 1rem;
+    background-color: var(--card-bg); /* モード連動 */
+    color: var(--foreground);        /* モード連動 */
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  
+  .inputArea input:focus {
+    border-color: #3b82f6; /* 入力中、青く光らせる */
+  }
+  
+  .inputArea input::placeholder {
+    color: #94a3b8;
+  }
+  
+  /* 送信ボタン */
+  .inputArea button {
+    width: 48px;
+    height: 48px;
+    border: none;
+    border-radius: 50%; /* 完全な丸ボタンに */
+    cursor: pointer;
+    background: #000000; /* ホームのチェックやONボタンとお揃いのきれいな緑に */
+    color: #fff;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.1s;
+  }
+  
+  .inputArea button:active {
+    transform: scale(0.92);
+  }
