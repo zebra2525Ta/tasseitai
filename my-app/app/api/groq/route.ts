@@ -1,16 +1,23 @@
 import { NextResponse } from "next/server";
-import { generateText } from "./groq";
+import { generateText, generateTextFromNotionData } from "./groq";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const prompt = typeof body?.prompt === "string" ? body.prompt.trim() : "";
+    const question = typeof body?.question === "string" ? body.question.trim() : "";
+    const databaseItems = Array.isArray(body?.databaseItems) ? body.databaseItems : undefined;
 
-    if (!prompt) {
-      return NextResponse.json({ error: "prompt が必要です" }, { status: 400 });
+    let content;
+
+    if (question) {
+      content = await generateTextFromNotionData(question, databaseItems);
+    } else if (prompt) {
+      content = await generateText(prompt);
+    } else {
+      return NextResponse.json({ error: "prompt または question が必要です" }, { status: 400 });
     }
 
-    const content = await generateText(prompt);
     return NextResponse.json({ content });
   } catch (error) {
     const message = error instanceof Error ? error.message : "不明なエラーです";

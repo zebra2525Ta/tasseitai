@@ -1,63 +1,38 @@
-import { generateText } from "./groq.js";
+import assert from "node:assert/strict";
+import { buildNotionPrompt, generateTextFromNotionData } from "./groq.js";
+import { getSavedNotionTestData } from "../notion/notion.js";
 
 /**
- * chatから渡される文字列をgeneratTextで処理するテスト
+ * groq.js の Notion参照データ保存仕様を検証するテスト
  */
-async function testGroqCall() {
-  console.log("=== Groq API テスト開始 ===\n");
+async function testGroqNotionReference() {
+  console.log("=== groq.js Notion参照テスト開始 ===\n");
 
-  // テストケース1: 通常の文字列
-  const testPrompt1 = "大阪の明日の天気を教えて";
-  console.log(`テスト1: "${testPrompt1}"`);
-  try {
-    const result = await generateText(testPrompt1);
-    console.log("✓ 成功");
-    console.log(`  結果: ${result.substring(0, 100)}...`);
-  } catch (error) {
-    console.log("✗ エラー:", error.message);
-  }
-  console.log();
+  const question = "このタスクの要点を簡潔にまとめてください。";
+  const notionData = getSavedNotionTestData();
 
-  // テストケース2: 別の質問
-  const testPrompt2 = "JavaScriptとは何ですか？";
-  console.log(`テスト2: "${testPrompt2}"`);
-  try {
-    const result = await generateText(testPrompt2);
-    console.log("✓ 成功");
-    console.log(`  結果: ${result.substring(0, 100)}...`);
-  } catch (error) {
-    console.log("✗ エラー:", error.message);
-  }
-  console.log();
+  const prompt = buildNotionPrompt(question, notionData);
+  console.log("Generated prompt:\n", prompt, "\n");
 
-  // テストケース3: 空文字列（エラーハンドリング）
-  console.log("テスト3: 空文字列のテスト");
-  try {
-    const result = await generateText("");
-    console.log("✓ 成功（予期しない）");
-  } catch (error) {
-    console.log("✓ 期待通りエラー:", error.message);
-  }
-  console.log();
+  assert(prompt.includes("Name: テストタスク"), "promptには保存されたNotionのNameデータが含まれている必要があります");
+  assert(
+    prompt.includes("Description: これは参照用のNotionデータです。"),
+    "promptには保存されたNotionのDescriptionデータが含まれている必要があります"
+  );
+  assert(prompt.includes("- Name: テストタスク"), "promptには渡された notionData の行が - プレフィックス付きで含まれている必要があります");
+  assert(prompt.includes(`質問: ${question}`), "promptには質問文が含まれている必要があります");
 
-  // テストケース4: 非文字列（エラーハンドリング）
-  console.log("テスト4: 非文字列のテスト");
-  try {
-    const result = await generateText(12345);
-    console.log("✓ 成功（予期しない）");
-  } catch (error) {
-    console.log("✓ 期待通りエラー:", error.message);
+  console.log("✓ saved Notion data and supplied data are both present in normalizedItems\n");
+
+  if (process.env.GROQ_API_KEY) {
+    const result = await generateTextFromNotionData(question, notionData);
+    console.log("✓ generateTextFromNotionData executed successfully");
+    console.log(`  結果: ${result.substring(0, 100)}...\n`);
+  } else {
+    console.log("⚠️ GROQ_API_KEY が設定されていないため、API呼び出しテストはスキップします。\n");
   }
-  console.log();
 
   console.log("=== テスト終了 ===");
 }
 
-// 環境変数確認
-if (!process.env.GROQ_API_KEY) {
-  console.warn("⚠️  GROQ_API_KEY が設定されていません");
-  console.warn("   テスト前に .env ファイルまたは環境変数を設定してください\n");
-}
-
-// テスト実行
-testGroqCall().catch(console.error);
+await testGroqNotionReference();

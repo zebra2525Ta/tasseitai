@@ -4,17 +4,47 @@ import { useState } from "react";
 import { useRouter } from "next/navigation"; //
 import styles from "./chat.module.css";
 
+type ChatMessage = {
+  role: "user" | "assistant";
+  text: string;
+};
+
 export default function ChatPage() {
   const router = useRouter(); // 追加
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState<string[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
 
-  const handleSend = () => {
-    if (!message.trim()) return;
+  const handleSend = async () => {
+    const question = message.trim();
+    if (!question) return;
 
-    setMessages((prev) => [...prev, message]);
-
+    setMessages((prev) => [...prev, { role: "user", text: question }]);
     setMessage("");
+
+    try {
+      const response = await fetch("/api/groq", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ question }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.error || "API request failed");
+      }
+
+      const assistantText = typeof data.content === "string" ? data.content : "";
+      if (assistantText.trim()) {
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", text: assistantText },
+        ]);
+      }
+    } catch (error) {
+      console.error("チャット送信エラー:", error);
+    }
   };
 
   return (
@@ -30,8 +60,15 @@ export default function ChatPage() {
 </div>
       <div className={styles.chatArea}>
         {messages.map((msg, index) => (
-          <div key={index} className={styles.userBubble}>
-            {msg}
+          <div
+            key={index}
+            className={
+              msg.role === "assistant"
+                ? styles.assistantBubble
+                : styles.userBubble
+            }
+          >
+            {msg.text}
           </div>
         ))}
       </div>
