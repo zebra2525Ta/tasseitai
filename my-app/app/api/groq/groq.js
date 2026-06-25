@@ -32,8 +32,11 @@ export async function generateText(promptText) {
     throw new Error("generateText requires a non-empty string promptText argument");
   }
 
-  if (!process.env.GROQ_API_KEY) {
-    throw new Error("GROQ_API_KEY が設定されていません");
+  const groqApiKey = (process.env.GROQ_API_KEY || process.env.NEXT_PUBLIC_GROQ_API_KEY)?.trim();
+  if (!groqApiKey) {
+    throw new Error(
+      "GROQ_API_KEY が設定されていません。Vercel の環境変数に GROQ_API_KEY を追加してください。"
+    );
   }
 
   let res;
@@ -41,7 +44,7 @@ export async function generateText(promptText) {
     res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+        "Authorization": `Bearer ${groqApiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({

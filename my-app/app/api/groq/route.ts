@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { generateText, generateTextFromNotionData } from "./groq";
+import { generateText, generateTextFromNotionData } from "./groq.js";
+
+export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
