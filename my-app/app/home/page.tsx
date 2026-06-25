@@ -147,7 +147,7 @@ export default function HomePage() {
       setNewsArticles(JSON.parse(cacheData));
     } else {
       // キャッシュがない、または1時間以上経っている場合は新しくAPIを叩く
-      const NEWS_API_KEY = '8a87edcbd181c83a254c14aa438f0ca6'; 
+      const NEWS_API_KEY = process.env.NEXT_PUBLIC_GNEWS_API_KEY;
       const newsUrl = `https://gnews.io/api/v4/top-headlines?category=${savedCategory}&lang=ja&country=jp&max=2&apikey=${NEWS_API_KEY}`;
       
       fetch(newsUrl)
