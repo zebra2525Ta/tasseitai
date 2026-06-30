@@ -3,7 +3,7 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background-color: #2b2b36; /* ホーム画面と同じディープパープルグレー */
+  background-color: #3b3a4e; /* モックアップの暗い背景色 */
   color: #ffffff;
   font-family: sans-serif;
 }
@@ -96,7 +96,7 @@
 .inputWrapper {
   display: flex;
   align-items: center;
-  background-color: #3b3b46; /* 外枠のグレー */
+  background-color: rgba(255, 255, 255, 0.25);
   border: 1px solid #4a4a5a;
   border-radius: 28px;
   padding: 6px 14px;
