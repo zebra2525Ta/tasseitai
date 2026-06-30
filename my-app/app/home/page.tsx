@@ -248,16 +248,36 @@ export default function HomePage() {
           </Link>
 
           {/* 天気予報 */}
-          <div className={`${styles.card} ${styles.weatherCard}`}>
-            <p className={styles.cardTitle}>Weather({currentRegionName})</p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: '8px 0' }}>
-              <span style={{ fontSize: '1.5rem' }}>{weather.emoji}</span>
-              <p className={styles.weatherInfo}>{weather.text}</p>
+        <div className={`${styles.card} ${styles.weatherCard}`}>
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
+            <div>
+              <p className={styles.cardTitle}>天気予報 ({currentRegionName})</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '1.75rem' }}>{weather.emoji}</span>
+                <p className={styles.weatherInfo}>{weather.text}</p>
+              </div>
+              <p className={styles.weatherDetail} style={{ fontSize: '1rem', fontWeight: 'bold', margin: '2px 0 6px 0' }}>{weather.temp}</p>
             </div>
-            <p className={styles.weatherDetail} style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{weather.temp}</p>
             
-            {/* 明日の簡易予報も残す場合はここに表示されます */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '4px', paddingBottom: '4px' }}>
+              <p className={styles.weatherDetail}>💧 降水確率: {weather.pop}</p>
+              <p className={styles.weatherDetail}>🌀 風速: {weather.windSpeed}</p>
+            </div>
+
+            {weather.tomorrow.text && (
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '6px', marginTop: '2px' }}>
+                <p className={styles.weatherDetail} style={{ opacity: 0.6, fontSize: '0.65rem', marginBottom: '2px' }}>明日の予報</p>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span>{weather.tomorrow.emoji}</span>
+                    <span>{weather.tomorrow.text}</span>
+                  </span>
+                  <span>{weather.tomorrow.temp} (💧{weather.tomorrow.pop})</span>
+                </div>
+              </div>
+            )}
           </div>
+        </div>
 
           {/* GitHubプロジェクトアクティビティ */}
           <div className={styles.githubFullCard}>
@@ -265,14 +285,17 @@ export default function HomePage() {
             <p className={styles.githubSub}>last activity</p>
             <p className={styles.githubSub}>Member</p>
             <div className={styles.memberList}>
-              {projectActivities.map((activity, index) => (
-                <div key={index} className={styles.memberItem}>
-                  <div className={styles.memberMain}>
-                    <span>{activity.name}</span>
-                    {activity.action && <span style={{ fontSize: '0.75rem', marginLeft: '4px', opacity: 0.8 }}>{activity.action}</span>}
-                  </div>
-                </div>
-              ))}
+          {projectActivities.map((activity, index) => (
+            <div key={index} className={styles.memberItem}>
+              <div className={styles.memberMain}>
+                <span className={`${styles.statusDot} ${styles[activity.status]}`}></span>
+                <span>{activity.name}</span>
+                {activity.action && <span style={{ fontSize: '0.75rem', fontWeight: 'normal', opacity: 0.8 }}>({activity.action})</span>}
+              </div>
+              <span className={styles.lastActivity}>Last activity: {activity.time}</span>
+            </div>
+          ))}
+
             </div>
           </div>
         </div>
