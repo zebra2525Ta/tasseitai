@@ -61,7 +61,7 @@ export default function HomePage() {
   });
 
   // 画面に選択された地域名を表示するためのState（デフォルトは大阪）
-  const [currentRegionName, setCurrentRegionName] = useState('大阪');
+  const [currentRegionName, setCurrentRegionName] = useState('Osaka');
 
   // 画面に選択されたジャンル名を表示するためのState
   const [currentCategoryName, setCurrentCategoryName] = useState('総合');
@@ -93,7 +93,7 @@ export default function HomePage() {
     // 💡 重いAPI通信やチェック処理は、画面表示の直後に後ろでこっそり実行する
     setTimeout(() => {
       // --- 天気APIの取得 ---
-      const savedRegionName = localStorage.getItem('setting_weatherName') || '大阪';
+      const savedRegionName = localStorage.getItem('setting_weatherName') || 'Osaka';
       const savedLat = localStorage.getItem('setting_weatherLat') || '34.6937';
       const savedLon = localStorage.getItem('setting_weatherLon') || '135.5023';
       setCurrentRegionName(savedRegionName);
