@@ -4,7 +4,8 @@
 
 /* 全体のコンテナ */
 .container {
-  margin: 0 auto;
+  width: 100%;       /* 画面の横幅いっぱいに広げる */
+  margin: 0;         /* 中央寄せを解除 */
   padding: 16px;
   background-color: #3b3a4e; /* モックアップの暗い背景色 */
   min-height: 100vh;
