@@ -4,7 +4,6 @@
 
 /* 全体のコンテナ */
 .container {
-  max-width: 1200px;
   margin: 0 auto;
   padding: 16px;
   background-color: #3b3a4e; /* モックアップの暗い背景色 */
