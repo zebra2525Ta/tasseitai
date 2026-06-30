@@ -116,13 +116,13 @@ export default function HomePage() {
           setWeather({
             text: currentDecoded.text,
             emoji: currentDecoded.emoji,
-            temp: `${Math.round(data.current.temperature_2m)}℃`,
+            temp: `${Math.round(data.current.temperature_2m)}°C`,
             windSpeed: `${data.current.wind_speed_10m} m/s`,
             pop: `${currentPop}%`,
             tomorrow: {
               text: tomorrowDecoded.text,
               emoji: tomorrowDecoded.emoji,
-              temp: `${Math.round(tomorrowMaxTemp)}℃`,
+              temp: `${Math.round(tomorrowMaxTemp)}°C`,
               pop: `${tomorrowPop}%`
             }
           });
@@ -133,7 +133,7 @@ export default function HomePage() {
         tomorrow: { text: 'エラー', emoji: '⚠️', temp: '--', pop: '--' } 
       }));
 
-    // ⭕ 自作APIルート（/api/news）を利用したニュース取得処理
+    // 自作APIルート（/api/news）を利用したニュース取得処理
     const savedCategory = localStorage.getItem('setting_newsCategory') || 'general';
     setCurrentCategoryName(CATEGORY_NAMES[savedCategory] || '総合');
 
@@ -141,12 +141,10 @@ export default function HomePage() {
     const cacheTimestamp = localStorage.getItem('cache_newsTimestamp');
     const now = new Date().getTime();
     
-    // キャッシュが存在し、かつ1時間（3,600,000ミリ秒）未満であればキャッシュを使う
     const CACHE_LIMIT = 60 * 60 * 1000; 
     if (cacheData && cacheTimestamp && now - parseInt(cacheTimestamp) < CACHE_LIMIT) {
       setNewsArticles(JSON.parse(cacheData));
     } else {
-      // キャッシュがない、または1時間以上経っている場合は自作APIルートを叩く
       fetch(`/api/news?category=${savedCategory}`)
         .then((res) => {
           if (!res.ok) throw new Error('API request failed');
@@ -160,7 +158,6 @@ export default function HomePage() {
             }));
             setNewsArticles(articles);
             
-            // フロントエンド側のLocalStorageにキャッシュ保存
             localStorage.setItem('cache_newsData', JSON.stringify(articles));
             localStorage.setItem('cache_newsTimestamp', now.toString());
           } else {
@@ -180,21 +177,16 @@ export default function HomePage() {
         });
     }
 
-    // LocalStorageから設定されたGitHubリポジトリ名を取得（無い場合はデフォルト値）
+    // LocalStorageから設定されたGitHubリポジトリ名を取得
     const savedRepo = localStorage.getItem('setting_githubRepo') || 'haru200453/tasseitai';
         
-    // 表示用カードのタイトルに反映するため、スラッシュ以降のリポジトリ名だけを切り出して保存
     const repoTitle = savedRepo.includes('/') ? savedRepo.split('/')[1] : savedRepo;
     setCurrentRepoName(repoTitle);
 
-    // エラー対策：「ユーザー名/リポジトリ名」の形式（スラッシュが含まれているか）をチェック
     if (savedRepo.includes('/') && savedRepo.split('/')[0] && savedRepo.split('/')[1]) {
-      // 動的に設定されたリポジトリURLを構築してフェッチ
       fetch(`https://api.github.com/repos/${savedRepo}/commits`)
         .then((res) => {
-          if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`);
-          }
+          if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
           return res.json();
         })
         .then((commits) => {
@@ -237,122 +229,134 @@ export default function HomePage() {
 
   return (
     <div className={styles.container}>
+      {/* 歯車ヘッダー */}
       <div className={styles.header}>
-        <Link href="/settings" className={styles.iconBtn}>
-          <span className={styles.gearIcon}>⚙️</span>
-        </Link>
+        <Link href="/settings" className={styles.iconBtn}>⚙️</Link>
       </div>
 
-      <h1 className={styles.title}>ホーム画面</h1>
+      {/* モックアップ用の2カラム全体グリッド */}
+      <div className={styles.mainGrid}>
+        
+        {/* ⬅️ 左カラム（AI、天気、GitHub） */}
+        <div className={styles.leftColumn}>
+          
+          {/* AIチャットカード「Noir」 */}
+          <Link href="/chat" className={styles.aiChatFullCard}>
+            <div className={styles.chatLinkContentRow}>
+              <span className={styles.chatTextLarge}>Noir</span>
+            </div>
+          </Link>
 
-      {/* AIチャットカード「Noir」 */}
-      <Link href="/chat" className={styles.aiChatFullCard}>
-        <div className={styles.chatLinkContentRow}>
-          <span className={styles.chatTextLarge}>Noir</span>
-          <span className={styles.chatEmojiLarge}>🤖</span>
-        </div>
-      </Link>
+          {/* 天気予報 */}
+          <div className={`${styles.card} ${styles.weatherCard}`}>
+            <p className={styles.cardTitle}>Weather({currentRegionName})</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: '8px 0' }}>
+              <span style={{ fontSize: '1.5rem' }}>{weather.emoji}</span>
+              <p className={styles.weatherInfo}>{weather.text}</p>
+            </div>
+            <p className={styles.weatherDetail} style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{weather.temp}</p>
+            
+            {/* 明日の簡易予報も残す場合はここに表示されます */}
+          </div>
 
-      {/* 上段：予定 ＆ 天気 */}
-      <div className={styles.topGrid}>
-        <div className={`${styles.card} ${styles.scheduleCard}`}>
-          <div>
-            <p className={styles.cardTitle}>6月16日 火曜日</p>
-            <div className={styles.todoList}>
-              <label className={styles.todoLabel}>
-                <input 
-                  type="checkbox" 
-                  checked={tasks.healthCheck} 
-                  onChange={(e) => handleCheckboxChange('healthCheck', e.target.checked)}
-                />
-                <span className={!tasks.healthCheck ? styles.completed : ''}>健康診断</span>
-              </label>
-
-              <label className={styles.todoLabel}>
-                <input 
-                  type="checkbox" 
-                  checked={tasks.jobHunting} 
-                  onChange={(e) => handleCheckboxChange('jobHunting', e.target.checked)}
-                />
-                <span className={!tasks.jobHunting ? styles.completed : ''}>就職活動</span>
-              </label>
+          {/* GitHubプロジェクトアクティビティ */}
+          <div className={styles.githubFullCard}>
+            <p className={styles.githubTitle}>GitHub ({currentRepoName})</p>
+            <p className={styles.githubSub}>last activity</p>
+            <p className={styles.githubSub}>Member</p>
+            <div className={styles.memberList}>
+              {projectActivities.map((activity, index) => (
+                <div key={index} className={styles.memberItem}>
+                  <div className={styles.memberMain}>
+                    <span>{activity.name}</span>
+                    {activity.action && <span style={{ fontSize: '0.75rem', marginLeft: '4px', opacity: 0.8 }}>{activity.action}</span>}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* 天気予報 */}
-        <div className={`${styles.card} ${styles.weatherCard}`}>
-          <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
-            <div>
-              <p className={styles.cardTitle}>天気予報 ({currentRegionName})</p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontSize: '1.75rem' }}>{weather.emoji}</span>
-                <p className={styles.weatherInfo}>{weather.text}</p>
-              </div>
-              <p className={styles.weatherDetail} style={{ fontSize: '1rem', fontWeight: 'bold', margin: '2px 0 6px 0' }}>{weather.temp}</p>
-            </div>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '4px', paddingBottom: '4px' }}>
-              <p className={styles.weatherDetail}>💧 降水確率: {weather.pop}</p>
-              <p className={styles.weatherDetail}>🌀 風速: {weather.windSpeed}</p>
-            </div>
+        {/* ➡️ 右カラム（Quick link、スケジュールエリア、ニュース） */}
+        <div className={styles.rightColumn}>
+          
+          {/* Quick link */}
+          <div className={styles.quickLinkCard}>
+            <span className={styles.quickLinkTitle}>Quick link</span>
+            <span className={styles.quickLinkContent}>Notionカレンダーとか、Gitとか</span>
+          </div>
 
-            {weather.tomorrow.text && (
-              <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '6px', marginTop: '2px' }}>
-                <p className={styles.weatherDetail} style={{ opacity: 0.6, fontSize: '0.65rem', marginBottom: '2px' }}>明日の予報</p>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.8rem' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span>{weather.tomorrow.emoji}</span>
-                    <span>{weather.tomorrow.text}</span>
-                  </span>
-                  <span>{weather.tomorrow.temp} (💧{weather.tomorrow.pop})</span>
+          {/* スケジュールとToDoを横に並べる中間グリッド */}
+          <div className={styles.scheduleTodoGrid}>
+            
+            {/* スケジュール（タイムライン） */}
+            <div className={styles.scheduleCard}>
+              <p className={styles.scheduleTitle}>Schedule</p>
+              <p className={styles.scheduleDate}>6月25日（水）</p>
+              
+              {/* タイムラインのモック用の時間軸表示線 */}
+              <div className={styles.timelineContainer}>
+                <div className={styles.timelineHeader}>
+                  <span>8:00</span>
+                  <span>10:00</span>
+                  <span>12:00</span>
+                  <span>14:00</span>
+                </div>
+                <div className={styles.timelineBarWrapper}>
+                  <div className={styles.timelineBar}>9:30 - 学校</div>
                 </div>
               </div>
-            )}
+            </div>
+
+            {/* ToDo */}
+            <div className={styles.todoCard}>
+              <p className={styles.todoTitle}>ToDo</p>
+              <div className={styles.todoList}>
+                <label className={styles.todoLabel}>
+                  <input 
+                    type="checkbox" 
+                    checked={tasks.healthCheck} 
+                    onChange={(e) => handleCheckboxChange('healthCheck', e.target.checked)}
+                  />
+                  <span className={!tasks.healthCheck ? styles.completed : ''}>健康診断</span>
+                </label>
+
+                <label className={styles.todoLabel}>
+                  <input 
+                    type="checkbox" 
+                    checked={tasks.jobHunting} 
+                    onChange={(e) => handleCheckboxChange('jobHunting', e.target.checked)}
+                  />
+                  <span className={!tasks.jobHunting ? styles.completed : ''}>就職活動</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {/* ニュース */}
+          <div className={styles.newsCard}>
+            <p className={styles.cardTitle} style={{ fontSize: '1rem', opacity: 1 }}>News</p>
+            <ul className={styles.newsList}>
+              {newsArticles.map((article, index) => (
+                <li key={index} className={styles.newsItem}>
+                  {article.url && article.url !== '#' ? (
+                    <a 
+                      href={article.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className={styles.newsLink}
+                    >
+                      • {article.title}
+                    </a>
+                  ) : (
+                    <span>{article.title}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
-      </div>
 
-      {/* 中段：ニュース */}
-      <div className={styles.newsCard}>
-        <p className={styles.cardTitle} style={{ fontSize: '1rem', opacity: 1 }}>ニュース ({currentCategoryName})</p>
-        <ul className={styles.newsList}>
-          {newsArticles.map((article, index) => (
-            <li key={index} className={styles.newsItem}>
-              {article.title && <span style={{ marginRight: '6px' }}>•</span>}
-              {article.url && article.url !== '#' ? (
-                <a 
-                  href={article.url} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className={styles.newsLink}
-                  style={{ color: 'inherit', textDecoration: 'none' }}
-                >
-                  {article.title}
-                </a>
-              ) : (
-                <span>{article.title}</span>
-              )}
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* 下段：GitHubプロジェクトアクティビティ */}
-      <div className={styles.githubFullCard}>
-        <p className={styles.githubTitle}>GitHubプロジェクト ({currentRepoName})</p>
-        <div className={styles.memberList}>
-          {projectActivities.map((activity, index) => (
-            <div key={index} className={styles.memberItem}>
-              <div className={styles.memberMain}>
-                <span className={`${styles.statusDot} ${styles[activity.status]}`}></span>
-                <span>{activity.name}</span>
-                {activity.action && <span style={{ fontSize: '0.75rem', fontWeight: 'normal', opacity: 0.8 }}>({activity.action})</span>}
-              </div>
-              <span className={styles.lastActivity}>Last activity: {activity.time}</span>
-            </div>
-          ))}
-        </div>
       </div>
     </div>
   );
