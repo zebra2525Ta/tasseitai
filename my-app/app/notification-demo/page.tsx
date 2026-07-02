@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
+import styles from '@/app/settings/settings.module.css'; // 設定画面と同じCSSを再利用
 
 // ========================================
 // 型定義
@@ -40,9 +42,6 @@ const ERROR_MESSAGES = {
 // ユーティリティ関数
 // ========================================
 
-/**
- * Base64エンコードされたVAPID公開鍵をArrayBufferに変換
- */
 function urlBase64ToArrayBuffer(base64String: string): ArrayBuffer {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
@@ -58,16 +57,10 @@ function urlBase64ToArrayBuffer(base64String: string): ArrayBuffer {
   return buffer;
 }
 
-/**
- * ブラウザがプッシュ通知をサポートしているかチェック
- */
 function checkBrowserSupport(): boolean {
   return 'serviceWorker' in navigator && typeof Notification !== 'undefined';
 }
 
-/**
- * エラーメッセージを安全に抽出
- */
 function extractErrorMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
 }
@@ -76,9 +69,6 @@ function extractErrorMessage(error: unknown, fallback: string): string {
 // Service Worker関連の処理
 // ========================================
 
-/**
- * Service Workerを登録し、既存の購読を確認
- */
 async function registerServiceWorker(): Promise<{
   registration: ServiceWorkerRegistration;
   existingSubscription: PushSubscription | null;
@@ -94,9 +84,6 @@ async function registerServiceWorker(): Promise<{
   };
 }
 
-/**
- * ローカル通知を送信（Service Worker経由）
- */
 async function showLocalNotification(
   registration: ServiceWorkerRegistration
 ): Promise<void> {
@@ -112,9 +99,6 @@ async function showLocalNotification(
 // プッシュ購読関連の処理
 // ========================================
 
-/**
- * プッシュ通知を購読
- */
 async function createPushSubscription(
   registration: ServiceWorkerRegistration,
   vapidKey: string
@@ -127,9 +111,6 @@ async function createPushSubscription(
   });
 }
 
-/**
- * 既存の購読を取得、なければ新規作成
- */
 async function getOrCreateSubscription(
   registration: ServiceWorkerRegistration,
   vapidKey: string
@@ -148,9 +129,6 @@ async function getOrCreateSubscription(
 // サーバー通信
 // ========================================
 
-/**
- * サーバーにプッシュ通知送信をリクエスト
- */
 async function requestServerPush(subscription: PushSubscription): Promise<void> {
   const response = await fetch('/api/push/test', {
     method: 'POST',
@@ -169,7 +147,6 @@ async function requestServerPush(subscription: PushSubscription): Promise<void> 
 // ========================================
 
 const NotificationDemoPage: React.FC = () => {
-  // 状態管理
   const [supportState, setSupportState] = useState<SupportState>('checking');
   const [swState, setSwState] = useState<SwState>('idle');
   const [permission, setPermission] = useState<NotificationPermission>('default');
@@ -179,17 +156,11 @@ const NotificationDemoPage: React.FC = () => {
   const [isSubscribing, setIsSubscribing] = useState(false);
   const [isSendingServer, setIsSendingServer] = useState(false);
 
-  // ========================================
-  // 初期化処理
-  // ========================================
-  
   useEffect(() => {
-    // 現在の通知権限を取得
     if (typeof Notification !== 'undefined') {
       setPermission(Notification.permission);
     }
 
-    // ブラウザサポートチェック
     if (!checkBrowserSupport()) {
       setSupportState('unsupported');
       setMessage(ERROR_MESSAGES.unsupportedBrowser);
@@ -199,7 +170,6 @@ const NotificationDemoPage: React.FC = () => {
     setSupportState('supported');
     setSwState('registering');
 
-    // Service Worker登録処理
     const initialize = async () => {
       try {
         const { registration: reg, existingSubscription } = await registerServiceWorker();
@@ -223,13 +193,6 @@ const NotificationDemoPage: React.FC = () => {
     initialize();
   }, []);
 
-  // ========================================
-  // イベントハンドラー
-  // ========================================
-
-  /**
-   * 通知権限をリクエスト
-   */
   const requestPermission = useCallback(async () => {
     if (typeof Notification === 'undefined') return;
     
@@ -237,11 +200,7 @@ const NotificationDemoPage: React.FC = () => {
     setPermission(result);
   }, []);
 
-  /**
-   * ローカル通知を送信
-   */
   const sendLocalNotification = useCallback(async () => {
-    // 事前チェック
     if (!registration) {
       setMessage(ERROR_MESSAGES.noServiceWorker);
       return;
@@ -260,11 +219,7 @@ const NotificationDemoPage: React.FC = () => {
     }
   }, [registration, permission]);
 
-  /**
-   * プッシュ通知を購読
-   */
   const subscribePush = useCallback(async () => {
-    // 事前チェック
     if (!registration) {
       setMessage(ERROR_MESSAGES.noServiceWorker);
       return;
@@ -275,7 +230,6 @@ const NotificationDemoPage: React.FC = () => {
       return;
     }
 
-    // 権限確認・リクエスト
     const currentPermission =
       permission === 'default' ? await Notification.requestPermission() : permission;
     setPermission(currentPermission);
@@ -285,7 +239,6 @@ const NotificationDemoPage: React.FC = () => {
       return;
     }
 
-    // 購読処理
     setIsSubscribing(true);
     try {
       const { subscription: sub, isExisting } = await getOrCreateSubscription(
@@ -302,17 +255,12 @@ const NotificationDemoPage: React.FC = () => {
     }
   }, [permission, registration]);
 
-  /**
-   * サーバー経由でプッシュ通知を送信
-   */
   const sendServerPush = useCallback(async () => {
-    // 事前チェック
     if (!subscription) {
       setMessage(ERROR_MESSAGES.noSubscription);
       return;
     }
 
-    // サーバーリクエスト
     setIsSendingServer(true);
     try {
       await requestServerPush(subscription.raw);
@@ -323,10 +271,6 @@ const NotificationDemoPage: React.FC = () => {
       setIsSendingServer(false);
     }
   }, [subscription]);
-
-  // ========================================
-  // 表示用ラベル生成
-  // ========================================
 
   const supportLabel =
     supportState === 'checking'
@@ -344,91 +288,97 @@ const NotificationDemoPage: React.FC = () => {
           ? 'エラー'
           : '未開始';
 
-  // ========================================
-  // レンダリング
-  // ========================================
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-3xl mx-auto px-4 py-12">
-        <div className="bg-white shadow-sm border border-gray-200 rounded-xl p-8">
-          <h1 className="text-2xl font-bold text-gray-900">プッシュ通知テスト</h1>
-          <p className="text-gray-600 mt-2">
-            PWA環境でのローカル通知とWeb Push（サーバー送信）の双方を確認します。
-          </p>
+    <div className={styles.container}>
+      {/* ヘッダー：設定画面のコンポーネントとデザインを統一 */}
+      <div className={styles.header}>
+        <Link href="/settings" className={styles.backBtn} style={{ textDecoration: 'none' }}>
+          ←
+        </Link>
+        <h1 className={styles.title}>通知テスト</h1>
+      </div>
 
-          {/* ステータス表示エリア */}
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
-              <p className="text-sm text-gray-500">ブラウザ対応状況</p>
-              <p className="text-base font-semibold text-gray-800">{supportLabel}</p>
-            </div>
-            <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
-              <p className="text-sm text-gray-500">Service Worker</p>
-              <p className="text-base font-semibold text-gray-800">{swLabel}</p>
-            </div>
-            <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
-              <p className="text-sm text-gray-500">通知権限</p>
-              <p className="text-base font-semibold text-gray-800">{permission}</p>
-            </div>
-            <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
-              <p className="text-sm text-gray-500">メッセージ</p>
-              <p className="text-base font-semibold text-gray-800 break-words">
-                {message || '—'}
-              </p>
-            </div>
-            <div className="p-4 border border-gray-200 rounded-lg bg-gray-50 md:col-span-2">
-              <p className="text-sm text-gray-500">購読エンドポイント</p>
-              <p className="text-xs text-gray-700 break-all">{subscription?.endpoint || '未購読'}</p>
-            </div>
-          </div>
+      {/* テストメインコンテンツエリア */}
+      <div className="min-h-screen bg-gray-50 rounded-xl overflow-hidden mt-4">
+        <div className="max-w-3xl mx-auto px-4 py-8">
+          <div className="bg-white shadow-sm border border-gray-200 rounded-xl p-6">
+            <p className="text-gray-600 text-sm">
+              PWA環境でのローカル通知とWeb Push（サーバー送信）の双方を確認します。
+            </p>
 
-          {/* アクションボタンエリア */}
-          <div className="mt-8 flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={requestPermission}
-              className="inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-              disabled={permission === 'granted' || supportState !== 'supported'}
-            >
-              通知を許可する
-            </button>
-            <button
-              type="button"
-              onClick={sendLocalNotification}
-              className="inline-flex items-center px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-700 focus:ring-offset-2 disabled:opacity-50"
-              disabled={permission !== 'granted' || !registration || swState !== 'ready'}
-            >
-              ローカル通知を送信
-            </button>
-            <button
-              type="button"
-              onClick={subscribePush}
-              className="inline-flex items-center px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50"
-              disabled={isSubscribing || swState !== 'ready'}
-            >
-              {isSubscribing ? '購読処理中...' : 'Web Pushを購読'}
-            </button>
-            <button
-              type="button"
-              onClick={sendServerPush}
-              className="inline-flex items-center px-4 py-2 rounded-lg bg-indigo-600 text-white hover:indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
-              disabled={isSendingServer || !subscription}
-            >
-              {isSendingServer ? '送信中...' : 'サーバー通知を送信'}
-            </button>
-          </div>
+            {/* ステータス表示エリア */}
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                <p className="text-sm text-gray-500">ブラウザ対応状況</p>
+                <p className="text-base font-semibold text-gray-800">{supportLabel}</p>
+              </div>
+              <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                <p className="text-sm text-gray-500">Service Worker</p>
+                <p className="text-base font-semibold text-gray-800">{swLabel}</p>
+              </div>
+              <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                <p className="text-sm text-gray-500">通知権限</p>
+                <p className="text-base font-semibold text-gray-800">{permission}</p>
+              </div>
+              <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                <p className="text-sm text-gray-500">メッセージ</p>
+                <p className="text-base font-semibold text-gray-800 break-words">
+                  {message || '—'}
+                </p>
+              </div>
+              <div className="p-4 border border-gray-200 rounded-lg bg-gray-50 md:col-span-2">
+                <p className="text-sm text-gray-500">購読エンドポイント</p>
+                <p className="text-xs text-gray-700 break-all">{subscription?.endpoint || '未購読'}</p>
+              </div>
+            </div>
 
-          {/* 使い方説明エリア */}
-          <div className="mt-10">
-            <h2 className="text-lg font-semibold text-gray-900">使い方</h2>
-            <ol className="mt-3 list-decimal list-inside space-y-2 text-gray-700">
-              <li>このページにアクセスするとService Workerを登録します。</li>
-              <li>「通知を許可する」を押して権限を付与します。</li>
-              <li>「Web Pushを購読」で PushManager.subscribe を実行し購読を作成します。</li>
-              <li>「ローカル通知を送信」でクライアント→SW経由の通知を確認します。</li>
-              <li>「サーバー通知を送信」でサーバー→PushService→SW経由の通知を確認します。</li>
-            </ol>
+            {/* アクションボタンエリア */}
+            <div className="mt-8 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={requestPermission}
+                className="inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 text-sm font-medium"
+                disabled={permission === 'granted' || supportState !== 'supported'}
+              >
+                通知を許可する
+              </button>
+              <button
+                type="button"
+                onClick={sendLocalNotification}
+                className="inline-flex items-center px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-700 focus:ring-offset-2 disabled:opacity-50 text-sm font-medium"
+                disabled={permission !== 'granted' || !registration || swState !== 'ready'}
+              >
+                ローカル通知を送信
+              </button>
+              <button
+                type="button"
+                onClick={subscribePush}
+                className="inline-flex items-center px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50 text-sm font-medium"
+                disabled={isSubscribing || swState !== 'ready'}
+              >
+                {isSubscribing ? '購読処理中...' : 'Web Pushを購読'}
+              </button>
+              <button
+                type="button"
+                onClick={sendServerPush}
+                className="inline-flex items-center px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 text-sm font-medium"
+                disabled={isSendingServer || !subscription}
+              >
+                {isSendingServer ? '送信中...' : 'サーバー通知を送信'}
+              </button>
+            </div>
+
+            {/* 使い方説明エリア */}
+            <div className="mt-10 border-t border-gray-100 pt-6">
+              <h2 className="text-lg font-semibold text-gray-900">使い方</h2>
+              <ol className="mt-3 list-decimal list-inside space-y-2 text-sm text-gray-700">
+                <li>このページにアクセスするとService Workerを自動登録します。</li>
+                <li>「通知を許可する」を押してブラウザの権限を付与します。</li>
+                <li>「Web Pushを購読」で鍵ペアを用いた購読情報（トークン）を作成します。</li>
+                <li>「ローカル通知を送信」で端末内での即時通知テストを行います。</li>
+                <li>「サーバー通知を送信」で実際のAPIサーバーを経由したプッシュ通知を検証します。</li>
+              </ol>
+            </div>
           </div>
         </div>
       </div>

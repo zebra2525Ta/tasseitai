@@ -245,20 +245,30 @@ export default function SettingsPage() {
 
       {/* 通知機能設定セクション */}
       <div className={styles.section}>
-        <div className={styles.settingRowInline}>
+        <div className={styles.sectionHeader}>
           <span className={styles.sectionTitle}>通知機能</span>
-          <div className={styles.toggleWrapper}>
-            <span className={notifications ? styles.textOn : styles.textOff}>
-              {notifications ? 'ON' : 'OFF'}
-            </span>
-            <label className={styles.switch}>
-              <input 
-                type="checkbox" 
-                checked={notifications} 
-                onChange={(e) => handleToggle('notifications', e.target.checked)} 
-              />
-              <span className={styles.slider}></span>
-            </label>
+          <div className={styles.rowContainer}>
+
+            {/* 💡 追加：テストデモ画面へ遷移するボタン */}
+            <div className={styles.inputRow} style={{ marginTop: '12px' }}>
+              <Link 
+                href="/notification-demo" 
+                className={styles.textField} 
+                style={{ 
+                  textDecoration: 'none', 
+                  display: 'flex', 
+                  justifyContent: 'center', 
+                  alignItems: 'center',
+                  backgroundColor: 'rgba(59, 130, 246, 0.15)', // 薄い青色の背景
+                  border: '1px solid #3b82f6', // 青色の枠線
+                  color: '#3b82f6', // 青色の文字
+                  fontWeight: 'bold',
+                  cursor: 'pointer'
+                }}
+              >
+                🔔 通知のテスト・再設定を行う
+              </Link>
+            </div>
           </div>
         </div>
       </div>
