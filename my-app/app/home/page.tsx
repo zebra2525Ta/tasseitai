@@ -43,8 +43,7 @@ const CATEGORY_NAMES: { [key: string]: string } = {
 
 export default function HomePage() {
   const [isMounted, setIsMounted] = useState(false);
-  const [tasks, setTasks] = useState({ healthCheck: true, jobHunting: true });
-  
+
   // 天気のStateを1つに統合して整理
   const [weather, setWeather] = useState({ 
     text: '読み込み中...', 
@@ -85,17 +84,14 @@ export default function HomePage() {
   const [scheduleLoading, setScheduleLoading] = useState(true);
   const [scheduleError, setScheduleError] = useState('');
 
+  // Notion「進捗管理」データベースから取得したタスク一覧
+  const [todoTasks, setTodoTasks] = useState<any[]>([]);
+  const [todoLoading, setTodoLoading] = useState(true);
+  const [todoError, setTodoError] = useState('');
+
   useEffect(() => {
     // 💡 まずは最初に画面の枠組みをパッと表示する
     setIsMounted(true);
-
-    // タスクの復元
-    const savedHealthCheck = localStorage.getItem('task_healthCheck');
-    const savedJobHunting = localStorage.getItem('task_jobHunting');
-    setTasks({
-      healthCheck: savedHealthCheck !== null ? JSON.parse(savedHealthCheck) : true,
-      jobHunting: savedJobHunting !== null ? JSON.parse(savedJobHunting) : true,
-    });
 
     // 💡 重いAPI通信やチェック処理は、画面表示の直後に後ろでこっそり実行する
     setTimeout(() => {
@@ -289,13 +285,58 @@ export default function HomePage() {
           setScheduleError('読み込みに失敗しました');
           setScheduleLoading(false);
         });
+
+      // --- 💡 Notion「進捗管理」データベースからタスクを取得 ---
+      const TODO_DATABASE_ID = '38fa15fd-a3c1-80bd-98d9-ddcfe8406a93';
+
+      fetch('/api/notion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          databaseId: TODO_DATABASE_ID,
+          searchType: 'database',
+          pageSize: 50,
+        }),
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+          return res.json();
+        })
+        .then((data) => {
+          const rawResults = Array.isArray(data.results) ? data.results : [];
+
+          const tasksList = rawResults
+            .map((item: any) => {
+              const statusName = item.properties?.['ステータス']?.name || '';
+              const dueDate = item.properties?.['期日']?.start || null;
+              return {
+                id: item.id,
+                name: item.properties?.['タスク名'] || item.title || '無題',
+                done: statusName === '完了',
+                overdue: Boolean(item.properties?.['期限超過']),
+                dueDate,
+              };
+            })
+            // 完了済みは一覧から除外し、期日が近い順に上位5件だけ表示する
+            .filter((task: any) => !task.done)
+            .sort((a: any, b: any) => {
+              if (!a.dueDate) return 1;
+              if (!b.dueDate) return -1;
+              return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+            })
+            .slice(0, 5);
+
+          setTodoTasks(tasksList);
+          setTodoLoading(false);
+        })
+        .catch((err) => {
+          console.error('Notionタスクの取得に失敗:', err);
+          setTodoError('読み込みに失敗しました');
+          setTodoLoading(false);
+        });
     }, 0); // 0秒ディレイで画面描画の直後に実行
 
   }, []);
-  const handleCheckboxChange = (taskKey: 'healthCheck' | 'jobHunting', checked: boolean) => {
-    setTasks((prev) => ({ ...prev, [taskKey]: checked }));
-    localStorage.setItem(`task_${taskKey}`, JSON.stringify(checked));
-  };
 
   // 💡 クライアント側のマウントが完了するまでは真っ白なコンテナを返す（Next.jsのハイドレーションエラー対策）
   if (!isMounted) {
@@ -432,28 +473,32 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* ToDo */}
+            {/* ToDo（Notionの「進捗管理」データベースから取得） */}
             <div className={styles.todoCard}>
               <p className={styles.todoTitle}>ToDo</p>
-              <div className={styles.todoList}>
-                <label className={styles.todoLabel}>
-                  <input 
-                    type="checkbox" 
-                    checked={tasks.healthCheck} 
-                    onChange={(e) => handleCheckboxChange('healthCheck', e.target.checked)}
-                  />
-                  <span className={!tasks.healthCheck ? styles.completed : ''}>健康診断</span>
-                </label>
-
-                <label className={styles.todoLabel}>
-                  <input 
-                    type="checkbox" 
-                    checked={tasks.jobHunting} 
-                    onChange={(e) => handleCheckboxChange('jobHunting', e.target.checked)}
-                  />
-                  <span className={!tasks.jobHunting ? styles.completed : ''}>就職活動</span>
-                </label>
-              </div>
+              {todoLoading ? (
+                <p className={styles.notionStatus}>読み込み中...</p>
+              ) : todoError ? (
+                <p className={styles.notionStatus}>{todoError}</p>
+              ) : todoTasks.length === 0 ? (
+                <p className={styles.notionStatus}>タスクはありません</p>
+              ) : (
+                <div className={styles.todoList}>
+                  {todoTasks.map((task) => (
+                    <label key={task.id} className={styles.todoLabel}>
+                      <input
+                        type="checkbox"
+                        checked={task.done}
+                        onChange={() => {}}
+                      />
+                      <span className={task.done ? styles.completed : ''}>
+                        {task.name}
+                        {task.overdue && ' ⚠️'}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
