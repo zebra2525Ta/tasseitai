@@ -11,6 +11,25 @@ type ChatMessage = {
   image?: string; // 送信された画像のURLを保持する用
 };
 
+// Notionデータの参照が必要そうなメッセージかどうかを、キーワードで簡易判定する
+// （NLPや意図分類は行わず、既存コードと同じ「キーワード一致」方式に合わせる）
+const NOTION_TRIGGER_KEYWORDS = [
+  "登録",
+  "確認",
+  "タスク",
+  "予定",
+  "スケジュール",
+  "進捗",
+  "買い物",
+  "リスト",
+  "notion",
+];
+
+function shouldUseNotionContext(text: string) {
+  const lowerText = text.toLowerCase();
+  return NOTION_TRIGGER_KEYWORDS.some((keyword) => lowerText.includes(keyword.toLowerCase()));
+}
+
 export default function ChatPage() {
   const router = useRouter();
   const [message, setMessage] = useState("");
@@ -52,12 +71,15 @@ export default function ChatPage() {
       // NOTE: GroqなどのLLMへ画像データを送信して認識させたい場合は、
       // 将来的にここを FormData 形式にするか、Base64に変換して body に含める必要があります。
       // 現状は既存のテキスト送信ロジックを維持しています。
+      // キーワードに応じて、Notionを参照させたい質問（question）か
+      // 通常の会話（prompt）かをここで振り分ける。会話履歴は今回も送信しない（1問1答のまま）。
+      const useNotion = shouldUseNotionContext(question);
       const response = await fetch("/api/groq", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ question }),
+        body: JSON.stringify(useNotion ? { question } : { prompt: question }),
       });
 
       const data = await response.json();

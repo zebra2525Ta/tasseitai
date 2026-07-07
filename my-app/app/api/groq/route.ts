@@ -8,12 +8,11 @@ export async function POST(request: Request) {
     const body = await request.json();
     const prompt = typeof body?.prompt === "string" ? body.prompt.trim() : "";
     const question = typeof body?.question === "string" ? body.question.trim() : "";
-    const databaseItems = Array.isArray(body?.databaseItems) ? body.databaseItems : undefined;
 
     let content;
 
     if (question) {
-      content = await generateTextFromNotionData(question, databaseItems);
+      content = await generateTextFromNotionData(question);
     } else if (prompt) {
       content = await generateText(prompt);
     } else {

@@ -4,23 +4,47 @@
 //
 // 例：test.js での呼び出し例があります。参考にしてください。
 
-import { runNotionFetchTest } from "../notion/notion.js";
+import { searchNotionPages, collectNotionPageInfo } from "../notion/notion.js";
 
-// Notionデータを取得する関数（遅延実行）
+// Notion側の1件あたりのプロンプト行数が多すぎるとプロンプトが肥大化するため、
+// 1件あたりの propertiesList 行数と全体の文字数に上限を設ける
+const NOTION_MAX_PAGES_FOR_PROMPT = 30;
+const NOTION_MAX_PROPERTY_LINES_PER_ITEM = 8;
+const NOTION_PROMPT_MAX_CHARS = 6000;
+
+// Notionワークスペース全体から最新の情報を取得する（ホーム画面の全体検索と同じ方式）
 async function fetchNotionData() {
+  const notionApiKey = process.env.NOTION_API_KEY;
+  if (!notionApiKey) {
+    console.error("Notionデータ取得エラー: NOTION_API_KEY が設定されていません");
+    return [];
+  }
+
   try {
-    const data = await runNotionFetchTest(process.argv, process.env);
-    return {
-      ...data,
-      results: data.results.map(item => ({
-        properties: item.properties,
-        propertiesList: item.propertiesList
-      }))
-    };
+    // query="" かつ filterType未指定 = ワークスペース全体（ページ＋データベース）を対象にする
+    const pages = await searchNotionPages(notionApiKey, "", 50, 3, null);
+    return pages.map((page) => collectNotionPageInfo(page));
   } catch (error) {
     console.error("Notionデータ取得エラー:", error.message);
-    return { results: [] };
+    return [];
   }
+}
+
+// Notionの検索結果を、AIが読みやすい形式のテキストに整形する
+function formatNotionResultsForPrompt(notionResults) {
+  const lines = [];
+
+  for (const item of notionResults.slice(0, NOTION_MAX_PAGES_FOR_PROMPT)) {
+    const header = `[${item.object === "database" ? "データベース" : "ページ"}] ${item.title || "(無題)"}`;
+    const propertyLines = (item.propertiesList || []).slice(0, NOTION_MAX_PROPERTY_LINES_PER_ITEM);
+    lines.push(header, ...propertyLines, "");
+  }
+
+  let text = lines.join("\n").trim();
+  if (text.length > NOTION_PROMPT_MAX_CHARS) {
+    text = text.slice(0, NOTION_PROMPT_MAX_CHARS) + "\n...(以下省略)";
+  }
+  return text;
 }
 
 
@@ -72,18 +96,15 @@ async function buildNotionPrompt(question) {
   if (!questionText) {
     throw new Error("質問文が必要です");
   }
-  
-  const notionData = await fetchNotionData();
-  const propertiesList = (notionData?.results || [])
-    .flatMap(result => result.propertiesList || [])
-    .flat();
-  const propertiesText = propertiesList.join('\n');
+
+  const notionResults = await fetchNotionData();
+  const propertiesText = formatNotionResultsForPrompt(notionResults);
 
   return [
-    "以下は Notion データベースから取得した情報の一覧です。",
+    "以下は Notion ワークスペースから取得した情報の一覧です。",
     "これらのデータをもとに、質問に回答してください。",
     "",
-    propertiesText,
+    propertiesText || "(該当するNotionデータが見つかりませんでした)",
     "",
     `質問: ${questionText}`,
   ].join("\n");
@@ -91,8 +112,8 @@ async function buildNotionPrompt(question) {
 
 export { buildNotionPrompt };
 
-export async function generateTextFromNotionData(question, notionDataList) {
-  const promptText = await buildNotionPrompt(question, notionDataList);
+export async function generateTextFromNotionData(question) {
+  const promptText = await buildNotionPrompt(question);
   return generateText(promptText);
 }
 
