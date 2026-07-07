@@ -27,9 +27,6 @@ const NEWS_CATEGORY_OPTIONS = [
   { id: 'entertainment', name: 'エンタメ' },
 ];
 
-// 一時的な暫定連携用：デフォルトのNotionデータベースID（未設定時のフォールバック）
-const DEFAULT_NOTION_DATABASE_ID = 'f9a25ca6-2ade-46aa-8f80-ac065a6df417';
-
 export default function SettingsPage() {
   const [isMounted, setIsMounted] = useState(false);
 
@@ -40,9 +37,6 @@ export default function SettingsPage() {
   
   // 💡 修正1: GitHubリポジトリ名の初期状態をデフォルトなし（空っぽ）に変更
   const [githubRepo, setGithubRepo] = useState('');
-
-  // Notion データベースIDの状態管理（デフォルトは指定の暫定データベース）
-  const [notionDatabaseId, setNotionDatabaseId] = useState(DEFAULT_NOTION_DATABASE_ID);
 
   // 天気表示用地域の状態管理（デフォルトは大阪）
   const [weatherRegion, setWeatherRegion] = useState('osaka');
@@ -58,7 +52,6 @@ export default function SettingsPage() {
     const savedRepo = localStorage.getItem('setting_githubRepo');
     const savedRegion = localStorage.getItem('setting_weatherRegion');
     const savedCategory = localStorage.getItem('setting_newsCategory');
-    const savedNotionDatabaseId = localStorage.getItem('setting_notionDatabaseId');
 
     setAiBusiness(savedBusiness !== null ? JSON.parse(savedBusiness) : true);
     setAiDaily(savedDaily !== null ? JSON.parse(savedDaily) : true);
@@ -66,9 +59,6 @@ export default function SettingsPage() {
     
     // 💡 修正2: 保存されたデータがあればそれを入れ、無ければ確実に空っぽにする
     setGithubRepo(savedRepo !== null ? savedRepo : '');
-
-    // 保存されたIDがあればそれを、無ければ既定の暫定データベースIDを使う
-    setNotionDatabaseId(savedNotionDatabaseId !== null ? savedNotionDatabaseId : DEFAULT_NOTION_DATABASE_ID);
 
     if (savedRegion !== null) {
       setWeatherRegion(savedRegion);
@@ -93,12 +83,6 @@ export default function SettingsPage() {
   const handleRepoChange = (value: string) => {
     setGithubRepo(value);
     localStorage.setItem('setting_githubRepo', value);
-  };
-
-  // Notion データベースIDをLocalStorageに保存する関数
-  const handleNotionDatabaseIdChange = (value: string) => {
-    setNotionDatabaseId(value);
-    localStorage.setItem('setting_notionDatabaseId', value);
   };
 
   // 天気地域を変更し、座標情報などをまとめて保存する関数
@@ -255,20 +239,6 @@ export default function SettingsPage() {
               />
             </div>
             <p className={styles.inputHelp}>※ 「アカウント名/リポジトリ名」の形式で入力してください</p>
-
-            {/* 💡 追加：Notion データベースID（一時的な暫定連携） */}
-            <div className={styles.inputRow}>
-              <label className={styles.subLabel} htmlFor="notionDatabaseIdInput">Notion データベース ID</label>
-              <input
-                id="notionDatabaseIdInput"
-                type="text"
-                className={styles.textField}
-                placeholder="f9a25ca6-2ade-46aa-8f80-ac065a6df417"
-                value={notionDatabaseId}
-                onChange={(e) => handleNotionDatabaseIdChange(e.target.value)}
-              />
-            </div>
-            <p className={styles.inputHelp}>※ ホーム画面に表示するNotionデータベースのIDを入力してください（未設定時は既定のデータベースを使用します）</p>
           </div>
         </div>
       </div>

@@ -49,7 +49,6 @@
 .weatherCard      { order: 5; } /* 5. 天気 */
 .newsCard         { order: 6; } /* 6. News */
 .githubFullCard   { order: 7; } /* 7. GitHub */
-.notionCard       { order: 8; } /* 8. Notion（一時的な暫定連携） */
 
 /* スケジュールとToDoのエリア（スマホ時は縦並びにする） */
 .scheduleTodoGrid {
@@ -251,32 +250,11 @@
   text-decoration: underline;
 }
 
-/* Notionカード（一時的な暫定連携） */
-.notionCard {
-  composes: card;
-}
+/* Schedule/Notion系カードの読み込み中・エラー・空状態の共通テキストスタイル */
 .notionStatus {
   font-size: 0.85rem;
   opacity: 0.8;
   margin-top: 8px;
-}
-.notionList {
-  list-style: none;
-  padding: 0;
-  margin: 8px 0 0 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.notionItem {
-  font-size: 0.9rem;
-}
-.notionLink {
-  color: #ffffff;
-  text-decoration: none;
-}
-.notionLink:hover {
-  text-decoration: underline;
 }
 
 
@@ -314,8 +292,7 @@
   .newsCard,
   .githubFullCard,
   .scheduleCard,
-  .todoCard,
-  .notionCard {
+  .todoCard {
     order: unset;
   }
   

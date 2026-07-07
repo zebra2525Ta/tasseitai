@@ -78,11 +78,6 @@ export default function HomePage() {
   // 現在表示中のリポジトリ名を画面（JSX）に反映するためのState
   const [currentRepoName, setCurrentRepoName] = useState('読み込み中...');
 
-  // Notionデータベースの取得結果・読み込み状態・エラー状態
-  const [notionItems, setNotionItems] = useState<any[]>([]);
-  const [notionLoading, setNotionLoading] = useState(true);
-  const [notionError, setNotionError] = useState('');
-
   // Notion「スケジュール」データベースから取得した予定（現在時刻〜6時間後）
   const [scheduleDateLabel, setScheduleDateLabel] = useState('');
   const [scheduleTimeMarkers, setScheduleTimeMarkers] = useState(['--:--', '--:--', '--:--', '--:--']);
@@ -223,37 +218,6 @@ export default function HomePage() {
         setCurrentRepoName("設定不完全");
         setProjectActivities([{ name: '設定不完全', action: '「ユーザー名/リポジトリ名」の形で正しく入力してください', time: '--', status: 'offline' }]);
       }
-
-      // --- 💡 Notionデータベースの取得（一時的な暫定対応：共有APIキー + 指定データベースID）---
-      const DEFAULT_NOTION_DATABASE_ID = 'f9a25ca6-2ade-46aa-8f80-ac065a6df417';
-      const savedNotionDatabaseId = localStorage.getItem('setting_notionDatabaseId') || DEFAULT_NOTION_DATABASE_ID;
-
-      fetch('/api/notion', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          databaseId: savedNotionDatabaseId,
-          searchType: 'database',
-          pageSize: 5,
-        }),
-      })
-        .then((res) => {
-          if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-          return res.json();
-        })
-        .then((data) => {
-          if (data && Array.isArray(data.results)) {
-            setNotionItems(data.results);
-          } else {
-            setNotionItems([]);
-          }
-          setNotionLoading(false);
-        })
-        .catch((err) => {
-          console.error('Notionデータの取得に失敗:', err);
-          setNotionError('読み込みに失敗しました');
-          setNotionLoading(false);
-        });
 
       // --- 💡 Notion「スケジュール」データベースから予定を取得（現在時刻〜6時間後）---
       const SCHEDULE_DATABASE_ID = '38fa15fd-a3c1-80fa-a200-d99ac64b3409';
@@ -430,37 +394,6 @@ export default function HomePage() {
                 <span>GitHub</span>
               </a>
             </div>
-          </div>
-
-          {/* Notionデータベース（一時的な暫定連携） */}
-          <div className={styles.notionCard}>
-            <p className={styles.cardTitle} style={{ fontSize: '1rem', opacity: 1 }}>Notion</p>
-            {notionLoading ? (
-              <p className={styles.notionStatus}>読み込み中...</p>
-            ) : notionError ? (
-              <p className={styles.notionStatus}>{notionError}</p>
-            ) : notionItems.length === 0 ? (
-              <p className={styles.notionStatus}>データが見つかりませんでした</p>
-            ) : (
-              <ul className={styles.notionList}>
-                {notionItems.map((item) => (
-                  <li key={item.id} className={styles.notionItem}>
-                    {item.url ? (
-                      <a
-                        href={item.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={styles.notionLink}
-                      >
-                        • {item.title || (item.propertiesList && item.propertiesList[0]) || '無題'}
-                      </a>
-                    ) : (
-                      <span>• {item.title || '無題'}</span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
           </div>
 
           {/* スケジュールとToDoを横に並べる中間グリッド */}
