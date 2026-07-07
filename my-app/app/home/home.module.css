@@ -247,14 +247,19 @@
 /* ニュース */
 .newsCard {
   composes: card;
+  min-height: 240px;
 }
 .newsList {
   list-style: none;
   padding: 0;
-  margin: 8px 0 0 0;
+  margin: 12px 0 0 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 14px;
+}
+.newsItem {
+  font-size: 1rem;
+  line-height: 1.5;
 }
 .newsLink {
   color: #ffffff;
@@ -310,8 +315,9 @@
     order: unset;
   }
   
-  /* PC時はGitHubを下に引き伸ばす */
-  .githubFullCard {
+  /* PC時はGitHub・Newsを下に引き伸ばす */
+  .githubFullCard,
+  .newsCard {
     flex-grow: 1;
   }
 
