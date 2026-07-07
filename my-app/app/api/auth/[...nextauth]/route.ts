@@ -42,8 +42,7 @@ const handler = NextAuth({
               body: JSON.stringify({
                 grant_type: "authorization_code",
                 code: params.code,
-                redirect_uri:
-                  "http://localhost:3000/api/auth/callback/notion",
+                redirect_uri: `${process.env.NEXTAUTH_URL}/api/auth/callback/notion`,
               }),
             }
           );
