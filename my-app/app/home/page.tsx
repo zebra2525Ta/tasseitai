@@ -78,6 +78,11 @@ export default function HomePage() {
   // 現在表示中のリポジトリ名を画面（JSX）に反映するためのState
   const [currentRepoName, setCurrentRepoName] = useState('読み込み中...');
 
+  // Notionデータベースの取得結果・読み込み状態・エラー状態
+  const [notionItems, setNotionItems] = useState<any[]>([]);
+  const [notionLoading, setNotionLoading] = useState(true);
+  const [notionError, setNotionError] = useState('');
+
   useEffect(() => {
     // 💡 まずは最初に画面の枠組みをパッと表示する
     setIsMounted(true);
@@ -211,6 +216,37 @@ export default function HomePage() {
         setCurrentRepoName("設定不完全");
         setProjectActivities([{ name: '設定不完全', action: '「ユーザー名/リポジトリ名」の形で正しく入力してください', time: '--', status: 'offline' }]);
       }
+
+      // --- 💡 Notionデータベースの取得（一時的な暫定対応：共有APIキー + 指定データベースID）---
+      const DEFAULT_NOTION_DATABASE_ID = 'f9a25ca6-2ade-46aa-8f80-ac065a6df417';
+      const savedNotionDatabaseId = localStorage.getItem('setting_notionDatabaseId') || DEFAULT_NOTION_DATABASE_ID;
+
+      fetch('/api/notion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          databaseId: savedNotionDatabaseId,
+          searchType: 'database',
+          pageSize: 5,
+        }),
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+          return res.json();
+        })
+        .then((data) => {
+          if (data && Array.isArray(data.results)) {
+            setNotionItems(data.results);
+          } else {
+            setNotionItems([]);
+          }
+          setNotionLoading(false);
+        })
+        .catch((err) => {
+          console.error('Notionデータの取得に失敗:', err);
+          setNotionError('読み込みに失敗しました');
+          setNotionLoading(false);
+        });
     }, 0); // 0秒ディレイで画面描画の直後に実行
 
   }, []);
@@ -316,6 +352,37 @@ export default function HomePage() {
                 <span>GitHub</span>
               </a>
             </div>
+          </div>
+
+          {/* Notionデータベース（一時的な暫定連携） */}
+          <div className={styles.notionCard}>
+            <p className={styles.cardTitle} style={{ fontSize: '1rem', opacity: 1 }}>Notion</p>
+            {notionLoading ? (
+              <p className={styles.notionStatus}>読み込み中...</p>
+            ) : notionError ? (
+              <p className={styles.notionStatus}>{notionError}</p>
+            ) : notionItems.length === 0 ? (
+              <p className={styles.notionStatus}>データが見つかりませんでした</p>
+            ) : (
+              <ul className={styles.notionList}>
+                {notionItems.map((item) => (
+                  <li key={item.id} className={styles.notionItem}>
+                    {item.url ? (
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={styles.notionLink}
+                      >
+                        • {item.title || (item.propertiesList && item.propertiesList[0]) || '無題'}
+                      </a>
+                    ) : (
+                      <span>• {item.title || '無題'}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           {/* スケジュールとToDoを横に並べる中間グリッド */}
