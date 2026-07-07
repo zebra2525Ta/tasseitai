@@ -88,6 +88,7 @@ export default function HomePage() {
   const [todoTasks, setTodoTasks] = useState<any[]>([]);
   const [todoLoading, setTodoLoading] = useState(true);
   const [todoError, setTodoError] = useState('');
+  const [todoExpanded, setTodoExpanded] = useState(false);
 
   useEffect(() => {
     // 💡 まずは最初に画面の枠組みをパッと表示する
@@ -317,14 +318,14 @@ export default function HomePage() {
                 dueDate,
               };
             })
-            // 完了済みは一覧から除外し、期日が近い順に上位5件だけ表示する
+            // 完了済みは一覧から除外し、期日が近い順に上位10件だけ保持する（表示は3件/10件を切り替え）
             .filter((task: any) => !task.done)
             .sort((a: any, b: any) => {
               if (!a.dueDate) return 1;
               if (!b.dueDate) return -1;
               return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
             })
-            .slice(0, 5);
+            .slice(0, 10);
 
           setTodoTasks(tasksList);
           setTodoLoading(false);
@@ -483,21 +484,32 @@ export default function HomePage() {
               ) : todoTasks.length === 0 ? (
                 <p className={styles.notionStatus}>タスクはありません</p>
               ) : (
-                <div className={styles.todoList}>
-                  {todoTasks.map((task) => (
-                    <label key={task.id} className={styles.todoLabel}>
-                      <input
-                        type="checkbox"
-                        checked={task.done}
-                        onChange={() => {}}
-                      />
-                      <span className={task.done ? styles.completed : ''}>
-                        {task.name}
-                        {task.overdue && ' ⚠️'}
-                      </span>
-                    </label>
-                  ))}
-                </div>
+                <>
+                  <div className={styles.todoList}>
+                    {todoTasks.slice(0, todoExpanded ? 10 : 3).map((task) => (
+                      <label key={task.id} className={styles.todoLabel}>
+                        <input
+                          type="checkbox"
+                          checked={task.done}
+                          onChange={() => {}}
+                        />
+                        <span className={task.done ? styles.completed : ''}>
+                          {task.name}
+                          {task.overdue && ' ⚠️'}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                  {todoTasks.length > 3 && (
+                    <button
+                      type="button"
+                      className={styles.todoMoreBtn}
+                      onClick={() => setTodoExpanded((prev) => !prev)}
+                    >
+                      {todoExpanded ? '閉じる' : 'もっと見る'}
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>
