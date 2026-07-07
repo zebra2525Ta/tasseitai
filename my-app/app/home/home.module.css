@@ -193,14 +193,18 @@
   border-radius: 4px;
   padding: 4px;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 .timelineBar {
   background: #4d4ae8; /* 青いスケジュールバー */
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 0.75rem;
-  width: 60%; /* 横幅の目安 */
-  margin-left: 20%; /* 開始位置の目安 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ToDo */

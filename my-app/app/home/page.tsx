@@ -83,6 +83,13 @@ export default function HomePage() {
   const [notionLoading, setNotionLoading] = useState(true);
   const [notionError, setNotionError] = useState('');
 
+  // Notion「スケジュール」データベースから取得した予定（現在時刻〜6時間後）
+  const [scheduleDateLabel, setScheduleDateLabel] = useState('');
+  const [scheduleTimeMarkers, setScheduleTimeMarkers] = useState(['--:--', '--:--', '--:--', '--:--']);
+  const [scheduleEvents, setScheduleEvents] = useState<any[]>([]);
+  const [scheduleLoading, setScheduleLoading] = useState(true);
+  const [scheduleError, setScheduleError] = useState('');
+
   useEffect(() => {
     // 💡 まずは最初に画面の枠組みをパッと表示する
     setIsMounted(true);
@@ -247,6 +254,77 @@ export default function HomePage() {
           setNotionError('読み込みに失敗しました');
           setNotionLoading(false);
         });
+
+      // --- 💡 Notion「スケジュール」データベースから予定を取得（現在時刻〜6時間後）---
+      const SCHEDULE_DATABASE_ID = '38fa15fd-a3c1-80fa-a200-d99ac64b3409';
+      const WEEKDAY_NAMES = ['日', '月', '火', '水', '木', '金', '土'];
+      const formatHHMM = (date: Date) =>
+        `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+
+      const scheduleWindowStart = new Date();
+      const scheduleWindowEnd = new Date(scheduleWindowStart.getTime() + 6 * 60 * 60 * 1000);
+      const scheduleWindowMs = scheduleWindowEnd.getTime() - scheduleWindowStart.getTime();
+
+      setScheduleDateLabel(
+        `${scheduleWindowStart.getMonth() + 1}月${scheduleWindowStart.getDate()}日（${WEEKDAY_NAMES[scheduleWindowStart.getDay()]}）`
+      );
+      setScheduleTimeMarkers(
+        [0, 2, 4, 6].map((hourOffset) =>
+          formatHHMM(new Date(scheduleWindowStart.getTime() + hourOffset * 60 * 60 * 1000))
+        )
+      );
+
+      fetch('/api/notion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          databaseId: SCHEDULE_DATABASE_ID,
+          searchType: 'database',
+          pageSize: 50,
+        }),
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+          return res.json();
+        })
+        .then((data) => {
+          const rawResults = Array.isArray(data.results) ? data.results : [];
+
+          const events = rawResults
+            .map((item: any) => {
+              const dateProp = item.properties?.['日時'];
+              if (!dateProp || !dateProp.start) return null;
+              const start = new Date(dateProp.start);
+              const end = dateProp.end ? new Date(dateProp.end) : new Date(start.getTime() + 60 * 60 * 1000);
+              const label = item.properties?.['予定'] || item.title || '無題';
+              return { id: item.id, label, start, end };
+            })
+            .filter((event: any) => event && event.end > scheduleWindowStart && event.start < scheduleWindowEnd)
+            .sort((a: any, b: any) => a.start.getTime() - b.start.getTime())
+            .map((event: any) => {
+              const clampedStart = event.start < scheduleWindowStart ? scheduleWindowStart : event.start;
+              const clampedEnd = event.end > scheduleWindowEnd ? scheduleWindowEnd : event.end;
+              const leftPercent = ((clampedStart.getTime() - scheduleWindowStart.getTime()) / scheduleWindowMs) * 100;
+              const widthPercent = Math.max(
+                ((clampedEnd.getTime() - clampedStart.getTime()) / scheduleWindowMs) * 100,
+                12
+              );
+              return {
+                id: event.id,
+                label: `${formatHHMM(event.start)} - ${event.label}`,
+                leftPercent,
+                widthPercent,
+              };
+            });
+
+          setScheduleEvents(events);
+          setScheduleLoading(false);
+        })
+        .catch((err) => {
+          console.error('Notionスケジュールの取得に失敗:', err);
+          setScheduleError('読み込みに失敗しました');
+          setScheduleLoading(false);
+        });
     }, 0); // 0秒ディレイで画面描画の直後に実行
 
   }, []);
@@ -388,21 +466,35 @@ export default function HomePage() {
           {/* スケジュールとToDoを横に並べる中間グリッド */}
           <div className={styles.scheduleTodoGrid}>
             
-            {/* スケジュール（タイムライン） */}
+            {/* スケジュール（Notionの「スケジュール」データベースから現在時刻〜6時間後の予定を取得） */}
             <div className={styles.scheduleCard}>
               <p className={styles.scheduleTitle}>Schedule</p>
-              <p className={styles.scheduleDate}>6月25日（水）</p>
-              
-              {/* タイムラインのモック用の時間軸表示線 */}
+              <p className={styles.scheduleDate}>{scheduleDateLabel}</p>
+
               <div className={styles.timelineContainer}>
                 <div className={styles.timelineHeader}>
-                  <span>8:00</span>
-                  <span>10:00</span>
-                  <span>12:00</span>
-                  <span>14:00</span>
+                  {scheduleTimeMarkers.map((label, index) => (
+                    <span key={index}>{label}</span>
+                  ))}
                 </div>
                 <div className={styles.timelineBarWrapper}>
-                  <div className={styles.timelineBar}>9:30 - 学校</div>
+                  {scheduleLoading ? (
+                    <p className={styles.notionStatus}>読み込み中...</p>
+                  ) : scheduleError ? (
+                    <p className={styles.notionStatus}>{scheduleError}</p>
+                  ) : scheduleEvents.length === 0 ? (
+                    <p className={styles.notionStatus}>予定はありません</p>
+                  ) : (
+                    scheduleEvents.map((event) => (
+                      <div
+                        key={event.id}
+                        className={styles.timelineBar}
+                        style={{ marginLeft: `${event.leftPercent}%`, width: `${event.widthPercent}%` }}
+                      >
+                        {event.label}
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             </div>
