@@ -435,6 +435,14 @@ export default function HomePage() {
                 <img src="https://cdn.simpleicons.org/github/ffffff" alt="GitHub" className={styles.linkIcon} />
                 <span>GitHub</span>
               </a>
+              <a href="https://weathernews.jp/" target="_blank" rel="noopener noreferrer" className={styles.quickLinkItem}>
+                <span className={styles.linkIcon} style={{ fontSize: '16px', lineHeight: '18px' }}>🌤️</span>
+                <span>ウェザーニュース</span>
+              </a>
+              <a href="https://news.google.com" target="_blank" rel="noopener noreferrer" className={styles.quickLinkItem}>
+                <img src="https://cdn.simpleicons.org/googlenews/ffffff" alt="Google News" className={styles.linkIcon} />
+                <span>Googleニュース</span>
+              </a>
             </div>
           </div>
 
