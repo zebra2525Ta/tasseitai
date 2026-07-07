@@ -21,6 +21,7 @@ export async function POST(request: Request) {
     const databaseId = typeof body.databaseId === "string" ? body.databaseId.trim() : "";
     const query = typeof body.query === "string" ? body.query.trim() : "";
     const searchType = body.searchType === "search" ? "search" : "database";
+    const filterType = body.filterType === "page" || body.filterType === "database" ? body.filterType : undefined;
     const pageSize = normalizeNumber(body.pageSize, defaultPageSize);
     const maxPages = normalizeNumber(body.maxPages, defaultMaxPages);
     const filter = body.filter && typeof body.filter === "object" ? (body.filter as any) : undefined;
@@ -34,15 +35,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "databaseId が必要です" }, { status: 400 });
     }
 
-    if (searchType === "search" && !query) {
-      return NextResponse.json({ error: "query が必要です" }, { status: 400 });
-    }
-
     let pages: any[] = [];
     let source = "database";
 
     if (searchType === "search") {
-      pages = await searchNotionPages(apiKey, query, pageSize, maxPages);
+      pages = await searchNotionPages(apiKey, query, pageSize, maxPages, filterType);
       source = "search";
     } else {
       pages = await queryNotionDatabase(apiKey, databaseId, pageSize, maxPages, filter, sorts);

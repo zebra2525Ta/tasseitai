@@ -186,8 +186,14 @@ export function getSavedNotionTestData() {
 }
 
 export function extractNotionTitle(page) {
+  // データベースオブジェクトはトップレベルの title 配列にタイトルを持つ
+  if (Array.isArray(page.title)) {
+    const text = plainTextFromRichText(page.title);
+    if (text) return text;
+  }
+
   const titleProperty = Object.values(page.properties || {}).find(
-    (property) => property?.type === "title"
+    (property) => property?.type === "title" && Array.isArray(property.title)
   );
   if (titleProperty) {
     return plainTextFromRichText(titleProperty.title);
@@ -199,6 +205,7 @@ export function extractNotionTitle(page) {
 export function collectNotionPageInfo(page) {
   return {
     id: page.id,
+    object: page.object ?? null,
     url: page.url ?? null,
     title: extractNotionTitle(page),
     parent: page.parent ?? null,
@@ -287,7 +294,7 @@ export async function queryNotionDatabase(
   return results;
 }
 
-export async function searchNotionPages(apiKeyValue, query, pageSize = 50, maxPages = 3) {
+export async function searchNotionPages(apiKeyValue, query, pageSize = 50, maxPages = 3, filterType = null) {
   const results = [];
   let nextCursor = null;
   const safePageSize = Math.min(Math.max(pageSize, 1), 100);
@@ -295,13 +302,13 @@ export async function searchNotionPages(apiKeyValue, query, pageSize = 50, maxPa
 
   do {
     const body = {
-      query,
-      filter: {
-        value: "page",
-        property: "object",
-      },
+      query: query || "",
       page_size: safePageSize,
     };
+    // filterType省略時はページ・データベース両方が対象になる（Notion検索APIの仕様）
+    if (filterType === "page" || filterType === "database") {
+      body.filter = { value: filterType, property: "object" };
+    }
     if (nextCursor) body.start_cursor = nextCursor;
 
     const data = await fetchNotionJson("https://api.notion.com/v1/search", apiKeyValue, body);
@@ -322,6 +329,7 @@ export async function fetchNotionPages({
   searchType = "database",
   pageSize = 50,
   maxPages = 3,
+  filterType = null,
 }) {
   if (!apiKeyValue) {
     throw new Error("apiKeyValue is required to fetch Notion pages.");
@@ -330,7 +338,7 @@ export async function fetchNotionPages({
   const source = searchType === "search" ? "search" : "database";
   const pages =
     source === "search"
-      ? await searchNotionPages(apiKeyValue, query, pageSize, maxPages)
+      ? await searchNotionPages(apiKeyValue, query, pageSize, maxPages, filterType)
       : await queryNotionDatabase(apiKeyValue, databaseIdValue, pageSize, maxPages);
 
   const results = pages.map((page) => collectNotionPageInfo(page));
