@@ -135,10 +135,24 @@ async function requestServerPush(subscription: PushSubscription): Promise<void> 
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ subscription: subscription.toJSON() }),
   });
-  
+
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
     throw new Error(data?.error || 'サーバー通知の送信に失敗しました');
+  }
+}
+
+// 定期通知（Cron経由）で使えるように、購読情報をサーバー側に保存しておく
+async function persistSubscription(subscription: PushSubscription): Promise<void> {
+  const response = await fetch('/api/push/subscribe', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ subscription: subscription.toJSON() }),
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data?.error || '購読情報の保存に失敗しました');
   }
 }
 
@@ -245,9 +259,10 @@ const NotificationDemoPage: React.FC = () => {
         registration,
         publicVapidKey
       );
-      
+
       setSubscription({ endpoint: sub.endpoint, raw: sub });
-      setMessage(isExisting ? '既存の購読を再利用します' : '購読を作成しました');
+      await persistSubscription(sub);
+      setMessage(isExisting ? '既存の購読を再利用します（サーバーにも保存済み）' : '購読を作成し、サーバーに保存しました');
     } catch (error) {
       setMessage(extractErrorMessage(error, '購読に失敗しました'));
     } finally {
