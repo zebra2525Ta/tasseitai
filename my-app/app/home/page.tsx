@@ -491,51 +491,79 @@ export default function HomePage() {
             {/* スケジュール（Notionの「スケジュール」データベースから現在時刻〜6時間後の予定を取得） */}
             <div className={styles.scheduleCard}>
               <p className={styles.scheduleTitle}>Schedule</p>
-              <p className={styles.scheduleDate}>{scheduleDateLabel}</p>
 
-              <div className={styles.timelineContainer}>
-                <div className={styles.timelineHeader}>
-                  {scheduleTimeMarkers.map((label, index) => (
-                    <span key={index}>{label}</span>
-                  ))}
-                </div>
-                <div className={styles.timelineBarWrapper} style={{ position: 'relative' }}>
-                  {scheduleLoading ? (
-                    <p className={styles.notionStatus}>読み込み中...</p>
-                  ) : scheduleError ? (
-                    <p className={styles.notionStatus}>{scheduleError}</p>
-                  ) : scheduleEvents.length === 0 ? (
-                    <p className={styles.notionStatus}>予定はありません</p>
-                  ) : (
-                    scheduleEvents.map((event) => (
-                      <div
-                        key={event.id}
-                        className={styles.timelineBar}
-                        style={{ marginLeft: `${event.leftPercent}%`, width: `${event.widthPercent}%` }}
-                      >
-                        {event.label}
+              {['today', 'tomorrow'].map((day) => {
+                const dayLabel = day === 'today' ? '今日' : '明日';
+                const dayDate = day === 'today' ? new Date() : new Date(new Date().getTime() + 24 * 60 * 60 * 1000);
+                const dayStart = new Date(dayDate);
+                dayStart.setHours(0, 0, 0, 0);
+                const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+                const dayMs = 24 * 60 * 60 * 1000;
+
+                const dayEvents = scheduleEvents.filter((event) => {
+                  const eventPercent = event.leftPercent;
+                  const isToday = day === 'today' ? eventPercent < 50 : eventPercent >= 50;
+                  return isToday;
+                }).map((event) => ({
+                  ...event,
+                  leftPercent: day === 'today' ? event.leftPercent * 2 : (event.leftPercent - 50) * 2
+                }));
+
+                const isDayWithinCurrentTime = day === 'today' && currentTimePercent !== null && currentTimePercent < 50;
+                const dayCurrentTimePercent = isDayWithinCurrentTime ? currentTimePercent * 2 : null;
+
+                return (
+                  <div key={day} style={{ marginBottom: '16px' }}>
+                    <p style={{ fontSize: '0.95rem', opacity: 0.8, marginBottom: '6px' }}>
+                      {dayLabel} ({dayStart.getMonth() + 1}月{dayStart.getDate()}日)
+                    </p>
+
+                    <div className={styles.timelineContainer}>
+                      <div className={styles.timelineHeader}>
+                        {scheduleTimeMarkers.slice(0, 6).map((label, index) => (
+                          <span key={index}>{label}</span>
+                        ))}
                       </div>
-                    ))
-                  )}
-                  {currentTimePercent !== null && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        left: `${currentTimePercent}%`,
-                        top: 0,
-                        bottom: 0,
-                        width: '3px',
-                        backgroundColor: '#ff6b6b',
-                        boxShadow: '0 0 8px rgba(255, 107, 107, 0.8)',
-                        zIndex: 10,
-                        borderRadius: '2px',
-                        transform: 'translateX(-50%)'
-                      }}
-                      title={`現在時刻`}
-                    />
-                  )}
-                </div>
-              </div>
+                      <div className={styles.timelineBarWrapper} style={{ position: 'relative' }}>
+                        {scheduleLoading ? (
+                          <p className={styles.notionStatus}>読み込み中...</p>
+                        ) : scheduleError ? (
+                          <p className={styles.notionStatus}>{scheduleError}</p>
+                        ) : dayEvents.length === 0 ? (
+                          <p className={styles.notionStatus}>予定はありません</p>
+                        ) : (
+                          dayEvents.map((event) => (
+                            <div
+                              key={event.id}
+                              className={styles.timelineBar}
+                              style={{ marginLeft: `${event.leftPercent}%`, width: `${event.widthPercent}%` }}
+                            >
+                              {event.label}
+                            </div>
+                          ))
+                        )}
+                        {dayCurrentTimePercent !== null && (
+                          <div
+                            style={{
+                              position: 'absolute',
+                              left: `${dayCurrentTimePercent}%`,
+                              top: 0,
+                              bottom: 0,
+                              width: '3px',
+                              backgroundColor: '#ff6b6b',
+                              boxShadow: '0 0 8px rgba(255, 107, 107, 0.8)',
+                              zIndex: 10,
+                              borderRadius: '2px',
+                              transform: 'translateX(-50%)'
+                            }}
+                            title={`現在時刻`}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
             {/* ToDo（Notionの「進捗管理」データベースから取得） */}
