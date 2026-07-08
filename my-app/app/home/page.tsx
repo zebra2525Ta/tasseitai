@@ -53,10 +53,12 @@ const CATEGORY_NAMES: { [key: string]: string } = {
   entertainment: 'エンタメ'
 };
 
+type NotificationGateStatus = 'checking' | 'blocked-default' | 'blocked-denied' | 'passed';
+
 export default function HomePage() {
   const [isMounted, setIsMounted] = useState(false);
-  // 通知許可がまだ「default」（未決定）のときだけ、有効化を促すバナーを出す
-  const [showNotificationBanner, setShowNotificationBanner] = useState(false);
+  // 通知が許可されるまでホーム画面本体を表示しない（強制ゲート）
+  const [notificationGate, setNotificationGate] = useState<NotificationGateStatus>('checking');
 
   const [weather, setWeather] = useState<any>({
     text: '読み込み中...',
@@ -106,17 +108,19 @@ export default function HomePage() {
   useEffect(() => {
     setIsMounted(true);
 
-    // 通知許可がまだ未決定（default）の場合、ブラウザはユーザー操作なしの
-    // 許可リクエストを表示しないことが多いため、バナーを出してボタン経由で許可してもらう。
-    // 既に許可済みなら、購読とサーバー保存だけを自動で行う（こちらは操作不要で実行可能）。
-    if (typeof Notification !== 'undefined') {
-      if (Notification.permission === 'default') {
-        setShowNotificationBanner(true);
-      } else if (Notification.permission === 'granted') {
-        autoSubscribeToPush().catch((error) => {
-          console.error('プッシュ通知の自動購読に失敗:', error);
-        });
-      }
+    // 通知が許可されるまでホーム画面を表示しない強制ゲート。
+    // 非対応ブラウザ（Notification/Service Worker非対応）はブロックしようがないので素通しする。
+    if (typeof Notification === 'undefined' || !('serviceWorker' in navigator)) {
+      setNotificationGate('passed');
+    } else if (Notification.permission === 'granted') {
+      setNotificationGate('passed');
+      autoSubscribeToPush().catch((error) => {
+        console.error('プッシュ通知の自動購読に失敗:', error);
+      });
+    } else if (Notification.permission === 'denied') {
+      setNotificationGate('blocked-denied');
+    } else {
+      setNotificationGate('blocked-default');
     }
 
     setTimeout(() => {
@@ -380,29 +384,60 @@ export default function HomePage() {
 
   }, []);
 
-  // バナーの「通知を有効にする」ボタン用：ユーザー操作をきっかけに許可・購読・サーバー保存を行う
+  // ポップアップの「通知を有効にする」ボタン用：ユーザー操作をきっかけに許可・購読・サーバー保存を行う
   const handleEnableNotifications = async () => {
     const result = await autoSubscribeToPush();
-    if (result.status !== 'unsupported') {
-      // granted/denied/error いずれの場合も、これ以上バナーで聞く必要は無い
-      setShowNotificationBanner(false);
+    if (result.status === 'subscribed') {
+      setNotificationGate('passed');
+    } else if (result.status === 'denied') {
+      setNotificationGate('blocked-denied');
+    } else if (result.status === 'unsupported') {
+      setNotificationGate('passed');
+    }
+    // status === 'error' の場合は blocked-default のまま留まり、再試行してもらう
+  };
+
+  // 「拒否」状態から、ブラウザ設定で許可し直した後に押してもらう再確認ボタン用
+  const handleRecheckPermission = () => {
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+      autoSubscribeToPush()
+        .then(() => setNotificationGate('passed'))
+        .catch((error) => console.error('プッシュ通知の自動購読に失敗:', error));
     }
   };
 
-  if (!isMounted) {
+  if (!isMounted || notificationGate === 'checking') {
     return <div className={styles.container} style={{ background: '#3b3a4e' }}></div>;
+  }
+
+  if (notificationGate !== 'passed') {
+    return (
+      <div className={styles.container}>
+        <div className={styles.notificationGateOverlay}>
+          <div className={styles.notificationGateCard}>
+            {notificationGate === 'blocked-denied' ? (
+              <>
+                <p>通知がブロックされています。ブラウザのサイト設定でこのサイトの通知を「許可」に変更してから、下のボタンを押してください。</p>
+                <button type="button" onClick={handleRecheckPermission} className={styles.notificationBannerBtn}>
+                  許可状態を確認する
+                </button>
+              </>
+            ) : (
+              <>
+                <p>予定やタスクのリマインドを受け取るために、通知を有効にしてください。</p>
+                <button type="button" onClick={handleEnableNotifications} className={styles.notificationBannerBtn}>
+                  通知を有効にする
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className={styles.container}>
-      {showNotificationBanner && (
-        <div className={styles.notificationBanner}>
-          <span>通知を有効にすると、予定やタスクのリマインドが届くようになります</span>
-          <button type="button" onClick={handleEnableNotifications} className={styles.notificationBannerBtn}>
-            通知を有効にする
-          </button>
-        </div>
-      )}
       <div className={styles.header}>
         <Link href="/settings" className={styles.iconBtn} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px' }}>
           <SettingsIcon size={20} color="#a9a9a9" />
