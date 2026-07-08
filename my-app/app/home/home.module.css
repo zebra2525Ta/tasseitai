@@ -162,8 +162,8 @@
 
 /* アイコン（公式ロゴ画像）のサイズと調整 */
 .linkIcon {
-  width: 24px;         /* アイコンの横幅 */
-  height: 24px;        /* アイコンの縦幅 */
+  width: 32px;         /* アイコンの横幅 */
+  height: 32px;        /* アイコンの縦幅 */
   object-fit: cover;   /* 余白をカバーしてアイコン部分を拡大表示 */
   object-position: center; /* 中央を基準にトリミング */
   display: inline-block;
