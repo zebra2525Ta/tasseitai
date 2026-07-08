@@ -26,7 +26,9 @@ export const authOptions: AuthOptions = {
       },
 
       token: {
-        async request({ params }) {
+        async request({ params, provider }) {
+          // NEXTAUTH_URLが実際のアクセス先ドメインとズレていても、認可時にNextAuthが
+          // 実際に使ったcallbackUrlをそのまま使うことで redirect_uri の不一致を防ぐ
           const response = await fetch(
             "https://api.notion.com/v1/oauth/token",
             {
@@ -42,7 +44,7 @@ export const authOptions: AuthOptions = {
               body: JSON.stringify({
                 grant_type: "authorization_code",
                 code: params.code,
-                redirect_uri: `${process.env.NEXTAUTH_URL}/api/auth/callback/notion`,
+                redirect_uri: provider.callbackUrl,
               }),
             }
           );
