@@ -238,6 +238,29 @@
   gap: 8px;
   cursor: pointer;
 }
+.todoLabel input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #e5c158;
+  border-radius: 3px;
+  cursor: pointer;
+  background-color: transparent;
+  transition: all 0.2s ease;
+}
+.todoLabel input[type="checkbox"]:checked {
+  background-color: #e5c158;
+  border-color: #e5c158;
+}
+.todoLabel input[type="checkbox"]:checked::after {
+  content: '✓';
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3b3a4e;
+  font-weight: bold;
+}
 .todoMoreBtn {
   background: none;
   border: none;
