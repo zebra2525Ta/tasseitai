@@ -3,16 +3,27 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import styles from './home.module.css';
+import {
+  SunnyIcon,
+  CloudyIcon,
+  RainyIcon,
+  SnowIcon,
+  ThunderstormIcon,
+  MistIcon,
+  WindIcon,
+  DropIcon,
+  SettingsIcon,
+} from './components/icons';
 
 const decodeWeather = (code: number) => {
-  if (code === 0) return { text: '快晴' };
-  if ([1, 2, 3].includes(code)) return { text: '晴れ/曇' };
-  if ([45, 48].includes(code)) return { text: '霧' };
-  if ([51, 53, 55, 56, 57].includes(code)) return { text: '小雨' };
-  if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return { text: '雨' };
-  if ([71, 73, 75, 77, 85, 86].includes(code)) return { text: '雪' };
-  if ([95, 96, 99].includes(code)) return { text: '雷雨' };
-  return { text: '不明' };
+  if (code === 0) return { text: '快晴', icon: SunnyIcon };
+  if ([1, 2, 3].includes(code)) return { text: '晴れ/曇', icon: CloudyIcon };
+  if ([45, 48].includes(code)) return { text: '霧', icon: MistIcon };
+  if ([51, 53, 55, 56, 57].includes(code)) return { text: '小雨', icon: RainyIcon };
+  if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return { text: '雨', icon: RainyIcon };
+  if ([71, 73, 75, 77, 85, 86].includes(code)) return { text: '雪', icon: SnowIcon };
+  if ([95, 96, 99].includes(code)) return { text: '雷雨', icon: ThunderstormIcon };
+  return { text: '不明', icon: CloudyIcon };
 };
 
 // 経過時間を計算する関数
@@ -43,13 +54,15 @@ const CATEGORY_NAMES: { [key: string]: string } = {
 export default function HomePage() {
   const [isMounted, setIsMounted] = useState(false);
 
-  const [weather, setWeather] = useState({
+  const [weather, setWeather] = useState<any>({
     text: '読み込み中...',
+    icon: CloudyIcon,
     temp: '--',
     windSpeed: '--',
     pop: '--',
     tomorrow: {
       text: '',
+      icon: CloudyIcon,
       temp: '--',
       pop: '--'
     }
@@ -111,11 +124,13 @@ export default function HomePage() {
 
             setWeather({
               text: currentDecoded.text,
+              icon: currentDecoded.icon,
               temp: `${Math.round(data.current.temperature_2m)}°C`,
               windSpeed: `${data.current.wind_speed_10m} m/s`,
               pop: `${currentPop}%`,
               tomorrow: {
                 text: tomorrowDecoded.text,
+                icon: tomorrowDecoded.icon,
                 temp: `${Math.round(tomorrowMaxTemp)}°C`,
                 pop: `${tomorrowPop}%`
               }
@@ -124,10 +139,11 @@ export default function HomePage() {
         })
         .catch(() => setWeather({
           text: 'エラー',
+          icon: CloudyIcon,
           temp: '--',
           windSpeed: '--',
           pop: '--',
-          tomorrow: { text: 'エラー', temp: '--', pop: '--' }
+          tomorrow: { text: 'エラー', icon: CloudyIcon, temp: '--', pop: '--' }
         }));
 
       // --- ニュースAPIの取得 ---
@@ -340,7 +356,9 @@ export default function HomePage() {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <Link href="/settings" className={styles.iconBtn}>⚙</Link>
+        <Link href="/settings" className={styles.iconBtn} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px' }}>
+          <SettingsIcon size={20} />
+        </Link>
       </div>
 
       {/* モックアップ用の2カラム全体グリッド */}
@@ -361,20 +379,40 @@ export default function HomePage() {
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
               <div>
                 <p className={styles.cardTitle}>Weather ({currentRegionName})</p>
-                <p className={styles.weatherInfo}>{weather.text}</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '6px 0' }}>
+                  <div style={{ width: '28px', height: '28px', color: '#e5c158' }}>
+                    <weather.icon size={28} />
+                  </div>
+                  <p className={styles.weatherInfo}>{weather.text}</p>
+                </div>
                 <p className={styles.weatherDetail} style={{ fontSize: '1rem', fontWeight: 'bold', margin: '2px 0 6px 0' }}>{weather.temp}</p>
               </div>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '4px', paddingBottom: '4px' }}>
-                <p className={styles.weatherDetail}>降水確率: {weather.pop}</p>
-                <p className={styles.weatherDetail}>風速: {weather.windSpeed}</p>
+                <p className={styles.weatherDetail} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ width: '16px', height: '16px', display: 'flex', alignItems: 'center' }}>
+                    <DropIcon size={16} />
+                  </span>
+                  降水確率: {weather.pop}
+                </p>
+                <p className={styles.weatherDetail} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ width: '16px', height: '16px', display: 'flex', alignItems: 'center' }}>
+                    <WindIcon size={16} />
+                  </span>
+                  風速: {weather.windSpeed}
+                </p>
               </div>
 
               {weather.tomorrow.text && (
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '6px', marginTop: '2px' }}>
                   <p className={styles.weatherDetail} style={{ opacity: 0.6, fontSize: '0.65rem', marginBottom: '2px' }}>明日の予報</p>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.8rem' }}>
-                    <span>{weather.tomorrow.text}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <div style={{ width: '20px', height: '20px' }}>
+                        <weather.tomorrow.icon size={20} />
+                      </div>
+                      <span>{weather.tomorrow.text}</span>
+                    </div>
                     <span>{weather.tomorrow.temp} ({weather.tomorrow.pop})</span>
                   </div>
                 </div>
