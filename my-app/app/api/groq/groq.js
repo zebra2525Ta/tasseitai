@@ -180,6 +180,75 @@ function extractOptionFromText(text, options) {
   return options.find((option) => text.includes(option)) || null;
 }
 
+// 「0820～0824」「8/20〜8/24」のような日付の範囲を読み取る。範囲が無ければnullを返す
+function extractDateRangeFromText(text) {
+  const normalized = normalizeFullWidthDigits(text);
+
+  // 8/20〜8/24 や 8月20日〜8月24日 のような表記
+  let match = normalized.match(/(\d{1,2})[\/月](\d{1,2})日?\s*[~〜～\-−]\s*(?:(\d{1,2})[\/月])?(\d{1,2})日?/);
+  if (match) {
+    const startMonth = parseInt(match[1], 10);
+    const startDay = parseInt(match[2], 10);
+    const endMonth = match[3] ? parseInt(match[3], 10) : startMonth;
+    const endDay = parseInt(match[4], 10);
+    return { startMonth, startDay, endMonth, endDay, matchedText: match[0] };
+  }
+
+  // 0820〜0824 のような MMDD〜MMDD
+  match = normalized.match(/(\d{2})(\d{2})\s*[~〜～\-−]\s*(\d{2})(\d{2})/);
+  if (match) {
+    const startMonth = parseInt(match[1], 10);
+    const startDay = parseInt(match[2], 10);
+    const endMonth = parseInt(match[3], 10);
+    const endDay = parseInt(match[4], 10);
+    if (
+      startMonth >= 1 && startMonth <= 12 && startDay >= 1 && startDay <= 31 &&
+      endMonth >= 1 && endMonth <= 12 && endDay >= 1 && endDay <= 31
+    ) {
+      return { startMonth, startDay, endMonth, endDay, matchedText: match[0] };
+    }
+  }
+
+  return null;
+}
+
+// 範囲の開始日〜終了日までの日付（YYYY-MM-DD）を1日ずつ列挙する
+function buildDateRangeList(range) {
+  const currentYear = new Date().getFullYear();
+  const start = new Date(currentYear, range.startMonth - 1, range.startDay);
+  const end = new Date(currentYear, range.endMonth - 1, range.endDay);
+
+  const dates = [];
+  const cursor = new Date(start);
+  while (cursor <= end) {
+    const y = cursor.getFullYear();
+    const mo = String(cursor.getMonth() + 1).padStart(2, "0");
+    const d = String(cursor.getDate()).padStart(2, "0");
+    dates.push(`${y}-${mo}-${d}`);
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return dates;
+}
+
+// タイトル抽出（範囲登録用の簡易版）：日付範囲・登録動詞・トピックキーワードを取り除いた残り
+function extractTitleExcluding(text, matchedText) {
+  let title = matchedText ? text.replace(matchedText, "") : text;
+  for (const t of NOTION_TOPICS) {
+    for (const keyword of t.keywords) {
+      title = title.replaceAll(keyword, "");
+    }
+  }
+  for (const verb of REGISTER_VERBS) {
+    title = title.replaceAll(verb, "");
+  }
+  title = title
+    .replace(/notion/gi, "")
+    .replaceAll("リスト", "")
+    .replace(/(まで|して|ください|お願い|に|へ|を|で|、|。|\s)+/g, " ")
+    .trim();
+  return title;
+}
+
 // メッセージからタイトルと各フィールドの値を抽出する。読み取れない項目は既定値で自動補完する。
 function extractFieldsFromMessage(topicId, rawText) {
   const schema = TOPIC_REGISTRATION_SCHEMAS[topicId];
@@ -273,6 +342,31 @@ export function buildRegistrationPreview(topicId, text) {
     return { item: null, message: "このトピックへの登録にはまだ対応していません。" };
   }
 
+  // スケジュールは「0820〜0824」のような複数日の範囲指定に対応する。
+  // 範囲があれば、各日を0:00〜23:58の終日予定として1件ずつまとめて登録する。
+  if (topicId === "schedule") {
+    const range = extractDateRangeFromText(text);
+    if (range) {
+      const topic = NOTION_TOPICS.find((t) => t.id === topicId);
+      const title = extractTitleExcluding(normalizeFullWidthDigits(text), range.matchedText);
+      if (!title) {
+        return {
+          item: null,
+          message: `何を${topic.label}に登録すればいいか読み取れませんでした。名前を教えてください。`,
+        };
+      }
+
+      const dates = buildDateRangeList(range);
+      const firstDate = dates[0];
+      const lastDate = dates[dates.length - 1];
+
+      return {
+        item: { topicId, title, multiDates: dates },
+        message: `スケジュールに「${title}」を${firstDate}〜${lastDate}の${dates.length}日間、各日0:00〜23:58で登録するね。これで合ってる？`,
+      };
+    }
+  }
+
   const { topic, title, values } = extractFieldsFromMessage(topicId, text);
   if (!title) {
     return {
@@ -290,11 +384,38 @@ export function buildRegistrationPreview(topicId, text) {
   };
 }
 
+// 複数日の範囲（multiDates）が指定されている場合、各日を0:00〜23:58の終日予定として1件ずつ登録する
+async function commitMultiDayRegistration(notionApiKey, title, dates) {
+  const topic = NOTION_TOPICS.find((t) => t.id === "schedule");
+
+  for (const date of dates) {
+    await createDatabasePage(notionApiKey, topic.databaseId, {
+      予定: { title: [{ text: { content: title } }] },
+      日時: { date: { start: `${date}T00:00:00+09:00`, end: `${date}T23:58:00+09:00` } },
+    });
+  }
+
+  return `スケジュールに「${title}」を${dates[0]}〜${dates[dates.length - 1]}の${dates.length}日間、各日0:00〜23:58で登録しといたよ。旅行や連休の予定は事前に準備しておくと安心だね！`;
+}
+
 // 確認が取れた後に、実際にNotionへ1件書き込む
 export async function commitRegistration(item) {
   const notionApiKey = process.env.NOTION_API_KEY;
   if (!notionApiKey) {
     return "NOTION_API_KEYが設定されていないため、登録できませんでした。";
+  }
+
+  if (Array.isArray(item?.multiDates) && item.multiDates.length > 0) {
+    const title = typeof item?.title === "string" ? item.title.trim() : "";
+    if (!title) {
+      return "登録内容が読み取れませんでした。もう一度お願いします。";
+    }
+    try {
+      return await commitMultiDayRegistration(notionApiKey, title, item.multiDates);
+    } catch (error) {
+      console.error("Notion登録エラー:", error.message);
+      return "スケジュールへの登録に失敗しました。もう一度試してみてください。";
+    }
   }
 
   const schema = TOPIC_REGISTRATION_SCHEMAS[item?.topicId];

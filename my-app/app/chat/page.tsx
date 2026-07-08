@@ -11,7 +11,12 @@ type ChatMessage = {
   image?: string; // 送信された画像のURLを保持する用
 };
 
-type PendingItem = { topicId: string; title: string; values: Record<string, unknown> };
+type PendingItem = {
+  topicId: string;
+  title: string;
+  values?: Record<string, unknown>;
+  multiDates?: string[];
+};
 type TopicChoice = { id: string; label: string };
 
 export default function ChatPage() {
