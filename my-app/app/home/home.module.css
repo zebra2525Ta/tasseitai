@@ -244,11 +244,14 @@
 .newsCard {
   composes: card;
   min-height: 240px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 .newsList {
   list-style: none;
   padding: 0;
-  margin: 12px 0 0 0;
+  margin: 0;
   display: flex;
   flex-direction: column;
   gap: 14px;
