@@ -475,6 +475,7 @@ export default function HomePage() {
                 <span>GitHub</span>
               </a>
               <a href="https://weathernews.jp/" target="_blank" rel="noopener noreferrer" className={styles.quickLinkItem}>
+                <img src="https://cdn.simpleicons.org/cloudsnow/ffffff" alt="Weather News" className={styles.linkIcon} />
                 <span>ウェザーニュース</span>
               </a>
               <a href="https://news.google.com" target="_blank" rel="noopener noreferrer" className={styles.quickLinkItem}>
