@@ -227,7 +227,7 @@ export default function HomePage() {
         setProjectActivities([{ name: '設定不完全', action: '「ユーザー名/リポジトリ名」の形で正しく入力してください', time: '--', status: 'offline' }]);
       }
 
-      // Notion「スケジュール」データベースから予定を取得（今日〜二日後の3日間）
+      // Notion「スケジュール」データベースから予定を取得（今日〜明日の2日間）
       const SCHEDULE_DATABASE_ID = '38fa15fd-a3c1-80fa-a200-d99ac64b3409';
       const WEEKDAY_NAMES = ['日', '月', '火', '水', '木', '金', '土'];
       const formatHHMM = (date: Date) =>
@@ -235,7 +235,7 @@ export default function HomePage() {
 
       const scheduleWindowStart = new Date();
       scheduleWindowStart.setHours(0, 0, 0, 0);
-      const scheduleWindowEnd = new Date(scheduleWindowStart.getTime() + 3 * 24 * 60 * 60 * 1000);
+      const scheduleWindowEnd = new Date(scheduleWindowStart.getTime() + 2 * 24 * 60 * 60 * 1000);
       scheduleWindowEnd.setHours(23, 59, 59, 999);
       const scheduleWindowMs = scheduleWindowEnd.getTime() - scheduleWindowStart.getTime();
 
@@ -244,7 +244,7 @@ export default function HomePage() {
         `${scheduleWindowStart.getMonth() + 1}月${scheduleWindowStart.getDate()}日（${WEEKDAY_NAMES[scheduleWindowStart.getDay()]}）〜 ${endDate.getMonth() + 1}月${endDate.getDate()}日（${WEEKDAY_NAMES[endDate.getDay()]}）`
       );
       setScheduleTimeMarkers(
-        [0, 24, 48].map((hourOffset) =>
+        [0, 12, 24].map((hourOffset) =>
           formatHHMM(new Date(scheduleWindowStart.getTime() + hourOffset * 60 * 60 * 1000))
         )
       );
