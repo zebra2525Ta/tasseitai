@@ -44,7 +44,6 @@
 
 /* スマホ時の表示順（数字が小さい順に上から並びます） */
 .aiChatFullCard   { order: 1; } /* 1. Noir（左カラム） */
-.quickLinkCard    { order: 2; } /* 2. Quick link */
 .scheduleCard     { order: 3; } /* 3. Schedule */
 .todoCard         { order: 4; } /* 4. ToDo */
 .weatherCard      { order: 5; } /* 5. Weather（左カラム） */
@@ -115,64 +114,6 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-}
-
-/* クイックリンク全体のカード */
-.quickLinkCard {
-  composes: card;
-  display: flex;
-  align-items: center;
-  gap: 16px; /* 「クイックリンク」の文字とアイテムの間の隙間 */
-  padding: 8px 12px;
-}
-/* 「クイックリンク」の見出し文字 */
-.quickLinkTitle {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #e5c158;
-  white-space: nowrap; /* 画面が狭くなっても改行させない */
-}
-
-/* リンクをまとめるコンテナ */
-.quickLinkItems {
-  display: flex;
-  flex-wrap: wrap; /* スマホなど画面が狭いときは自動で折り返す */
-  gap: 12px;       /* リンク同士の間隔 */
-  align-items: center;
-}
-
-/* 個々のリンクボタン */
-.quickLinkItem {
-  display: flex;
-  align-items: center;
-  gap: 4px; /* アイコンと文字の間の隙間 */
-  color: #ffffff;
-  text-decoration: none;
-  font-size: 0.9rem;
-  padding: 0;
-  border-radius: 4px;
-  transition: background-color 0.2s ease, opacity 0.2s ease;
-}
-
-.quickLinkItem span {
-  display: none;
-}
-
-/* マウスを載せたとき（ホバー時）の演出 */
-.quickLinkItem:hover {
-  background-color: rgba(255, 255, 255, 0.1); /* ほんのり背景を明るく */
-  opacity: 0.9;
-}
-
-/* アイコン（公式ロゴ画像）のサイズと調整 */
-.linkIcon {
-  width: 32px;         /* アイコンの横幅 */
-  height: 32px;        /* アイコンの縦幅 */
-  object-fit: cover;   /* 余白をカバーしてアイコン部分を拡大表示 */
-  object-position: center; /* 中央を基準にトリミング */
-  display: inline-block;
-  vertical-align: middle;
-  flex-shrink: 0;
 }
 
 /* スケジュール */
@@ -362,7 +303,6 @@
 
   /* PC時はスマホ用の並び順(order)をすべて解除 */
   .aiChatFullCard,
-  .quickLinkCard,
   .scheduleCard,
   .todoCard,
   .weatherCard,

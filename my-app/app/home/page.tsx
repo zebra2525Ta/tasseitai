@@ -473,29 +473,6 @@ export default function HomePage() {
         {/* 右カラム（Quick link、スケジュールエリア、ニュース） */}
         <div className={styles.rightColumn}>
           
-          {/* Quick link */}
-          <div className={styles.quickLinkCard}>
-            <a
-              href="https://www.notion.so"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.quickLinkTitle}
-              style={{ textDecoration: 'none', color: '#e5c158', cursor: 'pointer', display: 'inline-block' }}
-            >
-              Quick link
-            </a>
-            <div className={styles.quickLinkItems}>
-              <a href="https://www.notion.so" target="_blank" rel="noopener noreferrer" className={styles.quickLinkItem}>
-                <img src="/icon/notion.webp" alt="Notion" className={styles.linkIcon} />
-                <span>Notion</span>
-              </a>
-              <a href="https://calendar.notion.so" target="_blank" rel="noopener noreferrer" className={styles.quickLinkItem}>
-                <img src="/icon/calander.webp" alt="Notion Calendar" className={styles.linkIcon} />
-                <span>Notionカレンダー</span>
-              </a>
-            </div>
-          </div>
-
           {/* スケジュールとToDoを横に並べる中間グリッド */}
           <div className={styles.scheduleTodoGrid}>
             
