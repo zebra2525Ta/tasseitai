@@ -164,7 +164,8 @@
 .linkIcon {
   width: 24px;         /* アイコンの横幅 */
   height: 24px;        /* アイコンの縦幅 */
-  object-fit: contain; /* 画像が歪まないように収める */
+  object-fit: cover;   /* 余白をカバーしてアイコン部分を拡大表示 */
+  object-position: center; /* 中央を基準にトリミング */
   display: inline-block;
   vertical-align: middle;
   flex-shrink: 0;
