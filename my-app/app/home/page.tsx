@@ -227,21 +227,24 @@ export default function HomePage() {
         setProjectActivities([{ name: '設定不完全', action: '「ユーザー名/リポジトリ名」の形で正しく入力してください', time: '--', status: 'offline' }]);
       }
 
-      // Notion「スケジュール」データベースから予定を取得（現在時刻〜6時間後）
+      // Notion「スケジュール」データベースから予定を取得（今日〜二日後の3日間）
       const SCHEDULE_DATABASE_ID = '38fa15fd-a3c1-80fa-a200-d99ac64b3409';
       const WEEKDAY_NAMES = ['日', '月', '火', '水', '木', '金', '土'];
       const formatHHMM = (date: Date) =>
         `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 
       const scheduleWindowStart = new Date();
-      const scheduleWindowEnd = new Date(scheduleWindowStart.getTime() + 6 * 60 * 60 * 1000);
+      scheduleWindowStart.setHours(0, 0, 0, 0);
+      const scheduleWindowEnd = new Date(scheduleWindowStart.getTime() + 3 * 24 * 60 * 60 * 1000);
+      scheduleWindowEnd.setHours(23, 59, 59, 999);
       const scheduleWindowMs = scheduleWindowEnd.getTime() - scheduleWindowStart.getTime();
 
+      const endDate = new Date(scheduleWindowEnd);
       setScheduleDateLabel(
-        `${scheduleWindowStart.getMonth() + 1}月${scheduleWindowStart.getDate()}日（${WEEKDAY_NAMES[scheduleWindowStart.getDay()]}）`
+        `${scheduleWindowStart.getMonth() + 1}月${scheduleWindowStart.getDate()}日（${WEEKDAY_NAMES[scheduleWindowStart.getDay()]}）〜 ${endDate.getMonth() + 1}月${endDate.getDate()}日（${WEEKDAY_NAMES[endDate.getDay()]}）`
       );
       setScheduleTimeMarkers(
-        [0, 2, 4, 6].map((hourOffset) =>
+        [0, 24, 48].map((hourOffset) =>
           formatHHMM(new Date(scheduleWindowStart.getTime() + hourOffset * 60 * 60 * 1000))
         )
       );
