@@ -1,10 +1,33 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
   collectNotionPageInfo,
   queryNotionDatabase,
   searchNotionPages,
   filterNotionPagesByQuery,
+  getDatabaseSchema,
 } from "./notion";
+
+// データベースのプロパティ型を確認するための診断用エンドポイント
+// 例: GET /api/notion?databaseId=xxxxxxxx
+export async function GET(request: NextRequest) {
+  const databaseId = request.nextUrl.searchParams.get("databaseId");
+  const apiKey = process.env.NOTION_API_KEY;
+
+  if (!apiKey) {
+    return NextResponse.json({ error: "NOTION_API_KEY が設定されていません" }, { status: 400 });
+  }
+  if (!databaseId) {
+    return NextResponse.json({ error: "databaseId が必要です" }, { status: 400 });
+  }
+
+  try {
+    const schema = await getDatabaseSchema(apiKey, databaseId);
+    return NextResponse.json({ properties: schema.properties });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "不明なエラーです";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
 
 const defaultPageSize = 50;
 const defaultMaxPages = 3;

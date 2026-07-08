@@ -266,6 +266,21 @@ export async function createDatabasePage(apiKeyValue, databaseIdValue, propertie
   });
 }
 
+// データベースのスキーマ（プロパティの型定義）を取得する
+export async function getDatabaseSchema(apiKeyValue, databaseIdValue) {
+  const response = await fetch(`https://api.notion.com/v1/databases/${databaseIdValue}`, {
+    method: "GET",
+    headers: buildHeaders(apiKeyValue),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Notion API error: ${response.status} ${response.statusText} - ${errorText}`);
+  }
+
+  return response.json();
+}
+
 export async function queryNotionDatabase(
   apiKeyValue,
   databaseIdValue,
