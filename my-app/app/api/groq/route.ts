@@ -9,6 +9,7 @@ import {
   commitRegistration,
   NOTION_TOPICS,
 } from "./groq.js";
+import { resolveNotionApiKey } from "@/lib/notionAuth";
 
 export const runtime = "nodejs";
 
@@ -23,8 +24,8 @@ function handleRegisterAtTopic(topic: Topic, originalMessage: string) {
   return { content: preview.message, pendingItem: preview.item };
 }
 
-async function handleReadForTopics(topics: Topic[], message: string) {
-  const content = await generateTextFromNotionData(message, topics);
+async function handleReadForTopics(topics: Topic[], message: string, notionApiKey: string) {
+  const content = await generateTextFromNotionData(message, topics, notionApiKey);
   return { content };
 }
 
@@ -36,9 +37,14 @@ export async function POST(request: Request) {
     const forcedTopicId = typeof body?.topicId === "string" ? body.topicId : "";
     const originalMessage = typeof body?.originalMessage === "string" ? body.originalMessage.trim() : "";
 
+    const notionApiKey = await resolveNotionApiKey();
+
     // 登録内容の確認が取れている場合は、そのまま書き込みを実行する
     if (confirmRegistration && typeof confirmRegistration === "object") {
-      const content = await commitRegistration(confirmRegistration);
+      if (!notionApiKey) {
+        return NextResponse.json({ error: "Notionと連携されていません" }, { status: 401 });
+      }
+      const content = await commitRegistration(confirmRegistration, notionApiKey);
       return NextResponse.json({ content });
     }
 
@@ -48,9 +54,13 @@ export async function POST(request: Request) {
       if (!topic) {
         return NextResponse.json({ error: "不明なトピックです" }, { status: 400 });
       }
-      const result = hasRegisterIntent(originalMessage)
-        ? handleRegisterAtTopic(topic, originalMessage)
-        : await handleReadForTopics([topic], originalMessage);
+      if (hasRegisterIntent(originalMessage)) {
+        return NextResponse.json(handleRegisterAtTopic(topic, originalMessage));
+      }
+      if (!notionApiKey) {
+        return NextResponse.json({ error: "Notionと連携されていません" }, { status: 401 });
+      }
+      const result = await handleReadForTopics([topic], originalMessage, notionApiKey);
       return NextResponse.json(result);
     }
 
@@ -81,9 +91,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ content });
     }
 
-    const result = isRegister
-      ? handleRegisterAtTopic(matchedTopics[0], message)
-      : await handleReadForTopics(matchedTopics, message);
+    if (isRegister) {
+      return NextResponse.json(handleRegisterAtTopic(matchedTopics[0], message));
+    }
+    if (!notionApiKey) {
+      return NextResponse.json({ error: "Notionと連携されていません" }, { status: 401 });
+    }
+    const result = await handleReadForTopics(matchedTopics, message, notionApiKey);
     return NextResponse.json(result);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "不明なエラーです";

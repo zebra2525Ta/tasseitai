@@ -6,15 +6,16 @@ import {
   filterNotionPagesByQuery,
   getDatabaseSchema,
 } from "./notion";
+import { resolveNotionApiKey } from "@/lib/notionAuth";
 
 // データベースのプロパティ型を確認するための診断用エンドポイント
 // 例: GET /api/notion?databaseId=xxxxxxxx
 export async function GET(request: NextRequest) {
   const databaseId = request.nextUrl.searchParams.get("databaseId");
-  const apiKey = process.env.NOTION_API_KEY;
+  const apiKey = await resolveNotionApiKey();
 
   if (!apiKey) {
-    return NextResponse.json({ error: "NOTION_API_KEY が設定されていません" }, { status: 400 });
+    return NextResponse.json({ error: "Notionと連携されていません" }, { status: 401 });
   }
   if (!databaseId) {
     return NextResponse.json({ error: "databaseId が必要です" }, { status: 400 });
@@ -40,7 +41,7 @@ function normalizeNumber(value: unknown, fallback: number) {
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as any;
-    const apiKey = typeof body.apiKey === "string" ? body.apiKey.trim() : process.env.NOTION_API_KEY;
+    const apiKey = await resolveNotionApiKey();
     const databaseId = typeof body.databaseId === "string" ? body.databaseId.trim() : "";
     const query = typeof body.query === "string" ? body.query.trim() : "";
     const searchType = body.searchType === "search" ? "search" : "database";
@@ -51,7 +52,7 @@ export async function POST(request: Request) {
     const sorts = Array.isArray(body.sorts) ? (body.sorts as any) : undefined;
 
     if (!apiKey) {
-      return NextResponse.json({ error: "apiKey が必要です" }, { status: 400 });
+      return NextResponse.json({ error: "Notionと連携されていません" }, { status: 401 });
     }
 
     if (searchType === "database" && !databaseId) {
@@ -88,12 +89,12 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const body = (await request.json()) as any;
-    const apiKey = process.env.NOTION_API_KEY;
+    const apiKey = await resolveNotionApiKey();
     const pageId = typeof body.pageId === "string" ? body.pageId.trim() : "";
     const status = typeof body.status === "string" ? body.status.trim() : "";
 
     if (!apiKey) {
-      return NextResponse.json({ error: "NOTION_API_KEY が設定されていません" }, { status: 400 });
+      return NextResponse.json({ error: "Notionと連携されていません" }, { status: 401 });
     }
 
     if (!pageId) {

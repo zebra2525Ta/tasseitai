@@ -106,6 +106,9 @@ export default function HomePage() {
   const [todoLoading, setTodoLoading] = useState(true);
   const [todoError, setTodoError] = useState('');
 
+  // Notion未連携（401）の場合に案内バナーを出すためのフラグ
+  const [notionConnected, setNotionConnected] = useState(true);
+
   useEffect(() => {
     setIsMounted(true);
 
@@ -280,6 +283,10 @@ export default function HomePage() {
         }),
       })
         .then((res) => {
+          if (res.status === 401) {
+            setNotionConnected(false);
+            throw new Error('NOTION_UNAUTHORIZED');
+          }
           if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
           return res.json();
         })
@@ -329,7 +336,7 @@ export default function HomePage() {
         })
         .catch((err) => {
           console.error('Notionスケジュールの取得に失敗:', err);
-          setScheduleError('読み込みに失敗しました');
+          setScheduleError(err?.message === 'NOTION_UNAUTHORIZED' ? 'Notion連携が必要です' : '読み込みに失敗しました');
           setScheduleLoading(false);
         });
 
@@ -346,6 +353,10 @@ export default function HomePage() {
         }),
       })
         .then((res) => {
+          if (res.status === 401) {
+            setNotionConnected(false);
+            throw new Error('NOTION_UNAUTHORIZED');
+          }
           if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
           return res.json();
         })
@@ -378,7 +389,7 @@ export default function HomePage() {
         })
         .catch((err) => {
           console.error('Notionタスクの取得に失敗:', err);
-          setTodoError('読み込みに失敗しました');
+          setTodoError(err?.message === 'NOTION_UNAUTHORIZED' ? 'Notion連携が必要です' : '読み込みに失敗しました');
           setTodoLoading(false);
         });
     }, 0); // 0秒ディレイで画面描画の直後に実行
@@ -418,6 +429,15 @@ export default function HomePage() {
           <SettingsIcon size={20} color="#a9a9a9" />
         </Link>
       </div>
+
+      {!notionConnected && (
+        <div className={styles.notionGateCard}>
+          <p>Notionと連携すると、スケジュールやToDo、チャットからの登録が使えるようになります。</p>
+          <Link href="/login" className={styles.notificationBannerBtn}>
+            Notionと連携する
+          </Link>
+        </div>
+      )}
 
       {/* モックアップ用の2カラム全体グリッド */}
       <div className={styles.mainGrid}>

@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import styles from "./chat.module.css";
 
 // 1. データ構造に image プロパティ（任意）を追加
@@ -30,6 +31,8 @@ export default function ChatPage() {
   // どのトピック（データベース）の話か曖昧なときに、選択肢とその元メッセージを保持する
   const [topicChoices, setTopicChoices] = useState<TopicChoice[]>([]);
   const [pendingOriginalMessage, setPendingOriginalMessage] = useState("");
+  // Notion未連携（401）だったときに案内バナーを出すためのフラグ
+  const [notionAuthRequired, setNotionAuthRequired] = useState(false);
 
   const handlePlusClick = () => {
     fileInputRef.current?.click();
@@ -76,10 +79,14 @@ export default function ChatPage() {
       });
 
       const data = await response.json();
+      if (response.status === 401) {
+        setNotionAuthRequired(true);
+      }
       if (!response.ok) {
         throw new Error(data?.error || "API request failed");
       }
 
+      setNotionAuthRequired(false);
       applyServerResponse(data);
     } catch (error) {
       console.error("チャット送信エラー:", error);
@@ -121,10 +128,14 @@ export default function ChatPage() {
       });
 
       const data = await response.json();
+      if (response.status === 401) {
+        setNotionAuthRequired(true);
+      }
       if (!response.ok) {
         throw new Error(data?.error || "API request failed");
       }
 
+      setNotionAuthRequired(false);
       applyServerResponse(data);
     } catch (error) {
       console.error("トピック選択エラー:", error);
@@ -155,10 +166,14 @@ export default function ChatPage() {
       });
 
       const data = await response.json();
+      if (response.status === 401) {
+        setNotionAuthRequired(true);
+      }
       if (!response.ok) {
         throw new Error(data?.error || "API request failed");
       }
 
+      setNotionAuthRequired(false);
       applyServerResponse(data);
     } catch (error) {
       console.error("登録確定エラー:", error);
@@ -174,6 +189,15 @@ export default function ChatPage() {
           ←
         </button>
       </div>
+
+      {notionAuthRequired && (
+        <div className={styles.notionAuthBanner}>
+          <span>Notionと連携すると、スケジュールやToDoの参照・登録ができるようになります。</span>
+          <Link href="/login" className={styles.notionAuthBtn}>
+            Notionと連携する
+          </Link>
+        </div>
+      )}
 
       {/* チャット履歴エリア */}
       <div className={styles.chatArea}>

@@ -441,10 +441,9 @@ async function commitMultiDayRegistration(notionApiKey, title, dates) {
 }
 
 // 確認が取れた後に、実際にNotionへ1件書き込む
-export async function commitRegistration(item) {
-  const notionApiKey = process.env.NOTION_API_KEY;
+export async function commitRegistration(item, notionApiKey) {
   if (!notionApiKey) {
-    return "NOTION_API_KEYが設定されていないため、登録できませんでした。";
+    return "Notionと連携されていないため、登録できませんでした。";
   }
 
   if (Array.isArray(item?.multiDates) && item.multiDates.length > 0) {
@@ -513,10 +512,9 @@ export async function commitRegistration(item) {
 }
 
 // 特定のデータベース1つだけを取得する
-async function fetchTopicData(topic) {
-  const notionApiKey = process.env.NOTION_API_KEY;
+async function fetchTopicData(topic, notionApiKey) {
   if (!notionApiKey) {
-    console.error("Notionデータ取得エラー: NOTION_API_KEY が設定されていません");
+    console.error("Notionデータ取得エラー: Notionと連携されていません");
     return [];
   }
 
@@ -530,10 +528,9 @@ async function fetchTopicData(topic) {
 }
 
 // 話題が特定できない場合のフォールバック：ワークスペース全体から取得する
-async function fetchWorkspaceData() {
-  const notionApiKey = process.env.NOTION_API_KEY;
+async function fetchWorkspaceData(notionApiKey) {
   if (!notionApiKey) {
-    console.error("Notionデータ取得エラー: NOTION_API_KEY が設定されていません");
+    console.error("Notionデータ取得エラー: Notionと連携されていません");
     return [];
   }
 
@@ -644,7 +641,7 @@ export async function generateText(promptText) {
     : "";
 }
 
-async function buildNotionPrompt(question, forcedTopics) {
+async function buildNotionPrompt(question, forcedTopics, notionApiKey) {
   const questionText = typeof question === "string" ? question.trim() : "";
   if (!questionText) {
     throw new Error("質問文が必要です");
@@ -659,14 +656,14 @@ async function buildNotionPrompt(question, forcedTopics) {
     // 話題ごとにデータベースを絞り込んで取得し、無関係なデータを混ぜない
     const sections = await Promise.all(
       matchedTopics.map(async (topic) => {
-        const results = await fetchTopicData(topic);
+        const results = await fetchTopicData(topic, notionApiKey);
         return formatNotionResultsForPrompt(results, topic.label);
       })
     );
     propertiesText = sections.filter(Boolean).join("\n\n");
   } else {
     // 話題を特定できない場合はワークスペース全体から探す
-    const results = await fetchWorkspaceData();
+    const results = await fetchWorkspaceData(notionApiKey);
     propertiesText = formatNotionResultsForPrompt(results);
   }
 
@@ -686,7 +683,7 @@ async function buildNotionPrompt(question, forcedTopics) {
 
 export { buildNotionPrompt };
 
-export async function generateTextFromNotionData(question, forcedTopics) {
-  const promptText = await buildNotionPrompt(question, forcedTopics);
+export async function generateTextFromNotionData(question, forcedTopics, notionApiKey) {
+  const promptText = await buildNotionPrompt(question, forcedTopics, notionApiKey);
   return generateText(promptText);
 }
