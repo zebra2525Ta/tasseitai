@@ -550,11 +550,11 @@ export default function HomePage() {
                 <>
                   <div className={styles.todoList}>
                     {todoTasks.slice(0, 5).map((task) => (
-                      <div key={task.id} className={styles.todoLabel} style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'space-between' }}>
-                        <span className={task.done ? styles.completed : ''} style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1 }}>
-                          <span>{task.name}</span>
+                      <div key={task.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'space-between', width: '100%' }}>
+                        <span className={task.done ? styles.completed : ''} style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, minWidth: 0 }}>
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{task.name}</span>
                           {task.overdue && (
-                            <span style={{ width: '16px', height: '16px', display: 'flex', alignItems: 'center' }}>
+                            <span style={{ width: '16px', height: '16px', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
                               <AlertIcon size={16} color="#ff6b6b" />
                             </span>
                           )}
@@ -583,7 +583,7 @@ export default function HomePage() {
                             }
                           }}
                           style={{
-                            padding: '4px 8px',
+                            padding: '6px 10px',
                             borderRadius: '4px',
                             border: '1px solid #e5c158',
                             backgroundColor: 'rgba(51, 65, 85, 0.8)',
@@ -591,6 +591,8 @@ export default function HomePage() {
                             cursor: 'pointer',
                             fontSize: '0.85rem',
                             fontFamily: 'inherit',
+                            minWidth: '120px',
+                            flexShrink: 0,
                           }}
                         >
                           <option value="">状態を選択</option>
