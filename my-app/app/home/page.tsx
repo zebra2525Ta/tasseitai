@@ -392,7 +392,15 @@ export default function HomePage() {
           <div className={`${styles.card} ${styles.weatherCard}`}>
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
               <div>
-                <p className={styles.cardTitle}>Weather ({currentRegionName})</p>
+                <a
+                  href="https://weathernews.jp/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.cardTitle}
+                  style={{ textDecoration: 'none', color: '#e5c158', cursor: 'pointer', display: 'inline-block' }}
+                >
+                  Weather ({currentRegionName})
+                </a>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '6px 0' }}>
                   <div style={{ width: '28px', height: '28px' }}>
                     <weather.icon size={28} color="#e5c158" />
@@ -436,7 +444,15 @@ export default function HomePage() {
 
           {/* GitHubプロジェクトアクティビティ */}
           <div className={styles.githubFullCard}>
-            <p className={styles.githubTitle}>GitHub ({currentRepoName})</p>
+            <a
+              href="https://github.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.githubTitle}
+              style={{ textDecoration: 'none', color: '#e5c158', cursor: 'pointer', display: 'inline-block' }}
+            >
+              GitHub ({currentRepoName})
+            </a>
             <p className={styles.githubSub}>last activity</p>
             <p className={styles.githubSub}>Member</p>
             <div className={styles.memberList}>
@@ -631,7 +647,15 @@ export default function HomePage() {
 
           {/* ニュース */}
           <div className={styles.newsCard}>
-            <p className={styles.cardTitle} style={{ fontSize: '1rem', opacity: 1 }}>News</p>
+            <a
+              href="https://news.google.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.cardTitle}
+              style={{ fontSize: '1rem', opacity: 1, textDecoration: 'none', color: '#e5c158', cursor: 'pointer', display: 'inline-block' }}
+            >
+              News
+            </a>
             <ul className={styles.newsList}>
               {newsArticles.map((article, index) => (
                 <li key={index} className={styles.newsItem}>
