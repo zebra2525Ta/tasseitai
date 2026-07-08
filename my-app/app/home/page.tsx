@@ -502,7 +502,7 @@ export default function HomePage() {
             {/* スケジュール（Notionの「スケジュール」データベースから現在時刻から24時間の予定を取得） */}
             <div className={styles.scheduleCard}>
               <a
-                href="https://notion.so/38fa15fda3c180faa200d99ac64b3409"
+                href="https://calendar.notion.so"
                 target="_blank"
                 rel="noopener noreferrer"
                 className={styles.scheduleTitle}
