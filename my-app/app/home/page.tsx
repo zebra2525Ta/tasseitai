@@ -55,6 +55,8 @@ const CATEGORY_NAMES: { [key: string]: string } = {
 
 export default function HomePage() {
   const [isMounted, setIsMounted] = useState(false);
+  // 通知許可がまだ「default」（未決定）のときだけ、有効化を促すバナーを出す
+  const [showNotificationBanner, setShowNotificationBanner] = useState(false);
 
   const [weather, setWeather] = useState<any>({
     text: '読み込み中...',
@@ -104,10 +106,18 @@ export default function HomePage() {
   useEffect(() => {
     setIsMounted(true);
 
-    // 初回アクセス時に通知の許可・購読を自動で行う（許可済み/購読済みなら何もしない）
-    autoSubscribeToPush().catch((error) => {
-      console.error('プッシュ通知の自動購読に失敗:', error);
-    });
+    // 通知許可がまだ未決定（default）の場合、ブラウザはユーザー操作なしの
+    // 許可リクエストを表示しないことが多いため、バナーを出してボタン経由で許可してもらう。
+    // 既に許可済みなら、購読とサーバー保存だけを自動で行う（こちらは操作不要で実行可能）。
+    if (typeof Notification !== 'undefined') {
+      if (Notification.permission === 'default') {
+        setShowNotificationBanner(true);
+      } else if (Notification.permission === 'granted') {
+        autoSubscribeToPush().catch((error) => {
+          console.error('プッシュ通知の自動購読に失敗:', error);
+        });
+      }
+    }
 
     setTimeout(() => {
       // --- 天気APIの取得 ---
@@ -370,12 +380,29 @@ export default function HomePage() {
 
   }, []);
 
+  // バナーの「通知を有効にする」ボタン用：ユーザー操作をきっかけに許可・購読・サーバー保存を行う
+  const handleEnableNotifications = async () => {
+    const result = await autoSubscribeToPush();
+    if (result.status !== 'unsupported') {
+      // granted/denied/error いずれの場合も、これ以上バナーで聞く必要は無い
+      setShowNotificationBanner(false);
+    }
+  };
+
   if (!isMounted) {
-    return <div className={styles.container} style={{ background: '#3b3a4e' }}></div>; 
+    return <div className={styles.container} style={{ background: '#3b3a4e' }}></div>;
   }
 
   return (
     <div className={styles.container}>
+      {showNotificationBanner && (
+        <div className={styles.notificationBanner}>
+          <span>通知を有効にすると、予定やタスクのリマインドが届くようになります</span>
+          <button type="button" onClick={handleEnableNotifications} className={styles.notificationBannerBtn}>
+            通知を有効にする
+          </button>
+        </div>
+      )}
       <div className={styles.header}>
         <Link href="/settings" className={styles.iconBtn} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px' }}>
           <SettingsIcon size={20} color="#a9a9a9" />

@@ -21,6 +21,37 @@
   padding-bottom: 8px;
 }
 
+/* 通知有効化バナー */
+.notificationBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  background-color: rgba(229, 193, 88, 0.15);
+  border: 1px solid rgba(229, 193, 88, 0.4);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  font-size: 0.85rem;
+}
+
+.notificationBannerBtn {
+  background-color: #e5c158;
+  color: #3b3a4e;
+  border: none;
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.notificationBannerBtn:hover {
+  opacity: 0.9;
+}
+
 .iconBtn {
   background: none;
   border: none;
