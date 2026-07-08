@@ -489,7 +489,15 @@ export default function HomePage() {
             
             {/* スケジュール（Notionの「スケジュール」データベースから現在時刻から24時間の予定を取得） */}
             <div className={styles.scheduleCard}>
-              <p className={styles.scheduleTitle}>Schedule</p>
+              <a
+                href="https://notion.so/38fa15fda3c180faa200d99ac64b3409"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.scheduleTitle}
+                style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer', display: 'inline-block' }}
+              >
+                Schedule
+              </a>
               <p className={styles.scheduleDate}>{scheduleDateLabel}</p>
 
               <div className={styles.timelineContainer}>
@@ -542,7 +550,15 @@ export default function HomePage() {
 
             {/* ToDo（Notionの「進捗管理」データベースから取得） */}
             <div className={styles.todoCard}>
-              <p className={styles.todoTitle}>ToDo</p>
+              <a
+                href="https://notion.so/38fa15fda3c180bd98d9ddcfe8406a93"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.todoTitle}
+                style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer', display: 'inline-block' }}
+              >
+                ToDo
+              </a>
               {todoLoading ? (
                 <p className={styles.notionStatus}>読み込み中...</p>
               ) : todoError ? (
