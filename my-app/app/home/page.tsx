@@ -339,6 +339,7 @@ export default function HomePage() {
                 id: item.id,
                 name: item.properties?.['タスク名'] || item.title || '無題',
                 done: statusName === '完了',
+                status: statusName,
                 overdue: Boolean(item.properties?.['期限超過']),
                 dueDate,
               };
@@ -549,13 +550,20 @@ export default function HomePage() {
                 <>
                   <div className={styles.todoList}>
                     {todoTasks.slice(0, 5).map((task) => (
-                      <label key={task.id} className={styles.todoLabel}>
-                        <input
-                          type="checkbox"
-                          checked={task.done}
-                          onChange={async () => {
+                      <div key={task.id} className={styles.todoLabel} style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'space-between' }}>
+                        <span className={task.done ? styles.completed : ''} style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1 }}>
+                          <span>{task.name}</span>
+                          {task.overdue && (
+                            <span style={{ width: '16px', height: '16px', display: 'flex', alignItems: 'center' }}>
+                              <AlertIcon size={16} color="#ff6b6b" />
+                            </span>
+                          )}
+                        </span>
+                        <select
+                          value={task.status || ''}
+                          onChange={async (e) => {
                             try {
-                              const newStatus = task.done ? '未開始' : '完了';
+                              const newStatus = e.target.value;
                               await fetch('/api/notion', {
                                 method: 'PATCH',
                                 headers: { 'Content-Type': 'application/json' },
@@ -567,23 +575,30 @@ export default function HomePage() {
 
                               setTodoTasks((prevTasks) =>
                                 prevTasks.map((t) =>
-                                  t.id === task.id ? { ...t, done: !t.done } : t
+                                  t.id === task.id ? { ...t, status: newStatus, done: newStatus === '完了' } : t
                                 )
                               );
                             } catch (error) {
-                              console.error('タスク更新に失敗しました:', error);
+                              console.error('ステータス更新に失敗しました:', error);
                             }
                           }}
-                        />
-                        <span className={task.done ? styles.completed : ''} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span>{task.name}</span>
-                          {task.overdue && (
-                            <span style={{ width: '16px', height: '16px', display: 'flex', alignItems: 'center' }}>
-                              <AlertIcon size={16} color="#ff6b6b" />
-                            </span>
-                          )}
-                        </span>
-                      </label>
+                          style={{
+                            padding: '4px 8px',
+                            borderRadius: '4px',
+                            border: '1px solid #e5c158',
+                            backgroundColor: 'rgba(51, 65, 85, 0.8)',
+                            color: '#ffffff',
+                            cursor: 'pointer',
+                            fontSize: '0.85rem',
+                            fontFamily: 'inherit',
+                          }}
+                        >
+                          <option value="">状態を選択</option>
+                          <option value="未開始">未開始</option>
+                          <option value="進行中">進行中</option>
+                          <option value="完了">完了</option>
+                        </select>
+                      </div>
                     ))}
                   </div>
                 </>
