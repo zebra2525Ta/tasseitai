@@ -145,11 +145,11 @@
 .quickLinkItem {
   display: flex;
   align-items: center;
-  gap: 8px; /* アイコンと文字の間の隙間 */
+  gap: 6px; /* アイコンと文字の間の隙間 */
   color: #ffffff;
   text-decoration: none;
   font-size: 0.95rem;
-  padding: 4px 8px;
+  padding: 0;
   border-radius: 4px;
   transition: background-color 0.2s ease, opacity 0.2s ease;
 }
@@ -162,11 +162,12 @@
 
 /* アイコン（公式ロゴ画像）のサイズと調整 */
 .linkIcon {
-  width: 18px;         /* アイコンの横幅（文字の大きさに合わせる） */
-  height: 18px;        /* アイコンの縦幅 */
+  width: 20px;         /* アイコンの横幅 */
+  height: 20px;        /* アイコンの縦幅 */
   object-fit: contain; /* 画像が歪まないように収める */
   display: inline-block;
   vertical-align: middle;
+  flex-shrink: 0;
 }
 
 /* スケジュール */
