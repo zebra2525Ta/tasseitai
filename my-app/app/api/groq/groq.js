@@ -117,16 +117,37 @@ function extractShoppingItemFromMessage(text) {
 
 const SHOPPING_TOPIC = NOTION_TOPICS.find((topic) => topic.id === "shopping");
 
-// 買い物リストに新しいアイテムを1件登録する
-export async function registerShoppingItem(text) {
+// 「登録して」と言われた直後にいきなり書き込まず、まず内容を提示して確認を取るためのプレビューを作る。
+// 実際の書き込みは、ユーザーが確認した後に commitShoppingRegistration で行う。
+export function buildShoppingRegistrationPreview(text) {
+  const { name, quantity, memo } = extractShoppingItemFromMessage(text);
+  if (!name) {
+    return {
+      item: null,
+      message: "何を買い物リストに登録すればいいか読み取れませんでした。商品名を教えてください。",
+    };
+  }
+
+  const memoText = memo ? `、メモ: ${memo}` : "、メモ: なし";
+  return {
+    item: { name, quantity, memo },
+    message: `買い物リストに「${name}」を登録するね（数量: ${quantity}${memoText}）。これで合ってる？`,
+  };
+}
+
+// 確認が取れた後に、実際にNotionへ1件書き込む
+export async function commitShoppingRegistration(item) {
   const notionApiKey = process.env.NOTION_API_KEY;
   if (!notionApiKey) {
     return "NOTION_API_KEYが設定されていないため、登録できませんでした。";
   }
 
-  const { name, quantity, memo } = extractShoppingItemFromMessage(text);
+  const name = typeof item?.name === "string" ? item.name.trim() : "";
+  const quantity = Number.isFinite(item?.quantity) ? item.quantity : 1;
+  const memo = typeof item?.memo === "string" ? item.memo : "";
+
   if (!name) {
-    return "何を買い物リストに登録すればいいか読み取れませんでした。商品名を教えてください。";
+    return "登録内容が読み取れませんでした。もう一度お願いします。";
   }
 
   try {

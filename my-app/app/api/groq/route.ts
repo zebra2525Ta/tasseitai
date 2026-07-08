@@ -4,7 +4,8 @@ import {
   generateTextFromNotionData,
   shouldUseNotionContext,
   isShoppingRegisterRequest,
-  registerShoppingItem,
+  buildShoppingRegistrationPreview,
+  commitShoppingRegistration,
 } from "./groq.js";
 
 export const runtime = "nodejs";
@@ -13,20 +14,27 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const message = typeof body?.message === "string" ? body.message.trim() : "";
+    const confirmRegistration = body?.confirmRegistration;
+
+    // ユーザーが登録内容を確認済みの場合は、ここで実際にNotionへ書き込む
+    if (confirmRegistration && typeof confirmRegistration === "object") {
+      const content = await commitShoppingRegistration(confirmRegistration);
+      return NextResponse.json({ content });
+    }
 
     if (!message) {
       return NextResponse.json({ error: "message が必要です" }, { status: 400 });
     }
 
-    let content: string;
     if (isShoppingRegisterRequest(message)) {
-      // 買い物リストへの登録依頼は、Notionへの書き込みを行う専用パスで処理する
-      content = await registerShoppingItem(message);
-    } else if (shouldUseNotionContext(message)) {
-      content = await generateTextFromNotionData(message);
-    } else {
-      content = await generateText(message);
+      // 即座には書き込まず、内容を提示して確認を取る
+      const preview = buildShoppingRegistrationPreview(message);
+      return NextResponse.json({ content: preview.message, pendingItem: preview.item });
     }
+
+    const content = shouldUseNotionContext(message)
+      ? await generateTextFromNotionData(message)
+      : await generateText(message);
 
     return NextResponse.json({ content });
   } catch (error) {

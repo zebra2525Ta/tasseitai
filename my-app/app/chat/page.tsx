@@ -11,12 +11,24 @@ type ChatMessage = {
   image?: string; // 送信された画像のURLを保持する用
 };
 
+type PendingItem = { name: string; quantity: number; memo: string };
+
+// 登録内容の確認に対する肯定の返事を簡易判定する
+const AFFIRM_KEYWORDS = ["はい", "うん", "お願い", "おねがい", "ok", "オーケー", "それで", "登録して"];
+
+function isAffirmative(text: string) {
+  const lowerText = text.toLowerCase();
+  return AFFIRM_KEYWORDS.some((keyword) => lowerText.includes(keyword.toLowerCase()));
+}
+
 export default function ChatPage() {
   const router = useRouter();
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Notion登録の確認待ちアイテム（会話履歴とは別に、確認フローのためだけに1件だけ保持する）
+  const [pendingItem, setPendingItem] = useState<PendingItem | null>(null);
 
   const handlePlusClick = () => {
     fileInputRef.current?.click();
@@ -50,18 +62,30 @@ export default function ChatPage() {
       // 将来的にここを FormData 形式にするか、Base64に変換して body に含める必要があります。
       // 現状は既存のテキスト送信ロジックを維持しています。
       // Notionを参照するかどうかの判定はサーバー側で行う。会話履歴は送信しない（1問1答のまま）。
+      // ただし、直前に登録内容の確認待ちがあり、かつ今回のメッセージが肯定的な返事なら、
+      // 確認済みとしてそのまま登録を確定させる。
+      const shouldConfirmRegistration = pendingItem !== null && isAffirmative(question);
       const response = await fetch("/api/groq", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ message: question }),
+        body: JSON.stringify(
+          shouldConfirmRegistration
+            ? { confirmRegistration: pendingItem }
+            : { message: question }
+        ),
       });
 
       const data = await response.json();
       if (!response.ok) {
         throw new Error(data?.error || "API request failed");
       }
+
+      // 確認待ちアイテムは、新しいレスポンスに含まれていればそれに更新し、なければ解消する
+      setPendingItem(
+        data?.pendingItem && typeof data.pendingItem === "object" ? data.pendingItem : null
+      );
 
       const assistantText = typeof data.content === "string" ? data.content : "";
       if (assistantText.trim()) {
