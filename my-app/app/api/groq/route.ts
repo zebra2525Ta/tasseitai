@@ -5,8 +5,8 @@ import {
   detectNotionTopics,
   hasRegisterIntent,
   hasGeneralNotionIntent,
-  buildShoppingRegistrationPreview,
-  commitShoppingRegistration,
+  buildRegistrationPreview,
+  commitRegistration,
   NOTION_TOPICS,
 } from "./groq.js";
 
@@ -19,13 +19,8 @@ function topicChoices() {
 }
 
 function handleRegisterAtTopic(topic: Topic, originalMessage: string) {
-  if (topic.id === "shopping") {
-    const preview = buildShoppingRegistrationPreview(originalMessage);
-    return { content: preview.message, pendingItem: preview.item };
-  }
-  return {
-    content: `ごめん、今は買い物リストへの登録だけ対応しているんだ。${topic.label}への登録は、お手数だけどNotionから直接お願いします！`,
-  };
+  const preview = buildRegistrationPreview(topic.id, originalMessage);
+  return { content: preview.message, pendingItem: preview.item };
 }
 
 async function handleReadForTopics(topics: Topic[], message: string) {
@@ -43,7 +38,7 @@ export async function POST(request: Request) {
 
     // 登録内容の確認が取れている場合は、そのまま書き込みを実行する
     if (confirmRegistration && typeof confirmRegistration === "object") {
-      const content = await commitShoppingRegistration(confirmRegistration);
+      const content = await commitRegistration(confirmRegistration);
       return NextResponse.json({ content });
     }
 

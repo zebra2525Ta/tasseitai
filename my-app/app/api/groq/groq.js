@@ -74,85 +74,267 @@ export function hasRegisterIntent(text) {
   return REGISTER_VERBS.some((verb) => text.includes(verb));
 }
 
-// メッセージから商品名・数量・メモを簡易的に抽出する。
-// 数量・メモが読み取れない場合は、数量=1・メモ=空欄で自動補完する。
-function extractShoppingItemFromMessage(text) {
+// トピックごとの登録スキーマ。Notionの実際のプロパティ型（GET /api/notion?databaseId=...で確認済み）に合わせてある。
+// titleProperty: タイトル（名前）として使うプロパティ名
+// fields: タイトル以外に埋められるプロパティの定義（type は Notion API のプロパティ型と一致させる）
+const TOPIC_REGISTRATION_SCHEMAS = {
+  shopping: {
+    titleProperty: "商品名",
+    fields: [
+      { key: "quantity", property: "数量", type: "number", label: "数量", default: 1 },
+      { key: "memo", property: "メモ", type: "rich_text", label: "メモ", default: "" },
+    ],
+  },
+  todo: {
+    titleProperty: "タスク名",
+    fields: [
+      { key: "status", property: "ステータス", type: "status", label: "ステータス", default: "未着手", options: ["未着手", "進行中", "完了"] },
+      { key: "priority", property: "優先度", type: "select", label: "優先度", default: "中", options: ["高", "中", "低"] },
+      { key: "dueDate", property: "期日", type: "date", label: "期日", default: null },
+      { key: "description", property: "説明", type: "rich_text", label: "説明", default: "" },
+    ],
+  },
+  schedule: {
+    titleProperty: "予定",
+    fields: [
+      { key: "dueDate", property: "日時", type: "date", label: "日時", default: null },
+      { key: "memo", property: "メモ", type: "rich_text", label: "メモ", default: "" },
+    ],
+  },
+  jobhunting: {
+    titleProperty: "会社名",
+    fields: [
+      {
+        key: "status",
+        property: "ステータス",
+        type: "status",
+        label: "ステータス",
+        default: "説明会",
+        options: ["説明会", "履歴書", "最終", "1次", "2次", "落選", "内定"],
+      },
+      { key: "dueDate", property: "期日", type: "date", label: "期日", default: null },
+      { key: "description", property: "説明", type: "rich_text", label: "説明", default: "" },
+    ],
+  },
+  memo: {
+    // このデータベースはタイトル用プロパティが「メモ登録日時」という名前だが型はtitle（自由記述用）。
+    // 実データ上の命名の癖であり、こちらで作り直せないためそのまま使う。
+    titleProperty: "メモ登録日時",
+    fields: [{ key: "content", property: "メモ内容", type: "rich_text", label: "内容", default: "" }],
+  },
+};
+
+// 全角数字を半角に変換する（日付・時刻の正規表現マッチのため）
+function normalizeFullWidthDigits(text) {
+  return text.replace(/[０-９]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xfee0));
+}
+
+// メッセージから日付・時刻を読み取り、Notionのdateプロパティ用ISO文字列と表示用文字列を返す
+function extractDateTimeFromText(text) {
+  const normalized = normalizeFullWidthDigits(text);
+  const currentYear = new Date().getFullYear();
+  let month;
+  let day;
+
+  const slashMatch = normalized.match(/(\d{1,2})[\/月](\d{1,2})日?/);
+  if (slashMatch) {
+    month = parseInt(slashMatch[1], 10);
+    day = parseInt(slashMatch[2], 10);
+  } else {
+    const mmddMatch = normalized.match(/(\d{2})(\d{2})(?:で|に)?/);
+    if (mmddMatch) {
+      const mm = parseInt(mmddMatch[1], 10);
+      const dd = parseInt(mmddMatch[2], 10);
+      if (mm >= 1 && mm <= 12 && dd >= 1 && dd <= 31) {
+        month = mm;
+        day = dd;
+      }
+    }
+  }
+
+  if (month === undefined || day === undefined) return null;
+
+  let hour;
+  let minute = 0;
+  const timeMatch = normalized.match(/(\d{1,2})[時:](\d{2})?/);
+  if (timeMatch) {
+    hour = parseInt(timeMatch[1], 10);
+    minute = timeMatch[2] ? parseInt(timeMatch[2], 10) : 0;
+  }
+
+  const pad = (n) => String(n).padStart(2, "0");
+  if (hour !== undefined) {
+    return {
+      iso: `${currentYear}-${pad(month)}-${pad(day)}T${pad(hour)}:${pad(minute)}:00+09:00`,
+      display: `${currentYear}/${pad(month)}/${pad(day)} ${pad(hour)}:${pad(minute)}`,
+    };
+  }
+  return {
+    iso: `${currentYear}-${pad(month)}-${pad(day)}`,
+    display: `${currentYear}/${pad(month)}/${pad(day)}`,
+  };
+}
+
+// select/status系のフィールドについて、選択肢に含まれる単語がメッセージ内にあるか探す
+function extractOptionFromText(text, options) {
+  return options.find((option) => text.includes(option)) || null;
+}
+
+// メッセージからタイトルと各フィールドの値を抽出する。読み取れない項目は既定値で自動補完する。
+function extractFieldsFromMessage(topicId, rawText) {
+  const schema = TOPIC_REGISTRATION_SCHEMAS[topicId];
+  const topic = NOTION_TOPICS.find((t) => t.id === topicId);
+  // 全角数字（３個、１４時など）も拾えるように、以降の処理はすべて正規化済みテキストに対して行う
+  const text = normalizeFullWidthDigits(rawText);
+
+  // 「未分類メモ」はタイトル自体が本文を兼ねるため、メモ注釈パターン（「メモは〜」等）の抽出・除去は行わない
+  // （行うと、本文全体がメモ注釈として吸われてタイトルが空になってしまうため）
+  const isMemoTopic = topicId === "memo";
   const quantityMatch = text.match(/(\d+)\s*(個|つ|本|パック|袋|枚|箱|kg|g)/);
-  const quantity = quantityMatch ? parseInt(quantityMatch[1], 10) : 1;
+  const memoMatch = isMemoTopic
+    ? null
+    : text.match(/メモ(?:は|:|：)\s*(.+?)(?:で登録|。|$)/) || text.match(/(.+?)というメモ/);
+  const dateInfo = extractDateTimeFromText(text);
 
-  const memoMatch = text.match(/メモ(?:は|:|：)\s*(.+?)(?:で登録|。|$)/) || text.match(/(.+?)というメモ/);
-  const memo = memoMatch ? memoMatch[1].trim() : "";
+  const values = {};
+  for (const field of schema.fields) {
+    if (field.type === "number") {
+      values[field.key] = quantityMatch ? parseInt(quantityMatch[1], 10) : field.default;
+    } else if (field.type === "rich_text") {
+      values[field.key] = memoMatch ? memoMatch[1].trim() : field.default;
+    } else if (field.type === "date") {
+      values[field.key] = dateInfo ? dateInfo.iso : field.default;
+      values[`${field.key}Display`] = dateInfo ? dateInfo.display : null;
+    } else if (field.type === "status" || field.type === "select") {
+      values[field.key] = (field.options && extractOptionFromText(text, field.options)) || field.default;
+    }
+  }
 
-  // 数量・メモの一致部分は、他の除去処理より先に取り除く
-  // （後回しにすると「登録」等の語が先に消えて memoMatch の文字列が見つからなくなるため）
-  let name = text;
-  if (memoMatch) name = name.replace(memoMatch[0], "");
-  if (quantityMatch) name = name.replace(quantityMatch[0], "");
+  // タイトル抽出：既知のキーワード・登録の動詞・数量/日付/選択肢・項目ラベルに一致した部分を取り除いた残り
+  let title = text;
+  if (memoMatch) title = title.replace(memoMatch[0], "");
+  if (quantityMatch) title = title.replace(quantityMatch[0], "");
+  title = title
+    .replace(/(\d{1,2})[\/月](\d{1,2})日?まで(に)?/, "")
+    .replace(/(\d{1,2})[\/月](\d{1,2})日?/, "")
+    .replace(/(\d{2})(\d{2})(?:で|に)?/, "")
+    .replace(/(\d{1,2})[時:](\d{2})?(から|より)?/, "");
 
-  for (const topic of NOTION_TOPICS) {
-    for (const keyword of topic.keywords) {
-      name = name.replaceAll(keyword, "");
+  for (const field of schema.fields) {
+    // 項目のラベル語（「優先度」「ステータス」など）自体も取り除く
+    title = title.replaceAll(field.label, "");
+    if (field.options) {
+      for (const option of field.options) {
+        title = title.replaceAll(option, "");
+      }
+    }
+  }
+  for (const t of NOTION_TOPICS) {
+    for (const keyword of t.keywords) {
+      title = title.replaceAll(keyword, "");
     }
   }
   for (const verb of REGISTER_VERBS) {
-    name = name.replaceAll(verb, "");
+    title = title.replaceAll(verb, "");
   }
-  name = name
+  title = title
     .replace(/notion/gi, "")
     .replaceAll("リスト", "")
-    .replace(/(して|ください|お願い|に|へ|を|、|。|\s)+/g, " ")
+    .replace(/(まで|して|ください|お願い|に|へ|を|で|、|。|\s)+/g, " ")
     .trim();
 
-  return { name, quantity, memo };
+  // 未分類メモは、整形後の本文をそのままタイトル・rich_text両方の値として使う
+  if (isMemoTopic) {
+    values.content = title;
+  }
+
+  return { topic, schema, title, values };
 }
 
-const SHOPPING_TOPIC = NOTION_TOPICS.find((topic) => topic.id === "shopping");
+function summarizeFields(schema, values) {
+  return schema.fields
+    .filter((field) => values[field.key] !== null && values[field.key] !== undefined && values[field.key] !== "")
+    .map((field) => {
+      const displayValue = field.type === "date" ? values[`${field.key}Display`] : values[field.key];
+      return `${field.label}: ${displayValue}`;
+    });
+}
 
 // 「登録して」と言われた直後にいきなり書き込まず、まず内容を提示して確認を取るためのプレビューを作る。
-// 実際の書き込みは、ユーザーが確認した後に commitShoppingRegistration で行う。
-export function buildShoppingRegistrationPreview(text) {
-  const { name, quantity, memo } = extractShoppingItemFromMessage(text);
-  if (!name) {
+// 実際の書き込みは、ユーザーが確認した後に commitRegistration で行う。
+export function buildRegistrationPreview(topicId, text) {
+  const schema = TOPIC_REGISTRATION_SCHEMAS[topicId];
+  if (!schema) {
+    return { item: null, message: "このトピックへの登録にはまだ対応していません。" };
+  }
+
+  const { topic, title, values } = extractFieldsFromMessage(topicId, text);
+  if (!title) {
     return {
       item: null,
-      message: "何を買い物リストに登録すればいいか読み取れませんでした。商品名を教えてください。",
+      message: `何を${topic.label}に登録すればいいか読み取れませんでした。名前を教えてください。`,
     };
   }
 
-  const memoText = memo ? `、メモ: ${memo}` : "、メモ: なし";
+  const summaryParts = summarizeFields(schema, values);
+  const summary = summaryParts.length > 0 ? `（${summaryParts.join("、")}）` : "";
+
   return {
-    item: { name, quantity, memo },
-    message: `買い物リストに「${name}」を登録するね（数量: ${quantity}${memoText}）。これで合ってる？`,
+    item: { topicId, title, values },
+    message: `${topic.label}に「${title}」を登録するね${summary}。これで合ってる？`,
   };
 }
 
 // 確認が取れた後に、実際にNotionへ1件書き込む
-export async function commitShoppingRegistration(item) {
+export async function commitRegistration(item) {
   const notionApiKey = process.env.NOTION_API_KEY;
   if (!notionApiKey) {
     return "NOTION_API_KEYが設定されていないため、登録できませんでした。";
   }
 
-  const name = typeof item?.name === "string" ? item.name.trim() : "";
-  const quantity = Number.isFinite(item?.quantity) ? item.quantity : 1;
-  const memo = typeof item?.memo === "string" ? item.memo : "";
+  const schema = TOPIC_REGISTRATION_SCHEMAS[item?.topicId];
+  const topic = NOTION_TOPICS.find((t) => t.id === item?.topicId);
+  const title = typeof item?.title === "string" ? item.title.trim() : "";
+  const values = item?.values && typeof item.values === "object" ? item.values : {};
 
-  if (!name) {
+  if (!schema || !topic || !title) {
     return "登録内容が読み取れませんでした。もう一度お願いします。";
   }
 
-  try {
-    await createDatabasePage(notionApiKey, SHOPPING_TOPIC.databaseId, {
-      商品名: { title: [{ text: { content: name } }] },
-      数量: { number: quantity },
-      メモ: { rich_text: memo ? [{ text: { content: memo } }] : [] },
-    });
+  const properties = {
+    [schema.titleProperty]: { title: [{ text: { content: title } }] },
+  };
 
-    const memoText = memo ? `、メモ: ${memo}` : "";
-    return `買い物リストに「${name}」を登録しといたよ（数量: ${quantity}${memoText}）。他にも欲しいものがあれば言ってね！`;
+  // 「未分類メモ」はタイトル自体が本文を兼ねるため、rich_text側にも同じ内容を入れておく
+  if (item.topicId === "memo") {
+    properties["メモ内容"] = { rich_text: [{ text: { content: title } }] };
+  }
+
+  for (const field of schema.fields) {
+    const value = values[field.key];
+    if (value === null || value === undefined || value === "") continue;
+
+    if (field.type === "number") {
+      properties[field.property] = { number: value };
+    } else if (field.type === "rich_text") {
+      properties[field.property] = { rich_text: [{ text: { content: String(value) } }] };
+    } else if (field.type === "date") {
+      properties[field.property] = { date: { start: value } };
+    } else if (field.type === "status") {
+      properties[field.property] = { status: { name: value } };
+    } else if (field.type === "select") {
+      properties[field.property] = { select: { name: value } };
+    }
+  }
+
+  try {
+    await createDatabasePage(notionApiKey, topic.databaseId, properties);
+    const summaryParts = summarizeFields(schema, values);
+    const summary = summaryParts.length > 0 ? `（${summaryParts.join("、")}）` : "";
+    return `${topic.label}に「${title}」を登録しといたよ${summary}。他にも何かあれば言ってね！`;
   } catch (error) {
     console.error("Notion登録エラー:", error.message);
-    return "買い物リストへの登録に失敗しました。もう一度試してみてください。";
+    return `${topic.label}への登録に失敗しました。もう一度試してみてください。`;
   }
 }
 
