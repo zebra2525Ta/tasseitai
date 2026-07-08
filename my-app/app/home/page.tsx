@@ -551,14 +551,21 @@ export default function HomePage() {
                   <div className={styles.todoList}>
                     {todoTasks.slice(0, 5).map((task) => (
                       <div key={task.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'space-between', width: '100%' }}>
-                        <span className={task.done ? styles.completed : ''} style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, minWidth: 0 }}>
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{task.name}</span>
-                          {task.overdue && (
-                            <span style={{ width: '16px', height: '16px', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-                              <AlertIcon size={16} color="#ff6b6b" />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+                          <span className={task.done ? styles.completed : ''} style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, minWidth: 0 }}>
+                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{task.name}</span>
+                            {task.overdue && (
+                              <span style={{ width: '16px', height: '16px', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                                <AlertIcon size={16} color="#ff6b6b" />
+                              </span>
+                            )}
+                          </span>
+                          {task.dueDate && (
+                            <span style={{ fontSize: '0.85rem', opacity: 0.8, whiteSpace: 'nowrap', minWidth: '90px', textAlign: 'right' }}>
+                              {new Date(task.dueDate).getMonth() + 1}月{new Date(task.dueDate).getDate()}日
                             </span>
                           )}
-                        </span>
+                        </div>
                         <select
                           value={task.status || ''}
                           onChange={async (e) => {
