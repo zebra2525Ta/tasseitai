@@ -549,7 +549,7 @@ export default function HomePage() {
               ) : (
                 <>
                   <div className={styles.todoList}>
-                    {todoTasks.slice(0, todoExpanded ? 8 : 3).map((task) => (
+                    {todoTasks.slice(0, todoExpanded ? 8 : 5).map((task) => (
                       <label key={task.id} className={styles.todoLabel}>
                         <input
                           type="checkbox"
@@ -567,7 +567,7 @@ export default function HomePage() {
                       </label>
                     ))}
                   </div>
-                  {todoTasks.length > 3 && (
+                  {todoTasks.length > 5 && (
                     <button
                       type="button"
                       className={styles.todoMoreBtn}
