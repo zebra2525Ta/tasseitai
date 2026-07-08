@@ -15,6 +15,7 @@ import {
   SettingsIcon,
   AlertIcon,
 } from '@/app/components/icons';
+import { autoSubscribeToPush } from '@/app/components/pushSubscription';
 
 const decodeWeather = (code: number) => {
   if (code === 0) return { text: '快晴', icon: SunnyIcon };
@@ -102,6 +103,12 @@ export default function HomePage() {
 
   useEffect(() => {
     setIsMounted(true);
+
+    // 初回アクセス時に通知の許可・購読を自動で行う（許可済み/購読済みなら何もしない）
+    autoSubscribeToPush().catch((error) => {
+      console.error('プッシュ通知の自動購読に失敗:', error);
+    });
+
     setTimeout(() => {
       // --- 天気APIの取得 ---
       const savedRegionName = localStorage.getItem('setting_weatherName') || 'Osaka';
