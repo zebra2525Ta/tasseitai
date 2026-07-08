@@ -467,7 +467,7 @@ export default function HomePage() {
                 <span>Notion</span>
               </a>
               <a href="https://calendar.notion.so" target="_blank" rel="noopener noreferrer" className={styles.quickLinkItem}>
-                <img src="https://cdn.simpleicons.org/notion/e16259" alt="Notion Calendar" className={styles.linkIcon} />
+                <img src="https://cdn.simpleicons.org/calendar/ffffff" alt="Notion Calendar" className={styles.linkIcon} />
                 <span>Notionカレンダー</span>
               </a>
               <a href="https://github.com" target="_blank" rel="noopener noreferrer" className={styles.quickLinkItem}>
