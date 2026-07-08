@@ -68,6 +68,7 @@
   border-radius: 12px;
   max-width: 80%;
   line-height: 1.5;
+  white-space: pre-wrap; /* APIレスポンスの改行をそのまま表示する */
 }
 
 /* ユーザー（自分）の吹き出し */
@@ -80,6 +81,7 @@
   max-width: 80%;
   line-height: 1.5;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  white-space: pre-wrap; /* 改行をそのまま表示する */
 }
 
 /* ボトム入力エリア全体の囲み */
