@@ -93,6 +93,7 @@ export default function HomePage() {
   const [scheduleEvents, setScheduleEvents] = useState<any[]>([]);
   const [scheduleLoading, setScheduleLoading] = useState(true);
   const [scheduleError, setScheduleError] = useState('');
+  const [currentTimePercent, setCurrentTimePercent] = useState<number | null>(null);
 
   // Notion「進捗管理」データベースから取得したタスク一覧
   const [todoTasks, setTodoTasks] = useState<any[]>([]);
@@ -293,6 +294,17 @@ export default function HomePage() {
             });
 
           setScheduleEvents(events);
+
+          const now = new Date();
+          const currentTimePercent = ((now.getTime() - scheduleWindowStart.getTime()) / scheduleWindowMs) * 100;
+          const isCurrentTimeInRange = now >= scheduleWindowStart && now <= scheduleWindowEnd;
+
+          if (isCurrentTimeInRange && currentTimePercent >= 0 && currentTimePercent <= 100) {
+            setCurrentTimePercent(currentTimePercent);
+          } else {
+            setCurrentTimePercent(null);
+          }
+
           setScheduleLoading(false);
         })
         .catch((err) => {
@@ -486,7 +498,7 @@ export default function HomePage() {
                     <span key={index}>{label}</span>
                   ))}
                 </div>
-                <div className={styles.timelineBarWrapper}>
+                <div className={styles.timelineBarWrapper} style={{ position: 'relative' }}>
                   {scheduleLoading ? (
                     <p className={styles.notionStatus}>読み込み中...</p>
                   ) : scheduleError ? (
@@ -503,6 +515,20 @@ export default function HomePage() {
                         {event.label}
                       </div>
                     ))
+                  )}
+                  {currentTimePercent !== null && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        left: `${currentTimePercent}%`,
+                        top: 0,
+                        bottom: 0,
+                        width: '2px',
+                        backgroundColor: '#ff6b6b',
+                        zIndex: 10,
+                        borderRadius: '1px'
+                      }}
+                    />
                   )}
                 </div>
               </div>
