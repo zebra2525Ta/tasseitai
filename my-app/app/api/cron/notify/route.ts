@@ -166,37 +166,42 @@ async function getUpcomingJobHunting(): Promise<string[]> {
     });
 }
 
-// カテゴリごとの生データを、Noirに渡す説明文にまとめる。データが無ければnullを返す（その回の通知は送らない）
+// カテゴリごとの生データを、Noirに渡す説明文にまとめる。
+// データが無い場合も「何も無い」という状態自体をNoirに伝え、必ず何かしら通知を作ってもらう。
 async function buildCategoryContext(category: Category): Promise<string | null> {
   switch (category) {
     case "shopping": {
       const items = await getShoppingItems();
-      if (items.length === 0) return null;
-      return `買い物リストの中身: ${items.slice(0, 8).join("、")}`;
+      return items.length > 0
+        ? `買い物リストの中身: ${items.slice(0, 8).join("、")}`
+        : "買い物リストは今のところ空っぽ";
     }
     case "weather": {
-      const description = await getWeatherDescription();
-      return description || null;
+      return (await getWeatherDescription()) || "天気情報が取得できなかった";
     }
     case "schedule": {
       const events = await getScheduleToday();
-      if (events.length === 0) return null;
-      return `本日残りの予定: ${events.map((e) => `${e.time} ${e.name}`).join("、")}`;
+      return events.length > 0
+        ? `本日残りの予定: ${events.map((e) => `${e.time} ${e.name}`).join("、")}`
+        : "本日はこの後、特に予定は入っていない";
     }
     case "todo": {
       const tasks = await getAtRiskTasks();
-      if (tasks.length === 0) return null;
-      return `遅れているか、2日以内に期日が来るタスク: ${tasks.slice(0, 8).join("、")}`;
+      return tasks.length > 0
+        ? `遅れているか、2日以内に期日が来るタスク: ${tasks.slice(0, 8).join("、")}`
+        : "遅れている・期日が近いタスクは特に無い、順調な状態";
     }
     case "news": {
       const headlines = await getNewsHeadlines();
-      if (headlines.length === 0) return null;
-      return `最新ニュースの見出し: ${headlines.join("、")}`;
+      return headlines.length > 0
+        ? `最新ニュースの見出し: ${headlines.join("、")}`
+        : "ニュースが取得できなかった";
     }
     case "jobhunting": {
       const entries = await getUpcomingJobHunting();
-      if (entries.length === 0) return null;
-      return `1週間以内に動きがある就活案件: ${entries.join("、")}`;
+      return entries.length > 0
+        ? `1週間以内に動きがある就活案件: ${entries.join("、")}`
+        : "1週間以内に動きがある就活案件は今のところ無い";
     }
     default:
       return null;
