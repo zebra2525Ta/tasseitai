@@ -122,8 +122,8 @@
   composes: card;
   display: flex;
   align-items: center;
-  gap: 24px; /* 「クイックリンク」の文字とアイテムの間の隙間 */
-  padding: 12px 16px;
+  gap: 16px; /* 「クイックリンク」の文字とアイテムの間の隙間 */
+  padding: 8px 12px;
 }
 /* 「クイックリンク」の見出し文字 */
 .quickLinkTitle {
@@ -137,7 +137,7 @@
 .quickLinkItems {
   display: flex;
   flex-wrap: wrap; /* スマホなど画面が狭いときは自動で折り返す */
-  gap: 20px;       /* リンク同士の間隔 */
+  gap: 12px;       /* リンク同士の間隔 */
   align-items: center;
 }
 
@@ -145,10 +145,10 @@
 .quickLinkItem {
   display: flex;
   align-items: center;
-  gap: 6px; /* アイコンと文字の間の隙間 */
+  gap: 4px; /* アイコンと文字の間の隙間 */
   color: #ffffff;
   text-decoration: none;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   padding: 0;
   border-radius: 4px;
   transition: background-color 0.2s ease, opacity 0.2s ease;
@@ -162,8 +162,8 @@
 
 /* アイコン（公式ロゴ画像）のサイズと調整 */
 .linkIcon {
-  width: 20px;         /* アイコンの横幅 */
-  height: 20px;        /* アイコンの縦幅 */
+  width: 24px;         /* アイコンの横幅 */
+  height: 24px;        /* アイコンの縦幅 */
   object-fit: contain; /* 画像が歪まないように収める */
   display: inline-block;
   vertical-align: middle;
