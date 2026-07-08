@@ -349,7 +349,7 @@ export default function HomePage() {
               if (!b.dueDate) return -1;
               return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
             })
-            .slice(0, 10);
+            .slice(0, 12);
 
           setTodoTasks(tasksList);
           setTodoLoading(false);
@@ -548,7 +548,7 @@ export default function HomePage() {
               ) : (
                 <>
                   <div className={styles.todoList}>
-                    {todoTasks.slice(0, 3).map((task) => (
+                    {todoTasks.slice(0, 5).map((task) => (
                       <label key={task.id} className={styles.todoLabel}>
                         <input
                           type="checkbox"
