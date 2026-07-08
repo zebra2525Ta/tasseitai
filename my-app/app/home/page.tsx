@@ -234,6 +234,7 @@ export default function HomePage() {
         `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 
       const scheduleWindowStart = new Date();
+      scheduleWindowStart.setMinutes(0, 0, 0);
       const scheduleWindowEnd = new Date(scheduleWindowStart.getTime() + 24 * 60 * 60 * 1000);
       const scheduleWindowMs = scheduleWindowEnd.getTime() - scheduleWindowStart.getTime();
 
@@ -242,7 +243,7 @@ export default function HomePage() {
         `${scheduleWindowStart.getMonth() + 1}月${scheduleWindowStart.getDate()}日 ${String(scheduleWindowStart.getHours()).padStart(2, '0')}:00 〜 ${endDate.getMonth() + 1}月${endDate.getDate()}日 ${String(endDate.getHours()).padStart(2, '0')}:00`
       );
       setScheduleTimeMarkers(
-        [0, 4, 8, 12, 16, 20, 24].map((hourOffset) =>
+        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24].map((hourOffset) =>
           formatHHMM(new Date(scheduleWindowStart.getTime() + hourOffset * 60 * 60 * 1000))
         )
       );
