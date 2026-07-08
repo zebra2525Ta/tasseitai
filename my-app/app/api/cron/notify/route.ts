@@ -2,14 +2,34 @@ import { NextRequest, NextResponse } from "next/server";
 import webpush from "web-push";
 import { Redis } from "@upstash/redis";
 import { queryNotionDatabase, collectNotionPageInfo } from "../../notion/notion.js";
+import { generateText } from "../../groq/groq.js";
 
 export const runtime = "nodejs";
 
 const SUBSCRIPTIONS_KEY = "push:subscriptions";
 
+const SHOPPING_DATABASE_ID = "38fa15fd-a3c1-8049-8041-ebf679d048b2"; // 買い物リスト
 const TODO_DATABASE_ID = "38fa15fd-a3c1-80bd-98d9-ddcfe8406a93"; // 進捗管理
 const SCHEDULE_DATABASE_ID = "38fa15fd-a3c1-80fa-a200-d99ac64b3409"; // スケジュール
-const SCHEDULE_WINDOW_HOURS = 1;
+const JOBHUNTING_DATABASE_ID = "38fa15fd-a3c1-8076-80ad-dc57719ac014"; // 就活
+
+// 天気のデフォルト地域（ホーム画面のデフォルトと同じ大阪。cronはサーバー側実行のためユーザーごとの設定は参照できない）
+const DEFAULT_WEATHER_LAT = "34.6937";
+const DEFAULT_WEATHER_LON = "135.5023";
+const DEFAULT_WEATHER_NAME = "大阪";
+
+// 6〜22時はこの順で1時間ごとにサイクルする。23時は「今日もお疲れ様」専用枠。
+const CYCLE_CATEGORIES = ["shopping", "weather", "schedule", "todo", "news", "jobhunting"] as const;
+type Category = (typeof CYCLE_CATEGORIES)[number];
+
+const CATEGORY_LABELS: Record<Category, string> = {
+  shopping: "🛒 買い物リスト",
+  weather: "☀️ 天気予報",
+  schedule: "📅 スケジュール",
+  todo: "📋 進捗管理",
+  news: "📰 ニュース",
+  jobhunting: "💼 就活",
+};
 
 const publicKey = process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY;
 const privateKey = process.env.WEB_PUSH_PRIVATE_KEY;
@@ -30,40 +50,56 @@ function isAuthorized(request: NextRequest): boolean {
   return querySecret === secret;
 }
 
-// 「進捗管理」から期限超過タスクの名前一覧を取得する
-async function getOverdueTasks(): Promise<string[]> {
-  const apiKey = process.env.NOTION_API_KEY;
-  if (!apiKey) return [];
-
-  const pages = await queryNotionDatabase(apiKey, TODO_DATABASE_ID, 50, 2);
-  const tasks = pages.map((page: any) => collectNotionPageInfo(page));
-
-  return tasks
-    .filter((task: any) => {
-      const statusName = task.properties?.["ステータス"]?.name || "";
-      const overdue = Boolean(task.properties?.["期限超過"]);
-      return statusName !== "完了" && overdue;
-    })
-    .map((task: any) => task.properties?.["タスク名"] || task.title || "無題");
+// JST（日本時間）の現在時刻を取得する（Vercelのサーバーは基本UTCで動くため）
+function getJstNow(): Date {
+  const now = new Date();
+  return new Date(now.toLocaleString("en-US", { timeZone: "Asia/Tokyo" }));
 }
 
-// 「スケジュール」から直近1時間以内に始まる予定の名前・時刻一覧を取得する
-async function getUpcomingSchedule(): Promise<{ name: string; time: string }[]> {
+// 現在時刻(JST)に応じて、今回送るべきカテゴリ（もしくは終業メッセージ）を決める
+function getCurrentSlot(jstHour: number): Category | "wrapup" | null {
+  if (jstHour < 6 || jstHour > 23) return null; // 6時〜23時の対象時間外
+  if (jstHour === 23) return "wrapup";
+  const index = (jstHour - 6) % CYCLE_CATEGORIES.length;
+  return CYCLE_CATEGORIES[index];
+}
+
+async function getShoppingItems(): Promise<string[]> {
   const apiKey = process.env.NOTION_API_KEY;
   if (!apiKey) return [];
+  const pages = await queryNotionDatabase(apiKey, SHOPPING_DATABASE_ID, 50, 2);
+  return pages
+    .map((page: any) => collectNotionPageInfo(page))
+    .map((item: any) => item.properties?.["商品名"] || item.title || "無題")
+    .filter(Boolean);
+}
 
+async function getWeatherDescription(): Promise<string> {
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${DEFAULT_WEATHER_LAT}&longitude=${DEFAULT_WEATHER_LON}&current=temperature_2m,weather_code,precipitation_probability,wind_speed_10m&timezone=Asia%2FTokyo&forecast_days=1`;
+  const res = await fetch(url);
+  if (!res.ok) return "";
+  const data = await res.json();
+  const current = data?.current;
+  if (!current) return "";
+  return `${DEFAULT_WEATHER_NAME}の現在の気温${current.temperature_2m}℃、天気コード${current.weather_code}、風速${current.wind_speed_10m}m/s`;
+}
+
+async function getScheduleToday(): Promise<{ name: string; time: string }[]> {
+  const apiKey = process.env.NOTION_API_KEY;
+  if (!apiKey) return [];
   const pages = await queryNotionDatabase(apiKey, SCHEDULE_DATABASE_ID, 50, 2);
   const events = pages.map((page: any) => collectNotionPageInfo(page));
 
   const now = new Date();
-  const windowEnd = new Date(now.getTime() + SCHEDULE_WINDOW_HOURS * 60 * 60 * 1000);
+  const endOfDay = new Date(now);
+  endOfDay.setHours(23, 59, 59, 999);
 
   return events
     .filter((event: any) => {
       const start = event.properties?.["日時"]?.start;
       if (!start) return false;
       const startDate = new Date(start);
-      return startDate >= now && startDate < windowEnd;
+      return startDate >= now && startDate <= endOfDay;
     })
     .map((event: any) => {
       const start = new Date(event.properties["日時"].start);
@@ -72,26 +108,129 @@ async function getUpcomingSchedule(): Promise<{ name: string; time: string }[]> 
     });
 }
 
-function buildNotificationBody(overdueTasks: string[], upcomingEvents: { name: string; time: string }[]): string | null {
-  const lines: string[] = [];
+// 「完了していない」かつ「期限超過」または「2日以内に期日が来る」タスク（＝遅れそう・遅れているタスク）
+async function getAtRiskTasks(): Promise<string[]> {
+  const apiKey = process.env.NOTION_API_KEY;
+  if (!apiKey) return [];
+  const pages = await queryNotionDatabase(apiKey, TODO_DATABASE_ID, 50, 2);
+  const tasks = pages.map((page: any) => collectNotionPageInfo(page));
 
-  if (upcomingEvents.length > 0) {
-    lines.push(`【この後${SCHEDULE_WINDOW_HOURS}時間以内の予定】`);
-    for (const event of upcomingEvents) {
-      lines.push(`・${event.time} ${event.name}`);
+  const now = new Date();
+  const soonThreshold = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
+
+  return tasks
+    .filter((task: any) => {
+      const statusName = task.properties?.["ステータス"]?.name || "";
+      if (statusName === "完了") return false;
+      const overdue = Boolean(task.properties?.["期限超過"]);
+      if (overdue) return true;
+      const dueDate = task.properties?.["期日"]?.start;
+      if (!dueDate) return false;
+      return new Date(dueDate) <= soonThreshold;
+    })
+    .map((task: any) => task.properties?.["タスク名"] || task.title || "無題");
+}
+
+async function getNewsHeadlines(): Promise<string[]> {
+  const apiKey = process.env.NEWS_API_KEY;
+  if (!apiKey) return [];
+  const res = await fetch(
+    `https://gnews.io/api/v4/top-headlines?category=general&lang=ja&country=jp&max=5&apikey=${apiKey}`
+  );
+  if (!res.ok) return [];
+  const data = await res.json();
+  return (data?.articles || []).map((article: any) => article.title).filter(Boolean);
+}
+
+// 就活データベースのうち、期日が7日以内に迫っているもの
+async function getUpcomingJobHunting(): Promise<string[]> {
+  const apiKey = process.env.NOTION_API_KEY;
+  if (!apiKey) return [];
+  const pages = await queryNotionDatabase(apiKey, JOBHUNTING_DATABASE_ID, 50, 2);
+  const entries = pages.map((page: any) => collectNotionPageInfo(page));
+
+  const now = new Date();
+  const soonThreshold = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+  return entries
+    .filter((entry: any) => {
+      const dueDate = entry.properties?.["期日"]?.start;
+      if (!dueDate) return false;
+      const due = new Date(dueDate);
+      return due >= now && due <= soonThreshold;
+    })
+    .map((entry: any) => {
+      const statusName = entry.properties?.["ステータス"]?.name || "";
+      const company = entry.properties?.["会社名"] || entry.title || "無題";
+      return `${company}（${statusName}）`;
+    });
+}
+
+// カテゴリごとの生データを、Noirに渡す説明文にまとめる。データが無ければnullを返す（その回の通知は送らない）
+async function buildCategoryContext(category: Category): Promise<string | null> {
+  switch (category) {
+    case "shopping": {
+      const items = await getShoppingItems();
+      if (items.length === 0) return null;
+      return `買い物リストの中身: ${items.slice(0, 8).join("、")}`;
     }
-  }
-
-  if (overdueTasks.length > 0) {
-    if (lines.length > 0) lines.push("");
-    lines.push("【期限超過のタスク】");
-    for (const name of overdueTasks) {
-      lines.push(`・${name}`);
+    case "weather": {
+      const description = await getWeatherDescription();
+      return description || null;
     }
+    case "schedule": {
+      const events = await getScheduleToday();
+      if (events.length === 0) return null;
+      return `本日残りの予定: ${events.map((e) => `${e.time} ${e.name}`).join("、")}`;
+    }
+    case "todo": {
+      const tasks = await getAtRiskTasks();
+      if (tasks.length === 0) return null;
+      return `遅れているか、2日以内に期日が来るタスク: ${tasks.slice(0, 8).join("、")}`;
+    }
+    case "news": {
+      const headlines = await getNewsHeadlines();
+      if (headlines.length === 0) return null;
+      return `最新ニュースの見出し: ${headlines.join("、")}`;
+    }
+    case "jobhunting": {
+      const entries = await getUpcomingJobHunting();
+      if (entries.length === 0) return null;
+      return `1週間以内に動きがある就活案件: ${entries.join("、")}`;
+    }
+    default:
+      return null;
   }
+}
 
-  if (lines.length === 0) return null;
-  return lines.join("\n");
+// Noir（Groqの人格つきgenerateText）を使って、短いプッシュ通知文を作る
+async function composeNotificationBody(context: string): Promise<string> {
+  const prompt = [
+    "以下の情報をもとに、スマホのプッシュ通知として送る短い一言を作ってください。",
+    "1〜2文、40〜80文字程度で、日時や項目名など重要な情報は残しつつ簡潔にまとめてください。",
+    "",
+    context,
+  ].join("\n");
+
+  return generateText(prompt);
+}
+
+async function composeWrapUpBody(): Promise<string> {
+  const tasks = await getAtRiskTasks();
+  const context =
+    tasks.length > 0
+      ? `今日時点で遅れている・期日が近いタスクが${tasks.length}件残っている: ${tasks.slice(0, 5).join("、")}`
+      : "遅れているタスクは特に無い、順調な1日だった";
+
+  const prompt = [
+    "1日の終わり（23時）に送る、スマホのプッシュ通知として短い一言を作ってください。",
+    "「今日もお疲れ様」というねぎらいを込めつつ、1〜2文、40〜80文字程度でまとめてください。",
+    "毎回同じ文面にならないよう、少し表現を変えてください。",
+    "",
+    context,
+  ].join("\n");
+
+  return generateText(prompt);
 }
 
 export async function GET(request: NextRequest) {
@@ -103,19 +242,33 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "VAPID keys are not configured on the server" }, { status: 500 });
   }
 
-  const [overdueTasks, upcomingEvents] = await Promise.all([
-    getOverdueTasks(),
-    getUpcomingSchedule(),
-  ]);
+  const jstNow = getJstNow();
+  const jstHour = jstNow.getHours();
+  const slot = getCurrentSlot(jstHour);
 
-  const notificationBody = buildNotificationBody(overdueTasks, upcomingEvents);
+  if (!slot) {
+    return NextResponse.json({ sent: false, reason: "outside notification hours", jstHour });
+  }
+
+  let notificationTitle: string;
+  let notificationBody: string | null;
+
+  if (slot === "wrapup") {
+    notificationTitle = "🌙 今日もお疲れ様";
+    notificationBody = await composeWrapUpBody();
+  } else {
+    notificationTitle = CATEGORY_LABELS[slot];
+    const context = await buildCategoryContext(slot);
+    notificationBody = context ? await composeNotificationBody(context) : null;
+  }
+
   if (!notificationBody) {
-    return NextResponse.json({ sent: false, reason: "no relevant Notion updates" });
+    return NextResponse.json({ sent: false, reason: "no content for this slot", slot });
   }
 
   const redis = Redis.fromEnv();
   const subscriptions = await redis.smembers(SUBSCRIPTIONS_KEY);
-  const payload = JSON.stringify({ title: "Noirからのお知らせ", body: notificationBody });
+  const payload = JSON.stringify({ title: notificationTitle, body: notificationBody });
 
   let sentCount = 0;
   for (const raw of subscriptions) {
@@ -133,10 +286,5 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({
-    sent: true,
-    sentCount,
-    overdueCount: overdueTasks.length,
-    upcomingCount: upcomingEvents.length,
-  });
+  return NextResponse.json({ sent: true, sentCount, slot, notificationBody });
 }
