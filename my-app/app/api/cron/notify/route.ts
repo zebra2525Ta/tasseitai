@@ -30,25 +30,27 @@ function isAuthorized(request: NextRequest): boolean {
   return querySecret === secret;
 }
 
-// 「進捗管理」から期限超過タスクの件数を数える
-async function countOverdueTasks(): Promise<number> {
+// 「進捗管理」から期限超過タスクの名前一覧を取得する
+async function getOverdueTasks(): Promise<string[]> {
   const apiKey = process.env.NOTION_API_KEY;
-  if (!apiKey) return 0;
+  if (!apiKey) return [];
 
   const pages = await queryNotionDatabase(apiKey, TODO_DATABASE_ID, 50, 2);
   const tasks = pages.map((page: any) => collectNotionPageInfo(page));
 
-  return tasks.filter((task: any) => {
-    const statusName = task.properties?.["ステータス"]?.name || "";
-    const overdue = Boolean(task.properties?.["期限超過"]);
-    return statusName !== "完了" && overdue;
-  }).length;
+  return tasks
+    .filter((task: any) => {
+      const statusName = task.properties?.["ステータス"]?.name || "";
+      const overdue = Boolean(task.properties?.["期限超過"]);
+      return statusName !== "完了" && overdue;
+    })
+    .map((task: any) => task.properties?.["タスク名"] || task.title || "無題");
 }
 
-// 「スケジュール」から直近1時間以内に始まる予定の件数を数える
-async function countUpcomingSchedule(): Promise<number> {
+// 「スケジュール」から直近1時間以内に始まる予定の名前・時刻一覧を取得する
+async function getUpcomingSchedule(): Promise<{ name: string; time: string }[]> {
   const apiKey = process.env.NOTION_API_KEY;
-  if (!apiKey) return 0;
+  if (!apiKey) return [];
 
   const pages = await queryNotionDatabase(apiKey, SCHEDULE_DATABASE_ID, 50, 2);
   const events = pages.map((page: any) => collectNotionPageInfo(page));
@@ -56,25 +58,40 @@ async function countUpcomingSchedule(): Promise<number> {
   const now = new Date();
   const windowEnd = new Date(now.getTime() + SCHEDULE_WINDOW_HOURS * 60 * 60 * 1000);
 
-  return events.filter((event: any) => {
-    const start = event.properties?.["日時"]?.start;
-    if (!start) return false;
-    const startDate = new Date(start);
-    return startDate >= now && startDate < windowEnd;
-  }).length;
+  return events
+    .filter((event: any) => {
+      const start = event.properties?.["日時"]?.start;
+      if (!start) return false;
+      const startDate = new Date(start);
+      return startDate >= now && startDate < windowEnd;
+    })
+    .map((event: any) => {
+      const start = new Date(event.properties["日時"].start);
+      const time = `${String(start.getHours()).padStart(2, "0")}:${String(start.getMinutes()).padStart(2, "0")}`;
+      return { name: event.properties?.["予定"] || event.title || "無題", time };
+    });
 }
 
-function buildNotificationBody(overdueCount: number, upcomingCount: number): string | null {
-  const parts: string[] = [];
-  if (overdueCount > 0) {
-    parts.push(`期限超過のタスクが${overdueCount}件`);
-  }
-  if (upcomingCount > 0) {
-    parts.push(`${SCHEDULE_WINDOW_HOURS}時間以内の予定が${upcomingCount}件`);
+function buildNotificationBody(overdueTasks: string[], upcomingEvents: { name: string; time: string }[]): string | null {
+  const lines: string[] = [];
+
+  if (upcomingEvents.length > 0) {
+    lines.push(`【この後${SCHEDULE_WINDOW_HOURS}時間以内の予定】`);
+    for (const event of upcomingEvents) {
+      lines.push(`・${event.time} ${event.name}`);
+    }
   }
 
-  if (parts.length === 0) return null;
-  return `${parts.join("、")}あります。Notionを確認してください。`;
+  if (overdueTasks.length > 0) {
+    if (lines.length > 0) lines.push("");
+    lines.push("【期限超過のタスク】");
+    for (const name of overdueTasks) {
+      lines.push(`・${name}`);
+    }
+  }
+
+  if (lines.length === 0) return null;
+  return lines.join("\n");
 }
 
 export async function GET(request: NextRequest) {
@@ -86,12 +103,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "VAPID keys are not configured on the server" }, { status: 500 });
   }
 
-  const [overdueCount, upcomingCount] = await Promise.all([
-    countOverdueTasks(),
-    countUpcomingSchedule(),
+  const [overdueTasks, upcomingEvents] = await Promise.all([
+    getOverdueTasks(),
+    getUpcomingSchedule(),
   ]);
 
-  const notificationBody = buildNotificationBody(overdueCount, upcomingCount);
+  const notificationBody = buildNotificationBody(overdueTasks, upcomingEvents);
   if (!notificationBody) {
     return NextResponse.json({ sent: false, reason: "no relevant Notion updates" });
   }
@@ -116,5 +133,10 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({ sent: true, sentCount, overdueCount, upcomingCount });
+  return NextResponse.json({
+    sent: true,
+    sentCount,
+    overdueCount: overdueTasks.length,
+    upcomingCount: upcomingEvents.length,
+  });
 }
