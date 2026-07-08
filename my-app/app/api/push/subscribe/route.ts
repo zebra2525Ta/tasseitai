@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Redis } from "@upstash/redis";
-
-// プッシュ購読情報を保存しておくRedisのキー（Setで複数端末分をまとめて管理）
-const SUBSCRIPTIONS_KEY = "push:subscriptions";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { addPushSubscription } from "@/lib/pushSubscriptions";
 
 function validateSubscription(subscription: any): boolean {
   return !!(
@@ -13,7 +12,10 @@ function validateSubscription(subscription: any): boolean {
 }
 
 export async function POST(request: NextRequest) {
-  const redis = Redis.fromEnv();
+  const session = await getServerSession(authOptions);
+  if (!session?.userId) {
+    return NextResponse.json({ error: "Notionと連携されていません" }, { status: 401 });
+  }
 
   let body: any;
   try {
@@ -27,8 +29,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid subscription object" }, { status: 400 });
   }
 
-  // 同じendpointの購読が既にあれば実質的に重複しないよう、文字列化したものをSetに追加する
-  await redis.sadd(SUBSCRIPTIONS_KEY, JSON.stringify(subscription));
+  // 同じendpointの購読が既にあれば実質的に重複しないよう、文字列化したものをユーザーごとのSetに追加する
+  await addPushSubscription(session.userId, subscription);
 
   return NextResponse.json({ ok: true });
 }

@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import webpush from "web-push";
-import { Redis } from "@upstash/redis";
 import { queryNotionDatabase, collectNotionPageInfo } from "../../notion/notion.js";
 import { generateText } from "../../groq/groq.js";
+import { getAllNotionUserIds, getNotionToken } from "@/lib/notionTokenStore";
+import { getPushSubscriptions, removePushSubscription } from "@/lib/pushSubscriptions";
 
 export const runtime = "nodejs";
-
-const SUBSCRIPTIONS_KEY = "push:subscriptions";
 
 const SHOPPING_DATABASE_ID = "38fa15fd-a3c1-8049-8041-ebf679d048b2"; // 買い物リスト
 const TODO_DATABASE_ID = "38fa15fd-a3c1-80bd-98d9-ddcfe8406a93"; // 進捗管理
@@ -64,9 +63,7 @@ function getCurrentSlot(jstHour: number): Category | "wrapup" | null {
   return CYCLE_CATEGORIES[index];
 }
 
-async function getShoppingItems(): Promise<string[]> {
-  const apiKey = process.env.NOTION_API_KEY;
-  if (!apiKey) return [];
+async function getShoppingItems(apiKey: string): Promise<string[]> {
   const pages = await queryNotionDatabase(apiKey, SHOPPING_DATABASE_ID, 50, 2);
   return pages
     .map((page: any) => collectNotionPageInfo(page))
@@ -84,9 +81,7 @@ async function getWeatherDescription(): Promise<string> {
   return `${DEFAULT_WEATHER_NAME}の現在の気温${current.temperature_2m}℃、天気コード${current.weather_code}、風速${current.wind_speed_10m}m/s`;
 }
 
-async function getScheduleToday(): Promise<{ name: string; time: string }[]> {
-  const apiKey = process.env.NOTION_API_KEY;
-  if (!apiKey) return [];
+async function getScheduleToday(apiKey: string): Promise<{ name: string; time: string }[]> {
   const pages = await queryNotionDatabase(apiKey, SCHEDULE_DATABASE_ID, 50, 2);
   const events = pages.map((page: any) => collectNotionPageInfo(page));
 
@@ -109,9 +104,7 @@ async function getScheduleToday(): Promise<{ name: string; time: string }[]> {
 }
 
 // 「完了していない」かつ「期限超過」または「2日以内に期日が来る」タスク（＝遅れそう・遅れているタスク）
-async function getAtRiskTasks(): Promise<string[]> {
-  const apiKey = process.env.NOTION_API_KEY;
-  if (!apiKey) return [];
+async function getAtRiskTasks(apiKey: string): Promise<string[]> {
   const pages = await queryNotionDatabase(apiKey, TODO_DATABASE_ID, 50, 2);
   const tasks = pages.map((page: any) => collectNotionPageInfo(page));
 
@@ -143,9 +136,7 @@ async function getNewsHeadlines(): Promise<string[]> {
 }
 
 // 就活データベースのうち、期日が7日以内に迫っているもの
-async function getUpcomingJobHunting(): Promise<string[]> {
-  const apiKey = process.env.NOTION_API_KEY;
-  if (!apiKey) return [];
+async function getUpcomingJobHunting(apiKey: string): Promise<string[]> {
   const pages = await queryNotionDatabase(apiKey, JOBHUNTING_DATABASE_ID, 50, 2);
   const entries = pages.map((page: any) => collectNotionPageInfo(page));
 
@@ -166,12 +157,16 @@ async function getUpcomingJobHunting(): Promise<string[]> {
     });
 }
 
+// weather/news はNotionを使わないため全ユーザー共通の内容にする。それ以外は各ユーザー自身のNotionを見る必要がある。
+const SHARED_SLOTS = new Set<Category>(["weather", "news"]);
+
 // カテゴリごとの生データを、Noirに渡す説明文にまとめる。
 // データが無い場合も「何も無い」という状態自体をNoirに伝え、必ず何かしら通知を作ってもらう。
-async function buildCategoryContext(category: Category): Promise<string | null> {
+async function buildCategoryContext(category: Category, apiKey: string | null): Promise<string | null> {
   switch (category) {
     case "shopping": {
-      const items = await getShoppingItems();
+      if (!apiKey) return null;
+      const items = await getShoppingItems(apiKey);
       return items.length > 0
         ? `買い物リストの中身: ${items.slice(0, 8).join("、")}`
         : "買い物リストは今のところ空っぽ";
@@ -180,13 +175,15 @@ async function buildCategoryContext(category: Category): Promise<string | null> 
       return (await getWeatherDescription()) || "天気情報が取得できなかった";
     }
     case "schedule": {
-      const events = await getScheduleToday();
+      if (!apiKey) return null;
+      const events = await getScheduleToday(apiKey);
       return events.length > 0
         ? `本日残りの予定: ${events.map((e) => `${e.time} ${e.name}`).join("、")}`
         : "本日はこの後、特に予定は入っていない";
     }
     case "todo": {
-      const tasks = await getAtRiskTasks();
+      if (!apiKey) return null;
+      const tasks = await getAtRiskTasks(apiKey);
       return tasks.length > 0
         ? `遅れているか、2日以内に期日が来るタスク: ${tasks.slice(0, 8).join("、")}`
         : "遅れている・期日が近いタスクは特に無い、順調な状態";
@@ -198,7 +195,8 @@ async function buildCategoryContext(category: Category): Promise<string | null> 
         : "ニュースが取得できなかった";
     }
     case "jobhunting": {
-      const entries = await getUpcomingJobHunting();
+      if (!apiKey) return null;
+      const entries = await getUpcomingJobHunting(apiKey);
       return entries.length > 0
         ? `1週間以内に動きがある就活案件: ${entries.join("、")}`
         : "1週間以内に動きがある就活案件は今のところ無い";
@@ -220,8 +218,8 @@ async function composeNotificationBody(context: string): Promise<string> {
   return generateText(prompt);
 }
 
-async function composeWrapUpBody(): Promise<string> {
-  const tasks = await getAtRiskTasks();
+async function composeWrapUpBody(apiKey: string): Promise<string> {
+  const tasks = await getAtRiskTasks(apiKey);
   const context =
     tasks.length > 0
       ? `今日時点で遅れている・期日が近いタスクが${tasks.length}件残っている: ${tasks.slice(0, 5).join("、")}`
@@ -266,41 +264,75 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ sent: false, reason: "outside notification hours", jstHour });
   }
 
-  let notificationTitle: string;
-  let notificationBody: string | null;
+  const userIds = await getAllNotionUserIds();
 
-  if (slot === "wrapup") {
-    notificationTitle = "🌙 今日もお疲れ様";
-    notificationBody = await composeWrapUpBody();
-  } else {
-    notificationTitle = CATEGORY_LABELS[slot];
-    const context = await buildCategoryContext(slot);
-    notificationBody = context ? await composeNotificationBody(context) : null;
-  }
-
-  if (!notificationBody) {
-    return NextResponse.json({ sent: false, reason: "no content for this slot", slot });
-  }
-
-  const redis = Redis.fromEnv();
-  const subscriptions = await redis.smembers(SUBSCRIPTIONS_KEY);
-  const payload = JSON.stringify({ title: notificationTitle, body: notificationBody });
-
-  let sentCount = 0;
-  for (const raw of subscriptions) {
-    const subscription = typeof raw === "string" ? JSON.parse(raw) : raw;
-    try {
-      await webpush.sendNotification(subscription, payload);
-      sentCount += 1;
-    } catch (error: any) {
-      // 期限切れ・無効な購読は保存先から削除しておく
-      if (error?.statusCode === 404 || error?.statusCode === 410) {
-        await redis.srem(SUBSCRIPTIONS_KEY, raw);
-      } else {
-        console.error("[cron/notify] sendNotification failed", error);
+  async function sendToUser(userId: string, title: string, body: string): Promise<number> {
+    const subscriptions = await getPushSubscriptions(userId);
+    const payload = JSON.stringify({ title, body });
+    let count = 0;
+    for (const { raw, subscription } of subscriptions) {
+      try {
+        await webpush.sendNotification(subscription, payload);
+        count += 1;
+      } catch (error: any) {
+        // 期限切れ・無効な購読は保存先から削除しておく
+        if (error?.statusCode === 404 || error?.statusCode === 410) {
+          await removePushSubscription(userId, raw);
+        } else {
+          console.error("[cron/notify] sendNotification failed", error);
+        }
       }
+    }
+    return count;
+  }
+
+  // weather/newsはNotionを使わないので、全員に同じ内容を送る
+  if (slot !== "wrapup" && SHARED_SLOTS.has(slot)) {
+    const notificationTitle = CATEGORY_LABELS[slot];
+    const context = await buildCategoryContext(slot, null);
+    const notificationBody = context ? await composeNotificationBody(context) : null;
+
+    if (!notificationBody) {
+      return NextResponse.json({ sent: false, reason: "no content for this slot", slot });
+    }
+
+    let sentCount = 0;
+    for (const userId of userIds) {
+      sentCount += await sendToUser(userId, notificationTitle, notificationBody);
+    }
+
+    return NextResponse.json({ sent: true, sentCount, slot, notificationBody });
+  }
+
+  // それ以外（shopping/schedule/todo/jobhunting/wrapup）は各ユーザー自身のNotionを見て個別に通知を作る
+  const notificationTitle = slot === "wrapup" ? "🌙 今日もお疲れ様" : CATEGORY_LABELS[slot];
+  let sentCount = 0;
+  let usersNotified = 0;
+
+  for (const userId of userIds) {
+    const subscriptions = await getPushSubscriptions(userId);
+    if (subscriptions.length === 0) continue;
+
+    const apiKey = await getNotionToken(userId);
+    if (!apiKey) continue;
+
+    try {
+      const notificationBody =
+        slot === "wrapup"
+          ? await composeWrapUpBody(apiKey)
+          : await (async () => {
+              const context = await buildCategoryContext(slot, apiKey);
+              return context ? await composeNotificationBody(context) : null;
+            })();
+
+      if (!notificationBody) continue;
+
+      usersNotified += 1;
+      sentCount += await sendToUser(userId, notificationTitle, notificationBody);
+    } catch (error) {
+      console.error(`[cron/notify] user ${userId} 向け通知の作成に失敗:`, error);
     }
   }
 
-  return NextResponse.json({ sent: true, sentCount, slot, notificationBody });
+  return NextResponse.json({ sent: sentCount > 0, sentCount, usersNotified, slot });
 }

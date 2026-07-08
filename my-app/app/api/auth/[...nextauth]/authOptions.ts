@@ -1,4 +1,5 @@
 import type { AuthOptions } from "next-auth";
+import { saveNotionToken } from "@/lib/notionTokenStore";
 
 export const authOptions: AuthOptions = {
   debug: true,
@@ -87,17 +88,25 @@ export const authOptions: AuthOptions = {
 
   callbacks: {
     async jwt({ token, account }) {
-      if (account?.access_token) {
+      // account はサインイン直後のリクエストにしか渡ってこない。以降のリクエストでは
+      // 何もせずtokenをそのまま返す（毎リクエストRedisに書きに行かないようにする）
+      if (account?.access_token && account?.providerAccountId) {
         token.accessToken = account.access_token;
-      }
-      if (account?.workspace_id) {
-        token.workspaceId = account.workspace_id as string;
+        token.userId = account.providerAccountId;
+        if (account.workspace_id) {
+          token.workspaceId = account.workspace_id as string;
+        }
+        // cronには実行時にログインセッションが無いため、通知作成時に使えるようトークンを保存しておく
+        await saveNotionToken(token.userId, token.accessToken).catch((error) => {
+          console.error("Notionトークンの保存に失敗:", error);
+        });
       }
       return token;
     },
     async session({ session, token }) {
       session.accessToken = token.accessToken;
       session.workspaceId = token.workspaceId;
+      session.userId = token.userId;
       return session;
     },
   },
