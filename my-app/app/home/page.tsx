@@ -13,6 +13,7 @@ import {
   WindIcon,
   DropIcon,
   SettingsIcon,
+  AlertIcon,
 } from '@/app/components/icons';
 
 const decodeWeather = (code: number) => {
@@ -524,9 +525,13 @@ export default function HomePage() {
                           checked={task.done}
                           onChange={() => {}}
                         />
-                        <span className={task.done ? styles.completed : ''}>
-                          {task.name}
-                          {task.overdue && ' ⚠️'}
+                        <span className={task.done ? styles.completed : ''} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span>{task.name}</span>
+                          {task.overdue && (
+                            <span style={{ width: '16px', height: '16px', display: 'flex', alignItems: 'center', color: '#ff6b6b' }}>
+                              <AlertIcon size={16} />
+                            </span>
+                          )}
                         </span>
                       </label>
                     ))}
