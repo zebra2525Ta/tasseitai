@@ -463,11 +463,11 @@ export default function HomePage() {
             <span className={styles.quickLinkTitle}>Quick link</span>
             <div className={styles.quickLinkItems}>
               <a href="https://www.notion.so" target="_blank" rel="noopener noreferrer" className={styles.quickLinkItem}>
-                <img src="https://cdn.simpleicons.org/notion/ffffff" alt="Notion" className={styles.linkIcon} />
+                <img src="/icon/notion.webp" alt="Notion" className={styles.linkIcon} />
                 <span>Notion</span>
               </a>
               <a href="https://calendar.notion.so" target="_blank" rel="noopener noreferrer" className={styles.quickLinkItem}>
-                <img src="https://cdn.simpleicons.org/calendar/ffffff" alt="Notion Calendar" className={styles.linkIcon} />
+                <img src="/icon/calander.webp" alt="Notion Calendar" className={styles.linkIcon} />
                 <span>Notionカレンダー</span>
               </a>
               <a href="https://github.com" target="_blank" rel="noopener noreferrer" className={styles.quickLinkItem}>
@@ -475,7 +475,7 @@ export default function HomePage() {
                 <span>GitHub</span>
               </a>
               <a href="https://weathernews.jp/" target="_blank" rel="noopener noreferrer" className={styles.quickLinkItem}>
-                <img src="https://cdn.simpleicons.org/cloudsnow/ffffff" alt="Weather News" className={styles.linkIcon} />
+                <img src="/icon/weather.png" alt="Weather News" className={styles.linkIcon} />
                 <span>ウェザーニュース</span>
               </a>
               <a href="https://news.google.com" target="_blank" rel="noopener noreferrer" className={styles.quickLinkItem}>
