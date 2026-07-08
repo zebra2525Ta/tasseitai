@@ -244,7 +244,7 @@ export default function HomePage() {
         `${scheduleWindowStart.getMonth() + 1}月${scheduleWindowStart.getDate()}日（${WEEKDAY_NAMES[scheduleWindowStart.getDay()]}）〜 ${endDate.getMonth() + 1}月${endDate.getDate()}日（${WEEKDAY_NAMES[endDate.getDay()]}）`
       );
       setScheduleTimeMarkers(
-        [0, 12, 24].map((hourOffset) =>
+        [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44].map((hourOffset) =>
           formatHHMM(new Date(scheduleWindowStart.getTime() + hourOffset * 60 * 60 * 1000))
         )
       );
