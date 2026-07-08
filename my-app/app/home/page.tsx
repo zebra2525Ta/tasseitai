@@ -459,7 +459,15 @@ export default function HomePage() {
           
           {/* Quick link */}
           <div className={styles.quickLinkCard}>
-            <span className={styles.quickLinkTitle}>Quick link</span>
+            <a
+              href="https://www.notion.so"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.quickLinkTitle}
+              style={{ textDecoration: 'none', color: '#e5c158', cursor: 'pointer', display: 'inline-block' }}
+            >
+              Quick link
+            </a>
             <div className={styles.quickLinkItems}>
               <a href="https://www.notion.so" target="_blank" rel="noopener noreferrer" className={styles.quickLinkItem}>
                 <img src="/icon/notion.webp" alt="Notion" className={styles.linkIcon} />
@@ -468,18 +476,6 @@ export default function HomePage() {
               <a href="https://calendar.notion.so" target="_blank" rel="noopener noreferrer" className={styles.quickLinkItem}>
                 <img src="/icon/calander.webp" alt="Notion Calendar" className={styles.linkIcon} />
                 <span>Notionカレンダー</span>
-              </a>
-              <a href="https://github.com" target="_blank" rel="noopener noreferrer" className={styles.quickLinkItem}>
-                <img src="https://cdn.simpleicons.org/github/ffffff" alt="GitHub" className={styles.linkIcon} />
-                <span>GitHub</span>
-              </a>
-              <a href="https://weathernews.jp/" target="_blank" rel="noopener noreferrer" className={styles.quickLinkItem}>
-                <img src="/icon/weather.png" alt="Weather News" className={styles.linkIcon} />
-                <span>ウェザーニュース</span>
-              </a>
-              <a href="https://news.google.com" target="_blank" rel="noopener noreferrer" className={styles.quickLinkItem}>
-                <img src="https://cdn.simpleicons.org/googlenews/ffffff" alt="Google News" className={styles.linkIcon} />
-                <span>Googleニュース</span>
               </a>
             </div>
           </div>
