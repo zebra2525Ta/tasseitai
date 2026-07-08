@@ -258,6 +258,14 @@ async function fetchNotionJson(url, apiKey, body) {
   return response.json();
 }
 
+// 指定したデータベースに新しいページ（レコード）を1件作成する
+export async function createDatabasePage(apiKeyValue, databaseIdValue, properties) {
+  return fetchNotionJson("https://api.notion.com/v1/pages", apiKeyValue, {
+    parent: { database_id: databaseIdValue },
+    properties,
+  });
+}
+
 export async function queryNotionDatabase(
   apiKeyValue,
   databaseIdValue,

@@ -4,7 +4,7 @@
 //
 // 例：test.js での呼び出し例があります。参考にしてください。
 
-import { queryNotionDatabase, searchNotionPages, collectNotionPageInfo } from "../notion/notion.js";
+import { queryNotionDatabase, searchNotionPages, collectNotionPageInfo, createDatabasePage } from "../notion/notion.js";
 
 // Notion側の1件あたりのプロンプト行数が多すぎるとプロンプトが肥大化するため、
 // 1件あたりの propertiesList 行数と全体の文字数に上限を設ける
@@ -65,6 +65,83 @@ export function shouldUseNotionContext(text) {
   const lowerText = text.toLowerCase();
   if (detectNotionTopics(text).length > 0) return true;
   return NOTION_GENERAL_KEYWORDS.some((keyword) => lowerText.includes(keyword.toLowerCase()));
+}
+
+// 「登録して」「追加して」のような、買い物リストへの新規登録を意図する動詞
+const REGISTER_VERBS = ["登録", "追加", "入れて"];
+
+// 買い物リストへの登録依頼かどうかを判定する。
+// 登録の動詞があり、かつ他のトピック（タスク・予定・就活・メモ）が明示されていない場合は
+// 買い物リストへの登録とみなす（単発の「モノを1つ追加する」操作は買い物リストが唯一の想定用途のため）。
+export function isShoppingRegisterRequest(text) {
+  if (typeof text !== "string" || !text.trim()) return false;
+  const hasRegisterVerb = REGISTER_VERBS.some((verb) => text.includes(verb));
+  if (!hasRegisterVerb) return false;
+
+  const matchedTopics = detectNotionTopics(text);
+  const matchesOtherTopic = matchedTopics.some((topic) => topic.id !== "shopping");
+  return !matchesOtherTopic;
+}
+
+// メッセージから商品名・数量・メモを簡易的に抽出する。
+// 数量・メモが読み取れない場合は、数量=1・メモ=空欄で自動補完する。
+function extractShoppingItemFromMessage(text) {
+  const quantityMatch = text.match(/(\d+)\s*(個|つ|本|パック|袋|枚|箱|kg|g)/);
+  const quantity = quantityMatch ? parseInt(quantityMatch[1], 10) : 1;
+
+  const memoMatch = text.match(/メモ(?:は|:|：)\s*(.+?)(?:で登録|。|$)/) || text.match(/(.+?)というメモ/);
+  const memo = memoMatch ? memoMatch[1].trim() : "";
+
+  // 数量・メモの一致部分は、他の除去処理より先に取り除く
+  // （後回しにすると「登録」等の語が先に消えて memoMatch の文字列が見つからなくなるため）
+  let name = text;
+  if (memoMatch) name = name.replace(memoMatch[0], "");
+  if (quantityMatch) name = name.replace(quantityMatch[0], "");
+
+  for (const topic of NOTION_TOPICS) {
+    for (const keyword of topic.keywords) {
+      name = name.replaceAll(keyword, "");
+    }
+  }
+  for (const verb of REGISTER_VERBS) {
+    name = name.replaceAll(verb, "");
+  }
+  name = name
+    .replace(/notion/gi, "")
+    .replaceAll("リスト", "")
+    .replace(/(して|ください|お願い|に|へ|を|、|。|\s)+/g, " ")
+    .trim();
+
+  return { name, quantity, memo };
+}
+
+const SHOPPING_TOPIC = NOTION_TOPICS.find((topic) => topic.id === "shopping");
+
+// 買い物リストに新しいアイテムを1件登録する
+export async function registerShoppingItem(text) {
+  const notionApiKey = process.env.NOTION_API_KEY;
+  if (!notionApiKey) {
+    return "NOTION_API_KEYが設定されていないため、登録できませんでした。";
+  }
+
+  const { name, quantity, memo } = extractShoppingItemFromMessage(text);
+  if (!name) {
+    return "何を買い物リストに登録すればいいか読み取れませんでした。商品名を教えてください。";
+  }
+
+  try {
+    await createDatabasePage(notionApiKey, SHOPPING_TOPIC.databaseId, {
+      商品名: { title: [{ text: { content: name } }] },
+      数量: { number: quantity },
+      メモ: { rich_text: memo ? [{ text: { content: memo } }] : [] },
+    });
+
+    const memoText = memo ? `、メモ: ${memo}` : "";
+    return `買い物リストに「${name}」を登録しといたよ（数量: ${quantity}${memoText}）。他にも欲しいものがあれば言ってね！`;
+  } catch (error) {
+    console.error("Notion登録エラー:", error.message);
+    return "買い物リストへの登録に失敗しました。もう一度試してみてください。";
+  }
 }
 
 // 特定のデータベース1つだけを取得する
