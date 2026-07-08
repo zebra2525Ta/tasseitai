@@ -523,11 +523,14 @@ export default function HomePage() {
                         left: `${currentTimePercent}%`,
                         top: 0,
                         bottom: 0,
-                        width: '2px',
+                        width: '3px',
                         backgroundColor: '#ff6b6b',
+                        boxShadow: '0 0 8px rgba(255, 107, 107, 0.8)',
                         zIndex: 10,
-                        borderRadius: '1px'
+                        borderRadius: '2px',
+                        transform: 'translateX(-50%)'
                       }}
+                      title={`現在時刻`}
                     />
                   )}
                 </div>
