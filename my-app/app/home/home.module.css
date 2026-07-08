@@ -42,23 +42,19 @@
   gap: 16px;
 }
 
-/* ⬇️ ここからスマホの表示順を指定（数字が小さい順に上から並びます） */
-.aiChatFullCard   { order: 1; } /* 1. Noir */
-.quickLinkCard    { order: 2; } /* 2. クイックリンク */
-.scheduleTodoGrid { order: 3; } /* 3 & 4. スケジュールとToDoの塊 */
-.weatherCard      { order: 5; } /* 5. 天気 */
+/* スマホ時の表示順（数字が小さい順に上から並びます） */
+.aiChatFullCard   { order: 1; } /* 1. Noir（左カラム） */
+.quickLinkCard    { order: 2; } /* 2. Quick link */
+.scheduleCard     { order: 3; } /* 3. Schedule */
+.todoCard         { order: 4; } /* 4. ToDo */
+.weatherCard      { order: 5; } /* 5. Weather（左カラム） */
 .newsCard         { order: 6; } /* 6. News */
-.githubFullCard   { order: 7; } /* 7. GitHub */
+.githubFullCard   { order: 7; } /* 7. GitHub（左カラム） */
 
-/* スケジュールとToDoのエリア（スマホ時は縦並びにする） */
+/* スケジュールとToDoのエリア（スマホ時は不要になるが、PC時の互換性のため残す） */
 .scheduleTodoGrid {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  display: contents;
 }
-/* スケジュール(3) のあとに ToDo(4) が来るように指定 */
-.scheduleCard     { order: 1; }
-.todoCard         { order: 2; }
 
 /* 左カラム・右カラムのラッパー自体は、PCのグリッド構造のために残しますが、
    スマホ時は邪魔をしないように display: contents; に設定します */
@@ -303,28 +299,28 @@
     grid-column: 2; /* グリッドの2列目（右）に配置 */
   }
 
-  /* PC時はスマホ用の並び順(order)をすべて解除して、HTMLの並び順に戻す */
+  /* PC時はスマホ用の並び順(order)をすべて解除 */
   .aiChatFullCard,
   .quickLinkCard,
-  .scheduleTodoGrid,
+  .scheduleCard,
+  .todoCard,
   .weatherCard,
   .newsCard,
-  .githubFullCard,
-  .scheduleCard,
-  .todoCard {
+  .githubFullCard {
     order: unset;
   }
-  
+
   /* PC時はGitHub・Newsを下に引き伸ばす */
   .githubFullCard,
   .newsCard {
     flex-grow: 1;
   }
 
-  /* スケジュールとToDoをPCの時だけ「2 : 1」で横並びにする */
+  /* スケジュールとToDoをPC時だけ「2 : 1」で横並びにする */
   .scheduleTodoGrid {
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 16px;
+    grid-column: 1 / -1;
   }
 }
