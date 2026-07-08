@@ -329,14 +329,13 @@ export default function HomePage() {
                 dueDate,
               };
             })
-            // 完了済みは一覧から除外し、期日が近い順に上位10件だけ保持する（表示は3件/10件を切り替え）
             .filter((task: any) => !task.done)
             .sort((a: any, b: any) => {
               if (!a.dueDate) return 1;
               if (!b.dueDate) return -1;
               return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
             })
-            .slice(0, 10);
+            .slice(0, 8);
 
           setTodoTasks(tasksList);
           setTodoLoading(false);
@@ -518,7 +517,7 @@ export default function HomePage() {
               ) : (
                 <>
                   <div className={styles.todoList}>
-                    {todoTasks.slice(0, todoExpanded ? 10 : 3).map((task) => (
+                    {todoTasks.slice(0, todoExpanded ? 8 : 3).map((task) => (
                       <label key={task.id} className={styles.todoLabel}>
                         <input
                           type="checkbox"
