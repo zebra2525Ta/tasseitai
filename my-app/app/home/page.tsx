@@ -511,16 +511,13 @@ export default function HomePage() {
                     <p className={styles.notionStatus}>予定はありません</p>
                   ) : (
                     scheduleEvents.map((event) => (
-                      <a
+                      <div
                         key={event.id}
-                        href={`https://notion.so/${event.id.replace(/-/g, '')}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
                         className={styles.timelineBar}
-                        style={{ marginLeft: `${event.leftPercent}%`, width: `${event.widthPercent}%`, textDecoration: 'none', display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+                        style={{ marginLeft: `${event.leftPercent}%`, width: `${event.widthPercent}%` }}
                       >
                         {event.label}
-                      </a>
+                      </div>
                     ))
                   )}
                   {currentTimePercent !== null && (
@@ -567,12 +564,9 @@ export default function HomePage() {
                     {todoTasks.slice(0, 5).map((task) => (
                       <div key={task.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'space-between', width: '100%' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
-                          <a
-                            href={`https://notion.so/${task.id.replace(/-/g, '')}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                          <span
                             className={task.done ? styles.completed : ''}
-                            style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit' }}
+                            style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, minWidth: 0 }}
                           >
                             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{task.name}</span>
                             {task.overdue && (
@@ -580,7 +574,7 @@ export default function HomePage() {
                                 <AlertIcon size={16} color="#ff6b6b" />
                               </span>
                             )}
-                          </a>
+                          </span>
                           {task.dueDate && (
                             <span style={{ fontSize: '0.85rem', opacity: 0.8, whiteSpace: 'nowrap', minWidth: '90px', textAlign: 'right' }}>
                               {new Date(task.dueDate).getMonth() + 1}月{new Date(task.dueDate).getDate()}日
