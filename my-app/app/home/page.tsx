@@ -344,7 +344,7 @@ export default function HomePage() {
                 dueDate,
               };
             })
-            .filter((task: any) => !task.done)
+            .filter((task: any) => task.status !== '完了')
             .sort((a: any, b: any) => {
               if (!a.dueDate) return 1;
               if (!b.dueDate) return -1;
@@ -595,7 +595,7 @@ export default function HomePage() {
                             flexShrink: 0,
                           }}
                         >
-                          <option value="未開始">未開始</option>
+                          <option value="未着手">未着手</option>
                           <option value="進行中">進行中</option>
                           <option value="完了">完了</option>
                         </select>
