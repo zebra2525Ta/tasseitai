@@ -1,4 +1,6 @@
-export const SettingsIcon = ({ size = 24 }: { size?: number }) => (
+import React from 'react';
+
+export const SettingsIcon = ({ size = 24 }: { size?: number }): React.ReactNode => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="12" r="3" />
     <path d="M12 1v6m0 6v6" />
@@ -7,7 +9,7 @@ export const SettingsIcon = ({ size = 24 }: { size?: number }) => (
   </svg>
 );
 
-export const SunnyIcon = ({ size = 24 }: { size?: number }) => (
+export const SunnyIcon = ({ size = 24 }: { size?: number }): React.ReactNode => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="12" r="5" />
     <line x1="12" y1="1" x2="12" y2="3" />
@@ -21,13 +23,13 @@ export const SunnyIcon = ({ size = 24 }: { size?: number }) => (
   </svg>
 );
 
-export const CloudyIcon = ({ size = 24 }: { size?: number }) => (
+export const CloudyIcon = ({ size = 24 }: { size?: number }): React.ReactNode => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M22 17H2m3-4a7 7 0 0 1 13.99.001" />
   </svg>
 );
 
-export const RainyIcon = ({ size = 24 }: { size?: number }) => (
+export const RainyIcon = ({ size = 24 }: { size?: number }): React.ReactNode => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.236" />
     <line x1="8" y1="16" x2="8" y2="20" />
@@ -36,7 +38,7 @@ export const RainyIcon = ({ size = 24 }: { size?: number }) => (
   </svg>
 );
 
-export const SnowIcon = ({ size = 24 }: { size?: number }) => (
+export const SnowIcon = ({ size = 24 }: { size?: number }): React.ReactNode => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25" />
     <line x1="12" y1="10" x2="12" y2="20" />
@@ -46,14 +48,14 @@ export const SnowIcon = ({ size = 24 }: { size?: number }) => (
   </svg>
 );
 
-export const ThunderstormIcon = ({ size = 24 }: { size?: number }) => (
+export const ThunderstormIcon = ({ size = 24 }: { size?: number }): React.ReactNode => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M19 16A5 5 0 0 0 14 3H9a7 7 0 0 0 0 14h12z" />
     <polyline points="13 11 9 17 15 17 11 23" />
   </svg>
 );
 
-export const MistIcon = ({ size = 24 }: { size?: number }) => (
+export const MistIcon = ({ size = 24 }: { size?: number }): React.ReactNode => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <line x1="2" y1="6" x2="22" y2="6" />
     <line x1="2" y1="10" x2="22" y2="10" />
@@ -62,13 +64,13 @@ export const MistIcon = ({ size = 24 }: { size?: number }) => (
   </svg>
 );
 
-export const WindIcon = ({ size = 24 }: { size?: number }) => (
+export const WindIcon = ({ size = 24 }: { size?: number }): React.ReactNode => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" />
   </svg>
 );
 
-export const DropIcon = ({ size = 24 }: { size?: number }) => (
+export const DropIcon = ({ size = 24 }: { size?: number }): React.ReactNode => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
   </svg>

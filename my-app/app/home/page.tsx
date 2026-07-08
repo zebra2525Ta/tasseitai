@@ -13,7 +13,7 @@ import {
   WindIcon,
   DropIcon,
   SettingsIcon,
-} from './components/icons';
+} from '@/app/components/icons';
 
 const decodeWeather = (code: number) => {
   if (code === 0) return { text: '快晴', icon: SunnyIcon };
