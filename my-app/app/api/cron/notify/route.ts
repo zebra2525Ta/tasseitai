@@ -249,7 +249,18 @@ export async function GET(request: NextRequest) {
 
   const jstNow = getJstNow();
   const jstHour = jstNow.getHours();
-  const slot = getCurrentSlot(jstHour);
+
+  // テスト用：?force=1 を付けると時間帯制限を無視して実行する（任意で &slot=weather のように指定可能）
+  const forceTest = request.nextUrl.searchParams.get("force") === "1";
+  const requestedSlot = request.nextUrl.searchParams.get("slot");
+  const isValidSlot = (value: string | null): value is Category | "wrapup" =>
+    value !== null && ((CYCLE_CATEGORIES as readonly string[]).includes(value) || value === "wrapup");
+
+  const slot = forceTest
+    ? isValidSlot(requestedSlot)
+      ? requestedSlot
+      : CYCLE_CATEGORIES[jstHour % CYCLE_CATEGORIES.length]
+    : getCurrentSlot(jstHour);
 
   if (!slot) {
     return NextResponse.json({ sent: false, reason: "outside notification hours", jstHour });
