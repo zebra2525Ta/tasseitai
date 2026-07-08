@@ -15,7 +15,7 @@ const NOTION_PROMPT_MAX_CHARS = 6000;
 // 特定のデータベースに話題が絞れるときは、そのデータベースだけをピンポイントで取得する。
 // ワークスペース全体を毎回渡すと関係ないデータに惑わされてAIの回答がぶれるため、
 // 話題が特定できる場合は対象を絞り込む。
-const NOTION_TOPICS = [
+export const NOTION_TOPICS = [
   {
     id: "shopping",
     label: "買い物リスト",
@@ -51,36 +51,27 @@ const NOTION_TOPICS = [
 // 上記のどのトピックにも当てはまらないが、Notionを見てほしそうな一般的なキーワード
 const NOTION_GENERAL_KEYWORDS = ["登録", "確認", "リスト", "notion"];
 
-function detectNotionTopics(text) {
+export function detectNotionTopics(text) {
+  if (typeof text !== "string" || !text.trim()) return [];
   const lowerText = text.toLowerCase();
   return NOTION_TOPICS.filter((topic) =>
     topic.keywords.some((keyword) => lowerText.includes(keyword.toLowerCase()))
   );
 }
 
-// メッセージの内容からNotionを参照すべきかどうかを判定する
-// （NLPや意図分類は行わず、キーワード一致の簡易判定にとどめる）
-export function shouldUseNotionContext(text) {
+// どのトピックにも当てはまらないが、Notionを見てほしそうな一般的なキーワードを含むかどうか
+export function hasGeneralNotionIntent(text) {
   if (typeof text !== "string" || !text.trim()) return false;
   const lowerText = text.toLowerCase();
-  if (detectNotionTopics(text).length > 0) return true;
   return NOTION_GENERAL_KEYWORDS.some((keyword) => lowerText.includes(keyword.toLowerCase()));
 }
 
-// 「登録して」「追加して」のような、買い物リストへの新規登録を意図する動詞
+// 「登録して」「追加して」のような、Notionへの新規登録を意図する動詞を含むかどうか
 const REGISTER_VERBS = ["登録", "追加", "入れて"];
 
-// 買い物リストへの登録依頼かどうかを判定する。
-// 登録の動詞があり、かつ他のトピック（タスク・予定・就活・メモ）が明示されていない場合は
-// 買い物リストへの登録とみなす（単発の「モノを1つ追加する」操作は買い物リストが唯一の想定用途のため）。
-export function isShoppingRegisterRequest(text) {
+export function hasRegisterIntent(text) {
   if (typeof text !== "string" || !text.trim()) return false;
-  const hasRegisterVerb = REGISTER_VERBS.some((verb) => text.includes(verb));
-  if (!hasRegisterVerb) return false;
-
-  const matchedTopics = detectNotionTopics(text);
-  const matchesOtherTopic = matchedTopics.some((topic) => topic.id !== "shopping");
-  return !matchesOtherTopic;
+  return REGISTER_VERBS.some((verb) => text.includes(verb));
 }
 
 // メッセージから商品名・数量・メモを簡易的に抽出する。
@@ -292,13 +283,15 @@ export async function generateText(promptText) {
     : "";
 }
 
-async function buildNotionPrompt(question) {
+async function buildNotionPrompt(question, forcedTopics) {
   const questionText = typeof question === "string" ? question.trim() : "";
   if (!questionText) {
     throw new Error("質問文が必要です");
   }
 
-  const matchedTopics = detectNotionTopics(questionText);
+  // forcedTopics が指定されていれば話題判定をスキップしてそれを使う
+  // （曖昧なときにユーザーがボタンで選んだトピックをそのまま使う場合など）
+  const matchedTopics = forcedTopics && forcedTopics.length > 0 ? forcedTopics : detectNotionTopics(questionText);
   let propertiesText;
 
   if (matchedTopics.length > 0) {
@@ -332,7 +325,7 @@ async function buildNotionPrompt(question) {
 
 export { buildNotionPrompt };
 
-export async function generateTextFromNotionData(question) {
-  const promptText = await buildNotionPrompt(question);
+export async function generateTextFromNotionData(question, forcedTopics) {
+  const promptText = await buildNotionPrompt(question, forcedTopics);
   return generateText(promptText);
 }

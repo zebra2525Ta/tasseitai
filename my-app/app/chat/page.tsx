@@ -12,6 +12,7 @@ type ChatMessage = {
 };
 
 type PendingItem = { name: string; quantity: number; memo: string };
+type TopicChoice = { id: string; label: string };
 
 export default function ChatPage() {
   const router = useRouter();
@@ -21,6 +22,9 @@ export default function ChatPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Notion登録の確認待ちアイテム（会話履歴とは別に、確認フローのためだけに1件だけ保持する）
   const [pendingItem, setPendingItem] = useState<PendingItem | null>(null);
+  // どのトピック（データベース）の話か曖昧なときに、選択肢とその元メッセージを保持する
+  const [topicChoices, setTopicChoices] = useState<TopicChoice[]>([]);
+  const [pendingOriginalMessage, setPendingOriginalMessage] = useState("");
 
   const handlePlusClick = () => {
     fileInputRef.current?.click();
@@ -45,8 +49,10 @@ export default function ChatPage() {
 
     // 会話はログとして残さず、直前の1往復だけを表示する（新しい質問で前のやり取りは消える）
     setMessages([{ role: "user", text: question, image: imageUrl }]);
-    // 登録確認はボタンでのみ行うため、メッセージを送るということは確認待ちを打ち切る扱いにする
+    // 登録確認・トピック選択はボタンでのみ行うため、メッセージを送るということは確認待ちを打ち切る扱いにする
     setPendingItem(null);
+    setTopicChoices([]);
+    setPendingOriginalMessage("");
 
     setMessage("");
     setSelectedFile(null);
@@ -69,20 +75,47 @@ export default function ChatPage() {
         throw new Error(data?.error || "API request failed");
       }
 
-      // 登録内容の確認待ちがあれば、ボタンで選べるように保持する
-      setPendingItem(
-        data?.pendingItem && typeof data.pendingItem === "object" ? data.pendingItem : null
-      );
-
-      const assistantText = typeof data.content === "string" ? data.content : "";
-      if (assistantText.trim()) {
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", text: assistantText },
-        ]);
-      }
+      applyServerResponse(data);
     } catch (error) {
       console.error("チャット送信エラー:", error);
+    }
+  };
+
+  // サーバーからのレスポンスに含まれる、確認待ち状態（登録待ち・トピック選択待ち）とメッセージ本文を反映する
+  const applyServerResponse = (data: any) => {
+    setPendingItem(
+      data?.pendingItem && typeof data.pendingItem === "object" ? data.pendingItem : null
+    );
+    setTopicChoices(Array.isArray(data?.topicChoices) ? data.topicChoices : []);
+    setPendingOriginalMessage(typeof data?.originalMessage === "string" ? data.originalMessage : "");
+
+    const assistantText = typeof data.content === "string" ? data.content : "";
+    if (assistantText.trim()) {
+      setMessages((prev) => [...prev, { role: "assistant", text: assistantText }]);
+    }
+  };
+
+  // トピック選択ボタン用：選ばれたトピックで元のメッセージを処理し直す
+  const handleTopicChoice = async (topicId: string) => {
+    if (!pendingOriginalMessage) return;
+
+    try {
+      const response = await fetch("/api/groq", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ topicId, originalMessage: pendingOriginalMessage }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.error || "API request failed");
+      }
+
+      applyServerResponse(data);
+    } catch (error) {
+      console.error("トピック選択エラー:", error);
     }
   };
 
@@ -113,15 +146,7 @@ export default function ChatPage() {
         throw new Error(data?.error || "API request failed");
       }
 
-      setPendingItem(null);
-
-      const assistantText = typeof data.content === "string" ? data.content : "";
-      if (assistantText.trim()) {
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", text: assistantText },
-        ]);
-      }
+      applyServerResponse(data);
     } catch (error) {
       console.error("登録確定エラー:", error);
     }
@@ -189,6 +214,22 @@ export default function ChatPage() {
             >
               やめる
             </button>
+          </div>
+        )}
+
+        {/* どのデータベースの話か曖昧なときの選択ボタン */}
+        {topicChoices.length > 0 && (
+          <div className={styles.confirmRow}>
+            {topicChoices.map((topic) => (
+              <button
+                key={topic.id}
+                type="button"
+                className={styles.confirmNoBtn}
+                onClick={() => handleTopicChoice(topic.id)}
+              >
+                {topic.label}
+              </button>
+            ))}
           </div>
         )}
       </div>

@@ -226,9 +226,10 @@
   display: block;
 }
 
-/* Notion登録の確認ボタン行 */
+/* Notion登録の確認・トピック選択ボタン行 */
 .confirmRow {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-top: 4px;
 }
