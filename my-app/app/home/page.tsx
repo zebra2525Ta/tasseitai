@@ -53,11 +53,12 @@ const CATEGORY_NAMES: { [key: string]: string } = {
   entertainment: 'エンタメ'
 };
 
-type NotificationGateStatus = 'checking' | 'blocked-default' | 'blocked-denied' | 'passed';
+// 「許可」「拒否」のどちらかを選ぶまでホームへ進ませない（未決定=defaultのときだけブロック）。
+// 一度どちらかに決まっていれば（許可でも拒否でも）ホームへ進める。
+type NotificationGateStatus = 'checking' | 'blocked' | 'passed';
 
 export default function HomePage() {
   const [isMounted, setIsMounted] = useState(false);
-  // 通知が許可されるまでホーム画面本体を表示しない（強制ゲート）
   const [notificationGate, setNotificationGate] = useState<NotificationGateStatus>('checking');
 
   const [weather, setWeather] = useState<any>({
@@ -108,19 +109,19 @@ export default function HomePage() {
   useEffect(() => {
     setIsMounted(true);
 
-    // 通知が許可されるまでホーム画面を表示しない強制ゲート。
-    // 非対応ブラウザ（Notification/Service Worker非対応）はブロックしようがないので素通しする。
+    // 通知の許可・拒否のどちらかが決まるまでホーム画面を表示しない強制ゲート。
+    // 一度決まっていれば（拒否でも）ホームへ進める。非対応ブラウザは素通しする。
     if (typeof Notification === 'undefined' || !('serviceWorker' in navigator)) {
       setNotificationGate('passed');
-    } else if (Notification.permission === 'granted') {
-      setNotificationGate('passed');
-      autoSubscribeToPush().catch((error) => {
-        console.error('プッシュ通知の自動購読に失敗:', error);
-      });
-    } else if (Notification.permission === 'denied') {
-      setNotificationGate('blocked-denied');
+    } else if (Notification.permission === 'default') {
+      setNotificationGate('blocked');
     } else {
-      setNotificationGate('blocked-default');
+      setNotificationGate('passed');
+      if (Notification.permission === 'granted') {
+        autoSubscribeToPush().catch((error) => {
+          console.error('プッシュ通知の自動購読に失敗:', error);
+        });
+      }
     }
 
     setTimeout(() => {
@@ -384,26 +385,11 @@ export default function HomePage() {
 
   }, []);
 
-  // ポップアップの「通知を有効にする」ボタン用：ユーザー操作をきっかけに許可・購読・サーバー保存を行う
+  // ポップアップのボタン用：ブラウザのネイティブ許可ダイアログを表示させ、
+  // 「許可」「拒否」どちらが選ばれてもホームへ進む（未決定のまま進めることだけを防ぐ）
   const handleEnableNotifications = async () => {
-    const result = await autoSubscribeToPush();
-    if (result.status === 'subscribed') {
-      setNotificationGate('passed');
-    } else if (result.status === 'denied') {
-      setNotificationGate('blocked-denied');
-    } else if (result.status === 'unsupported') {
-      setNotificationGate('passed');
-    }
-    // status === 'error' の場合は blocked-default のまま留まり、再試行してもらう
-  };
-
-  // 「拒否」状態から、ブラウザ設定で許可し直した後に押してもらう再確認ボタン用
-  const handleRecheckPermission = () => {
-    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-      autoSubscribeToPush()
-        .then(() => setNotificationGate('passed'))
-        .catch((error) => console.error('プッシュ通知の自動購読に失敗:', error));
-    }
+    await autoSubscribeToPush();
+    setNotificationGate('passed');
   };
 
   if (!isMounted || notificationGate === 'checking') {
@@ -415,21 +401,10 @@ export default function HomePage() {
       <div className={styles.container}>
         <div className={styles.notificationGateOverlay}>
           <div className={styles.notificationGateCard}>
-            {notificationGate === 'blocked-denied' ? (
-              <>
-                <p>通知がブロックされています。ブラウザのサイト設定でこのサイトの通知を「許可」に変更してから、下のボタンを押してください。</p>
-                <button type="button" onClick={handleRecheckPermission} className={styles.notificationBannerBtn}>
-                  許可状態を確認する
-                </button>
-              </>
-            ) : (
-              <>
-                <p>予定やタスクのリマインドを受け取るために、通知を有効にしてください。</p>
-                <button type="button" onClick={handleEnableNotifications} className={styles.notificationBannerBtn}>
-                  通知を有効にする
-                </button>
-              </>
-            )}
+            <p>予定やタスクのリマインドを受け取るために、通知の許可・拒否を選択してください。</p>
+            <button type="button" onClick={handleEnableNotifications} className={styles.notificationBannerBtn}>
+              通知の設定をする
+            </button>
           </div>
         </div>
       </div>
