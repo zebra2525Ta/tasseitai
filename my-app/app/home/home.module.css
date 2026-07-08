@@ -80,6 +80,13 @@
   font-weight: bold;
 }
 
+.cardTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #e5c158;
+  opacity: 1;
+}
+
 /* 天気カード */
 .weatherCard {
   composes: card;
@@ -94,6 +101,8 @@
 }
 .githubTitle {
   font-size: 1.1rem;
+  font-weight: 600;
+  color: #e5c158;
   margin-bottom: 4px;
 }
 .githubSub {
@@ -118,8 +127,9 @@
 }
 /* 「クイックリンク」の見出し文字 */
 .quickLinkTitle {
-  font-size: 0.95rem;
-  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #e5c158;
   white-space: nowrap; /* 画面が狭くなっても改行させない */
 }
 
@@ -165,6 +175,9 @@
 }
 .scheduleTitle {
   opacity: 1.0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #e5c158;
 }
 .scheduleDate {
   font-size: 1.2rem;
@@ -226,6 +239,9 @@
 .todoTitle {
   opacity: 1.0;
   margin-bottom: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #e5c158;
 }
 .todoList {
   display: flex;
