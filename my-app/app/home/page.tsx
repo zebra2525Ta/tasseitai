@@ -506,7 +506,7 @@ export default function HomePage() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className={styles.scheduleTitle}
-                style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer', display: 'inline-block' }}
+                style={{ textDecoration: 'none', cursor: 'pointer', display: 'inline-block' }}
               >
                 Schedule
               </a>
@@ -564,7 +564,7 @@ export default function HomePage() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className={styles.todoTitle}
-                style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer', display: 'inline-block' }}
+                style={{ textDecoration: 'none', cursor: 'pointer', display: 'inline-block' }}
               >
                 ToDo
               </a>
