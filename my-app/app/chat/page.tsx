@@ -58,12 +58,9 @@ export default function ChatPage() {
       imageUrl = URL.createObjectURL(selectedFile);
     }
 
-    // 自分のメッセージを画面に追加（画像URLも一緒に保持）
-    setMessages((prev) => [
-      ...prev,
-      { role: "user", text: question, image: imageUrl },
-    ]);
-    
+    // 会話はログとして残さず、直前の1往復だけを表示する（新しい質問で前のやり取りは消える）
+    setMessages([{ role: "user", text: question, image: imageUrl }]);
+
     setMessage("");
     setSelectedFile(null);
 
