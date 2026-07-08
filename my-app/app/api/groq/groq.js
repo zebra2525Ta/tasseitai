@@ -4,7 +4,7 @@
 //
 // 例：test.js での呼び出し例があります。参考にしてください。
 
-import { searchNotionPages, collectNotionPageInfo } from "../notion/notion.js";
+import { queryNotionDatabase, searchNotionPages, collectNotionPageInfo } from "../notion/notion.js";
 
 // Notion側の1件あたりのプロンプト行数が多すぎるとプロンプトが肥大化するため、
 // 1件あたりの propertiesList 行数と全体の文字数に上限を設ける
@@ -12,8 +12,80 @@ const NOTION_MAX_PAGES_FOR_PROMPT = 30;
 const NOTION_MAX_PROPERTY_LINES_PER_ITEM = 8;
 const NOTION_PROMPT_MAX_CHARS = 6000;
 
-// Notionワークスペース全体から最新の情報を取得する（ホーム画面の全体検索と同じ方式）
-async function fetchNotionData() {
+// 特定のデータベースに話題が絞れるときは、そのデータベースだけをピンポイントで取得する。
+// ワークスペース全体を毎回渡すと関係ないデータに惑わされてAIの回答がぶれるため、
+// 話題が特定できる場合は対象を絞り込む。
+const NOTION_TOPICS = [
+  {
+    id: "shopping",
+    label: "買い物リスト",
+    databaseId: "38fa15fd-a3c1-8049-8041-ebf679d048b2",
+    keywords: ["買い物", "ショッピング"],
+  },
+  {
+    id: "todo",
+    label: "進捗管理",
+    databaseId: "38fa15fd-a3c1-80bd-98d9-ddcfe8406a93",
+    keywords: ["進捗", "タスク", "todo", "やること"],
+  },
+  {
+    id: "schedule",
+    label: "スケジュール",
+    databaseId: "38fa15fd-a3c1-80fa-a200-d99ac64b3409",
+    keywords: ["予定", "スケジュール", "カレンダー"],
+  },
+  {
+    id: "jobhunting",
+    label: "就活",
+    databaseId: "38fa15fd-a3c1-8076-80ad-dc57719ac014",
+    keywords: ["就活", "面接", "選考", "エントリー"],
+  },
+  {
+    id: "memo",
+    label: "未分類メモ",
+    databaseId: "38fa15fd-a3c1-80ed-b95d-ea990af2b963",
+    keywords: ["メモ"],
+  },
+];
+
+// 上記のどのトピックにも当てはまらないが、Notionを見てほしそうな一般的なキーワード
+const NOTION_GENERAL_KEYWORDS = ["登録", "確認", "リスト", "notion"];
+
+function detectNotionTopics(text) {
+  const lowerText = text.toLowerCase();
+  return NOTION_TOPICS.filter((topic) =>
+    topic.keywords.some((keyword) => lowerText.includes(keyword.toLowerCase()))
+  );
+}
+
+// メッセージの内容からNotionを参照すべきかどうかを判定する
+// （NLPや意図分類は行わず、キーワード一致の簡易判定にとどめる）
+export function shouldUseNotionContext(text) {
+  if (typeof text !== "string" || !text.trim()) return false;
+  const lowerText = text.toLowerCase();
+  if (detectNotionTopics(text).length > 0) return true;
+  return NOTION_GENERAL_KEYWORDS.some((keyword) => lowerText.includes(keyword.toLowerCase()));
+}
+
+// 特定のデータベース1つだけを取得する
+async function fetchTopicData(topic) {
+  const notionApiKey = process.env.NOTION_API_KEY;
+  if (!notionApiKey) {
+    console.error("Notionデータ取得エラー: NOTION_API_KEY が設定されていません");
+    return [];
+  }
+
+  try {
+    const pages = await queryNotionDatabase(notionApiKey, topic.databaseId, 50, 2);
+    return pages.map((page) => collectNotionPageInfo(page));
+  } catch (error) {
+    console.error(`Notionデータ取得エラー(${topic.label}):`, error.message);
+    return [];
+  }
+}
+
+// 話題が特定できない場合のフォールバック：ワークスペース全体から取得する
+async function fetchWorkspaceData() {
   const notionApiKey = process.env.NOTION_API_KEY;
   if (!notionApiKey) {
     console.error("Notionデータ取得エラー: NOTION_API_KEY が設定されていません");
@@ -31,8 +103,11 @@ async function fetchNotionData() {
 }
 
 // Notionの検索結果を、AIが読みやすい形式のテキストに整形する
-function formatNotionResultsForPrompt(notionResults) {
+function formatNotionResultsForPrompt(notionResults, label) {
   const lines = [];
+  if (label) {
+    lines.push(`■ ${label}`);
+  }
 
   for (const item of notionResults.slice(0, NOTION_MAX_PAGES_FOR_PROMPT)) {
     const header = `[${item.object === "database" ? "データベース" : "ページ"}] ${item.title || "(無題)"}`;
@@ -40,13 +115,8 @@ function formatNotionResultsForPrompt(notionResults) {
     lines.push(header, ...propertyLines, "");
   }
 
-  let text = lines.join("\n").trim();
-  if (text.length > NOTION_PROMPT_MAX_CHARS) {
-    text = text.slice(0, NOTION_PROMPT_MAX_CHARS) + "\n...(以下省略)";
-  }
-  return text;
+  return lines.join("\n").trim();
 }
-
 
 // Noirのキャラクター設定（アメとムチ）。全ての応答にこの人格を適用する
 const NOIR_SYSTEM_PROMPT = [
@@ -63,6 +133,7 @@ const NOIR_SYSTEM_PROMPT = [
   "- 必ず、データの内容を踏まえた一言コメント（進み具合への指摘、励まし、次にやるべきことの提案など）を添えてください。",
   "- 簡潔に、会話として自然な文章で答えてください。",
   "- ただし「買い物リストがほしい」のように一覧そのものを求められたときは例外です。商品名・タスク名など名前の列だけの簡潔な表（Markdownテーブル）で示してください。数量やメモなどの詳細は、特に聞かれない限り省略してください。表を出す場合も、その前後に短い一言コメントは添えてください。",
+  "- 渡されたNotionデータに無関係な一般論やアドバイスを付け加えないでください。渡されたデータの範囲内だけで答えてください。",
 ].join("\n");
 
 // Node標準fetchを使う
@@ -117,11 +188,30 @@ async function buildNotionPrompt(question) {
     throw new Error("質問文が必要です");
   }
 
-  const notionResults = await fetchNotionData();
-  const propertiesText = formatNotionResultsForPrompt(notionResults);
+  const matchedTopics = detectNotionTopics(questionText);
+  let propertiesText;
+
+  if (matchedTopics.length > 0) {
+    // 話題ごとにデータベースを絞り込んで取得し、無関係なデータを混ぜない
+    const sections = await Promise.all(
+      matchedTopics.map(async (topic) => {
+        const results = await fetchTopicData(topic);
+        return formatNotionResultsForPrompt(results, topic.label);
+      })
+    );
+    propertiesText = sections.filter(Boolean).join("\n\n");
+  } else {
+    // 話題を特定できない場合はワークスペース全体から探す
+    const results = await fetchWorkspaceData();
+    propertiesText = formatNotionResultsForPrompt(results);
+  }
+
+  if (propertiesText.length > NOTION_PROMPT_MAX_CHARS) {
+    propertiesText = propertiesText.slice(0, NOTION_PROMPT_MAX_CHARS) + "\n...(以下省略)";
+  }
 
   return [
-    "以下は Notion ワークスペースから取得した情報の一覧です。",
+    "以下は Notion から取得した情報です。",
     "これらのデータをもとに、質問に回答してください。",
     "",
     propertiesText || "(該当するNotionデータが見つかりませんでした)",
@@ -136,4 +226,3 @@ export async function generateTextFromNotionData(question) {
   const promptText = await buildNotionPrompt(question);
   return generateText(promptText);
 }
-
