@@ -316,11 +316,10 @@
     flex-grow: 1;
   }
 
-  /* スケジュールとToDoをPC時だけ「2 : 1」で横並びにする */
+  /* スケジュールとToDoを縦並びにする */
   .scheduleTodoGrid {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
+    display: flex;
+    flex-direction: column;
     gap: 16px;
-    grid-column: 1 / -1;
   }
 }
