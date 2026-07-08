@@ -99,7 +99,6 @@ export default function HomePage() {
   const [todoTasks, setTodoTasks] = useState<any[]>([]);
   const [todoLoading, setTodoLoading] = useState(true);
   const [todoError, setTodoError] = useState('');
-  const [todoExpanded, setTodoExpanded] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -549,7 +548,7 @@ export default function HomePage() {
               ) : (
                 <>
                   <div className={styles.todoList}>
-                    {todoTasks.slice(0, todoExpanded ? 8 : 5).map((task) => (
+                    {todoTasks.slice(0, 5).map((task) => (
                       <label key={task.id} className={styles.todoLabel}>
                         <input
                           type="checkbox"
@@ -567,15 +566,6 @@ export default function HomePage() {
                       </label>
                     ))}
                   </div>
-                  {todoTasks.length > 5 && (
-                    <button
-                      type="button"
-                      className={styles.todoMoreBtn}
-                      onClick={() => setTodoExpanded((prev) => !prev)}
-                    >
-                      {todoExpanded ? '閉じる' : 'もっと見る'}
-                    </button>
-                  )}
                 </>
               )}
             </div>
