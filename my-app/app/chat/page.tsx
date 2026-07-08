@@ -13,14 +13,6 @@ type ChatMessage = {
 
 type PendingItem = { name: string; quantity: number; memo: string };
 
-// 登録内容の確認に対する肯定の返事を簡易判定する
-const AFFIRM_KEYWORDS = ["はい", "うん", "お願い", "おねがい", "ok", "オーケー", "それで", "登録して"];
-
-function isAffirmative(text: string) {
-  const lowerText = text.toLowerCase();
-  return AFFIRM_KEYWORDS.some((keyword) => lowerText.includes(keyword.toLowerCase()));
-}
-
 export default function ChatPage() {
   const router = useRouter();
   const [message, setMessage] = useState("");
@@ -53,6 +45,8 @@ export default function ChatPage() {
 
     // 会話はログとして残さず、直前の1往復だけを表示する（新しい質問で前のやり取りは消える）
     setMessages([{ role: "user", text: question, image: imageUrl }]);
+    // 登録確認はボタンでのみ行うため、メッセージを送るということは確認待ちを打ち切る扱いにする
+    setPendingItem(null);
 
     setMessage("");
     setSelectedFile(null);
@@ -62,19 +56,12 @@ export default function ChatPage() {
       // 将来的にここを FormData 形式にするか、Base64に変換して body に含める必要があります。
       // 現状は既存のテキスト送信ロジックを維持しています。
       // Notionを参照するかどうかの判定はサーバー側で行う。会話履歴は送信しない（1問1答のまま）。
-      // ただし、直前に登録内容の確認待ちがあり、かつ今回のメッセージが肯定的な返事なら、
-      // 確認済みとしてそのまま登録を確定させる。
-      const shouldConfirmRegistration = pendingItem !== null && isAffirmative(question);
       const response = await fetch("/api/groq", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(
-          shouldConfirmRegistration
-            ? { confirmRegistration: pendingItem }
-            : { message: question }
-        ),
+        body: JSON.stringify({ message: question }),
       });
 
       const data = await response.json();
@@ -82,7 +69,7 @@ export default function ChatPage() {
         throw new Error(data?.error || "API request failed");
       }
 
-      // 確認待ちアイテムは、新しいレスポンスに含まれていればそれに更新し、なければ解消する
+      // 登録内容の確認待ちがあれば、ボタンで選べるように保持する
       setPendingItem(
         data?.pendingItem && typeof data.pendingItem === "object" ? data.pendingItem : null
       );
@@ -96,6 +83,47 @@ export default function ChatPage() {
       }
     } catch (error) {
       console.error("チャット送信エラー:", error);
+    }
+  };
+
+  // 登録確認ボタン用：はい/やめる の選択を受けて処理する
+  const handleConfirmRegistration = async (confirmed: boolean) => {
+    if (!pendingItem) return;
+
+    if (!confirmed) {
+      setPendingItem(null);
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", text: "登録をやめておいたよ。また必要になったら教えてね。" },
+      ]);
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/groq", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ confirmRegistration: pendingItem }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.error || "API request failed");
+      }
+
+      setPendingItem(null);
+
+      const assistantText = typeof data.content === "string" ? data.content : "";
+      if (assistantText.trim()) {
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", text: assistantText },
+        ]);
+      }
+    } catch (error) {
+      console.error("登録確定エラー:", error);
     }
   };
 
@@ -143,6 +171,26 @@ export default function ChatPage() {
             </div>
           </div>
         ))}
+
+        {/* Notion登録の確認ボタン（メッセージではなく選択式にする） */}
+        {pendingItem && (
+          <div className={styles.confirmRow}>
+            <button
+              type="button"
+              className={styles.confirmYesBtn}
+              onClick={() => handleConfirmRegistration(true)}
+            >
+              はい、登録する
+            </button>
+            <button
+              type="button"
+              className={styles.confirmNoBtn}
+              onClick={() => handleConfirmRegistration(false)}
+            >
+              やめる
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ボトム入力エリア */}
