@@ -4,16 +4,15 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import styles from './home.module.css';
 
-// 天気コードを人間用の文字と絵文字に変換するマップ
 const decodeWeather = (code: number) => {
-  if (code === 0) return { text: '快晴', emoji: '☀️' };
-  if ([1, 2, 3].includes(code)) return { text: '晴れ/曇', emoji: '⛅' };
-  if ([45, 48].includes(code)) return { text: '霧', emoji: '🌫️' };
-  if ([51, 53, 55, 56, 57].includes(code)) return { text: '小雨', emoji: '🌦️' };
-  if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return { text: '雨', emoji: '☔' };
-  if ([71, 73, 75, 77, 85, 86].includes(code)) return { text: '雪', emoji: '❄️' };
-  if ([95, 96, 99].includes(code)) return { text: '雷雨', emoji: '⛈️' };
-  return { text: '不明', emoji: '❓' };
+  if (code === 0) return { text: '快晴' };
+  if ([1, 2, 3].includes(code)) return { text: '晴れ/曇' };
+  if ([45, 48].includes(code)) return { text: '霧' };
+  if ([51, 53, 55, 56, 57].includes(code)) return { text: '小雨' };
+  if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return { text: '雨' };
+  if ([71, 73, 75, 77, 85, 86].includes(code)) return { text: '雪' };
+  if ([95, 96, 99].includes(code)) return { text: '雷雨' };
+  return { text: '不明' };
 };
 
 // 経過時間を計算する関数
@@ -44,16 +43,13 @@ const CATEGORY_NAMES: { [key: string]: string } = {
 export default function HomePage() {
   const [isMounted, setIsMounted] = useState(false);
 
-  // 天気のStateを1つに統合して整理
-  const [weather, setWeather] = useState({ 
-    text: '読み込み中...', 
-    emoji: '⏳', 
+  const [weather, setWeather] = useState({
+    text: '読み込み中...',
     temp: '--',
-    windSpeed: '--', 
-    pop: '--', 
+    windSpeed: '--',
+    pop: '--',
     tomorrow: {
       text: '',
-      emoji: '',
       temp: '--',
       pop: '--'
     }
@@ -91,10 +87,7 @@ export default function HomePage() {
   const [todoExpanded, setTodoExpanded] = useState(false);
 
   useEffect(() => {
-    // 💡 まずは最初に画面の枠組みをパッと表示する
     setIsMounted(true);
-
-    // 💡 重いAPI通信やチェック処理は、画面表示の直後に後ろでこっそり実行する
     setTimeout(() => {
       // --- 天気APIの取得 ---
       const savedRegionName = localStorage.getItem('setting_weatherName') || 'Osaka';
@@ -118,22 +111,23 @@ export default function HomePage() {
 
             setWeather({
               text: currentDecoded.text,
-              emoji: currentDecoded.emoji,
               temp: `${Math.round(data.current.temperature_2m)}°C`,
               windSpeed: `${data.current.wind_speed_10m} m/s`,
               pop: `${currentPop}%`,
               tomorrow: {
                 text: tomorrowDecoded.text,
-                emoji: tomorrowDecoded.emoji,
                 temp: `${Math.round(tomorrowMaxTemp)}°C`,
                 pop: `${tomorrowPop}%`
               }
             });
           }
         })
-        .catch(() => setWeather({ 
-          text: 'エラー', emoji: '⚠️', temp: '--', windSpeed: '--', pop: '--', 
-          tomorrow: { text: 'エラー', emoji: '⚠️', temp: '--', pop: '--' } 
+        .catch(() => setWeather({
+          text: 'エラー',
+          temp: '--',
+          windSpeed: '--',
+          pop: '--',
+          tomorrow: { text: 'エラー', temp: '--', pop: '--' }
         }));
 
       // --- ニュースAPIの取得 ---
@@ -167,7 +161,7 @@ export default function HomePage() {
           });
       }
 
-      // --- 💡 GitHub設定のチェック & 実際のデータフェッチ ---
+      // GitHub設定のチェック & 実際のデータフェッチ
       const savedRepo = localStorage.getItem('setting_githubRepo'); // デフォルト値の `|| '...'` を削除しました
 
       // 未設定（空っぽ）の場合の処理
@@ -216,7 +210,7 @@ export default function HomePage() {
         setProjectActivities([{ name: '設定不完全', action: '「ユーザー名/リポジトリ名」の形で正しく入力してください', time: '--', status: 'offline' }]);
       }
 
-      // --- 💡 Notion「スケジュール」データベースから予定を取得（現在時刻〜6時間後）---
+      // Notion「スケジュール」データベースから予定を取得（現在時刻〜6時間後）
       const SCHEDULE_DATABASE_ID = '38fa15fd-a3c1-80fa-a200-d99ac64b3409';
       const WEEKDAY_NAMES = ['日', '月', '火', '水', '木', '金', '土'];
       const formatHHMM = (date: Date) =>
@@ -287,7 +281,7 @@ export default function HomePage() {
           setScheduleLoading(false);
         });
 
-      // --- 💡 Notion「進捗管理」データベースからタスクを取得 ---
+      // Notion「進捗管理」データベースからタスクを取得
       const TODO_DATABASE_ID = '38fa15fd-a3c1-80bd-98d9-ddcfe8406a93';
 
       fetch('/api/notion', {
@@ -339,22 +333,20 @@ export default function HomePage() {
 
   }, []);
 
-  // 💡 クライアント側のマウントが完了するまでは真っ白なコンテナを返す（Next.jsのハイドレーションエラー対策）
   if (!isMounted) {
     return <div className={styles.container} style={{ background: '#3b3a4e' }}></div>; 
   }
 
   return (
     <div className={styles.container}>
-      {/* 歯車ヘッダー */}
       <div className={styles.header}>
-        <Link href="/settings" className={styles.iconBtn}>⚙️</Link>
+        <Link href="/settings" className={styles.iconBtn}>⚙</Link>
       </div>
 
       {/* モックアップ用の2カラム全体グリッド */}
       <div className={styles.mainGrid}>
         
-        {/* ⬅️ 左カラム（AI、天気、GitHub） */}
+        {/* 左カラム（AI、天気、GitHub） */}
         <div className={styles.leftColumn}>
           
           {/* AIチャットカード「Noir」 */}
@@ -369,27 +361,21 @@ export default function HomePage() {
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
               <div>
                 <p className={styles.cardTitle}>Weather ({currentRegionName})</p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontSize: '1.75rem' }}>{weather.emoji}</span>
-                  <p className={styles.weatherInfo}>{weather.text}</p>
-                </div>
+                <p className={styles.weatherInfo}>{weather.text}</p>
                 <p className={styles.weatherDetail} style={{ fontSize: '1rem', fontWeight: 'bold', margin: '2px 0 6px 0' }}>{weather.temp}</p>
               </div>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '4px', paddingBottom: '4px' }}>
-                <p className={styles.weatherDetail}>💧 降水確率: {weather.pop}</p>
-                <p className={styles.weatherDetail}>🌀 風速: {weather.windSpeed}</p>
+                <p className={styles.weatherDetail}>降水確率: {weather.pop}</p>
+                <p className={styles.weatherDetail}>風速: {weather.windSpeed}</p>
               </div>
 
               {weather.tomorrow.text && (
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '6px', marginTop: '2px' }}>
                   <p className={styles.weatherDetail} style={{ opacity: 0.6, fontSize: '0.65rem', marginBottom: '2px' }}>明日の予報</p>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.8rem' }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <span>{weather.tomorrow.emoji}</span>
-                      <span>{weather.tomorrow.text}</span>
-                    </span>
-                    <span>{weather.tomorrow.temp} (💧{weather.tomorrow.pop})</span>
+                    <span>{weather.tomorrow.text}</span>
+                    <span>{weather.tomorrow.temp} ({weather.tomorrow.pop})</span>
                   </div>
                 </div>
               )}
@@ -416,7 +402,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* ➡️ 右カラム（Quick link、スケジュールエリア、ニュース） */}
+        {/* 右カラム（Quick link、スケジュールエリア、ニュース） */}
         <div className={styles.rightColumn}>
           
           {/* Quick link */}
@@ -436,7 +422,6 @@ export default function HomePage() {
                 <span>GitHub</span>
               </a>
               <a href="https://weathernews.jp/" target="_blank" rel="noopener noreferrer" className={styles.quickLinkItem}>
-                <span className={styles.linkIcon} style={{ fontSize: '16px', lineHeight: '18px' }}>🌤️</span>
                 <span>ウェザーニュース</span>
               </a>
               <a href="https://news.google.com" target="_blank" rel="noopener noreferrer" className={styles.quickLinkItem}>
