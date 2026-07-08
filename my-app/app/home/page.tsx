@@ -372,7 +372,7 @@ export default function HomePage() {
     <div className={styles.container}>
       <div className={styles.header}>
         <Link href="/settings" className={styles.iconBtn} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px' }}>
-          <SettingsIcon size={20} color="#e5c158" />
+          <SettingsIcon size={20} color="#a9a9a9" />
         </Link>
       </div>
 

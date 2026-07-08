@@ -1,9 +1,9 @@
 import React from 'react';
 
 export const SettingsIcon = ({ size = 24, color = 'currentColor' }: { size?: number; color?: string }): React.ReactNode => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="3" />
-    <path d="M12 1v2m0 16v2M4.22 4.22l1.41 1.41M18.37 18.37l1.41 1.41M1 12h2m16 0h2M4.22 19.78l1.41-1.41M18.37 5.63l1.41-1.41" />
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="2.5" />
+    <path d="M12 1v3m0 16v3M4 12h3m14 0h3M5.5 5.5l2.1 2.1M16.4 16.4l2.1 2.1M18.5 5.5l-2.1 2.1M7.6 16.4l-2.1 2.1" />
   </svg>
 );
 
