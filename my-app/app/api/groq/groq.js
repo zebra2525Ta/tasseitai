@@ -455,6 +455,9 @@ export async function generateText(promptText) {
   }
 
   if (!res.ok) {
+    if (res.status === 429) {
+      throw new Error("今ちょっとお話しすぎて混み合ってるみたい。少し時間を置いてからもう一度話しかけてね。");
+    }
     const responseText = await res.text().catch(() => "");
     throw new Error(`HTTP ${res.status}: ${responseText}`);
   }

@@ -78,7 +78,14 @@ export default function ChatPage() {
       applyServerResponse(data);
     } catch (error) {
       console.error("チャット送信エラー:", error);
+      showErrorMessage(error);
     }
+  };
+
+  // API呼び出しが失敗したとき、コンソールに沈めるだけでなく画面にも表示する
+  const showErrorMessage = (error: unknown) => {
+    const text = error instanceof Error ? error.message : "エラーが発生しました。もう一度試してみてください。";
+    setMessages((prev) => [...prev, { role: "assistant", text }]);
   };
 
   // サーバーからのレスポンスに含まれる、確認待ち状態（登録待ち・トピック選択待ち）とメッセージ本文を反映する
@@ -116,6 +123,7 @@ export default function ChatPage() {
       applyServerResponse(data);
     } catch (error) {
       console.error("トピック選択エラー:", error);
+      showErrorMessage(error);
     }
   };
 
@@ -149,6 +157,7 @@ export default function ChatPage() {
       applyServerResponse(data);
     } catch (error) {
       console.error("登録確定エラー:", error);
+      showErrorMessage(error);
     }
   };
 
