@@ -49,6 +49,13 @@ export const authOptions: AuthOptions = {
 
           const tokens = await response.json();
 
+          if (!response.ok || !tokens.access_token) {
+            console.error("Notionトークン取得エラー:", tokens);
+            throw new Error(
+              `Notionトークンの取得に失敗しました: ${tokens?.error_description || tokens?.error || response.status}`
+            );
+          }
+
           return {
             tokens,
           };
@@ -57,8 +64,11 @@ export const authOptions: AuthOptions = {
 
       userinfo: {
         async request({ tokens }) {
+          if (!tokens.access_token) {
+            throw new Error("Notionのaccess_tokenが取得できませんでした");
+          }
           return {
-            id: tokens.access_token || "notion-user",
+            id: tokens.access_token,
             name: "Notion User",
           };
         },
