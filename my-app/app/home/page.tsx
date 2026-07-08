@@ -553,7 +553,27 @@ export default function HomePage() {
                         <input
                           type="checkbox"
                           checked={task.done}
-                          onChange={() => {}}
+                          onChange={async () => {
+                            try {
+                              const newStatus = task.done ? '未開始' : '完了';
+                              await fetch('/api/notion', {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  pageId: task.id,
+                                  status: newStatus,
+                                }),
+                              });
+
+                              setTodoTasks((prevTasks) =>
+                                prevTasks.map((t) =>
+                                  t.id === task.id ? { ...t, done: !t.done } : t
+                                )
+                              );
+                            } catch (error) {
+                              console.error('タスク更新に失敗しました:', error);
+                            }
+                          }}
                         />
                         <span className={task.done ? styles.completed : ''} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <span>{task.name}</span>
