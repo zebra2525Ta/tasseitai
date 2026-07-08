@@ -61,9 +61,9 @@ export async function POST(request: Request) {
     const matchedTopics = detectNotionTopics(message);
     const isRegister = hasRegisterIntent(message);
 
-    // トピックが1つに絞れない（読み取りは0件、登録依頼は0件または2件以上）場合は、
-    // 勝手に推測せず選択肢を出してユーザーに選んでもらう
-    const isAmbiguous = isRegister ? matchedTopics.length !== 1 : matchedTopics.length === 0;
+    // トピックが1つに絞れない（0件、または2件以上に同時ヒット）場合は、
+    // 勝手に複数のデータベースを混ぜたりせず、選択肢を出してユーザーに1つ選んでもらう
+    const isAmbiguous = matchedTopics.length !== 1;
 
     if (isAmbiguous) {
       if (isRegister || hasGeneralNotionIntent(message)) {
