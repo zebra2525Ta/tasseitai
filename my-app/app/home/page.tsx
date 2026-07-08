@@ -358,7 +358,7 @@ export default function HomePage() {
     <div className={styles.container}>
       <div className={styles.header}>
         <Link href="/settings" className={styles.iconBtn} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px' }}>
-          <SettingsIcon size={20} />
+          <SettingsIcon size={20} color="#e5c158" />
         </Link>
       </div>
 
@@ -381,8 +381,8 @@ export default function HomePage() {
               <div>
                 <p className={styles.cardTitle}>Weather ({currentRegionName})</p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '6px 0' }}>
-                  <div style={{ width: '28px', height: '28px', color: '#e5c158' }}>
-                    <weather.icon size={28} />
+                  <div style={{ width: '28px', height: '28px' }}>
+                    <weather.icon size={28} color="#e5c158" />
                   </div>
                   <p className={styles.weatherInfo}>{weather.text}</p>
                 </div>
@@ -392,13 +392,13 @@ export default function HomePage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '4px', paddingBottom: '4px' }}>
                 <p className={styles.weatherDetail} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ width: '16px', height: '16px', display: 'flex', alignItems: 'center' }}>
-                    <DropIcon size={16} />
+                    <DropIcon size={16} color="#87ceeb" />
                   </span>
                   降水確率: {weather.pop}
                 </p>
                 <p className={styles.weatherDetail} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ width: '16px', height: '16px', display: 'flex', alignItems: 'center' }}>
-                    <WindIcon size={16} />
+                    <WindIcon size={16} color="#87ceeb" />
                   </span>
                   風速: {weather.windSpeed}
                 </p>
@@ -410,7 +410,7 @@ export default function HomePage() {
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.8rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <div style={{ width: '20px', height: '20px' }}>
-                        <weather.tomorrow.icon size={20} />
+                        <weather.tomorrow.icon size={20} color="#e5c158" />
                       </div>
                       <span>{weather.tomorrow.text}</span>
                     </div>
@@ -528,8 +528,8 @@ export default function HomePage() {
                         <span className={task.done ? styles.completed : ''} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <span>{task.name}</span>
                           {task.overdue && (
-                            <span style={{ width: '16px', height: '16px', display: 'flex', alignItems: 'center', color: '#ff6b6b' }}>
-                              <AlertIcon size={16} />
+                            <span style={{ width: '16px', height: '16px', display: 'flex', alignItems: 'center' }}>
+                              <AlertIcon size={16} color="#ff6b6b" />
                             </span>
                           )}
                         </span>
