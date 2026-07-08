@@ -66,7 +66,8 @@ export async function POST(request: Request) {
     const isAmbiguous = matchedTopics.length !== 1;
 
     if (isAmbiguous) {
-      if (isRegister || hasGeneralNotionIntent(message)) {
+      // 2件以上のトピックに同時ヒットした場合も、Notionを見る意図があるのは明らかなので選択肢を出す
+      if (isRegister || hasGeneralNotionIntent(message) || matchedTopics.length > 0) {
         return NextResponse.json({
           content: isRegister
             ? "どこに登録すればいいか迷っちゃった。下から選んでね。"
