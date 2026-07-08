@@ -595,7 +595,6 @@ export default function HomePage() {
                             flexShrink: 0,
                           }}
                         >
-                          <option value="">状態を選択</option>
                           <option value="未開始">未開始</option>
                           <option value="進行中">進行中</option>
                           <option value="完了">完了</option>
