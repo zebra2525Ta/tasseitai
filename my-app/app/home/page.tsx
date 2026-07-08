@@ -343,7 +343,14 @@ export default function HomePage() {
                 dueDate,
               };
             })
-            .filter((task: any) => task.status !== '完了')
+            .filter((task: any) => {
+              if (task.status === '完了') return false;
+              // 期日が本日より前（過去）のものはホームには表示しない。期日未設定のものは表示する
+              if (!task.dueDate) return true;
+              const startOfToday = new Date();
+              startOfToday.setHours(0, 0, 0, 0);
+              return new Date(task.dueDate).getTime() >= startOfToday.getTime();
+            })
             .sort((a: any, b: any) => {
               if (!a.dueDate) return 1;
               if (!b.dueDate) return -1;
