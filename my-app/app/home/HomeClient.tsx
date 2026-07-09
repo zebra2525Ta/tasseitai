@@ -58,7 +58,12 @@ const CATEGORY_NAMES: { [key: string]: string } = {
 // 一度どちらかに決まっていれば（許可でも拒否でも）ホームへ進める。
 type NotificationGateStatus = 'checking' | 'blocked' | 'passed';
 
-export default function HomeClient() {
+type HomeClientProps = {
+  scheduleDatabaseId: string;
+  todoDatabaseId: string;
+};
+
+export default function HomeClient({ scheduleDatabaseId, todoDatabaseId }: HomeClientProps) {
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
   const [notificationGate, setNotificationGate] = useState<NotificationGateStatus>('checking');
@@ -252,7 +257,6 @@ export default function HomeClient() {
       }
 
       // Notion「スケジュール」データベースから予定を取得（今日〜明日の2日間）
-      const SCHEDULE_DATABASE_ID = '38fa15fd-a3c1-80fa-a200-d99ac64b3409';
       const WEEKDAY_NAMES = ['日', '月', '火', '水', '木', '金', '土'];
       const formatHHMM = (date: Date) =>
         `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
@@ -276,7 +280,7 @@ export default function HomeClient() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          databaseId: SCHEDULE_DATABASE_ID,
+          databaseId: scheduleDatabaseId,
           searchType: 'database',
           pageSize: 50,
         }),
@@ -341,13 +345,11 @@ export default function HomeClient() {
         });
 
       // Notion「進捗管理」データベースからタスクを取得
-      const TODO_DATABASE_ID = '38fa15fd-a3c1-80bd-98d9-ddcfe8406a93';
-
       fetch('/api/notion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          databaseId: TODO_DATABASE_ID,
+          databaseId: todoDatabaseId,
           searchType: 'database',
           pageSize: 50,
         }),
@@ -395,7 +397,7 @@ export default function HomeClient() {
         });
     }, 0); // 0秒ディレイで画面描画の直後に実行
 
-  }, [router]);
+  }, [router, scheduleDatabaseId, todoDatabaseId]);
 
   // ポップアップのボタン用：ブラウザのネイティブ許可ダイアログを表示させ、
   // 「許可」「拒否」どちらが選ばれてもホームへ進む（未決定のまま進めることだけを防ぐ）

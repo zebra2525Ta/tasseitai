@@ -9,7 +9,8 @@ import {
   commitRegistration,
   NOTION_TOPICS,
 } from "./groq.js";
-import { resolveNotionApiKey } from "@/lib/notionAuth";
+import { resolveNotionSession } from "@/lib/notionAuth";
+import { getUserDatabaseMap } from "@/lib/notionDatabaseMap";
 
 export const runtime = "nodejs";
 
@@ -24,8 +25,13 @@ function handleRegisterAtTopic(topic: Topic, originalMessage: string) {
   return { content: preview.message, pendingItem: preview.item };
 }
 
-async function handleReadForTopics(topics: Topic[], message: string, notionApiKey: string) {
-  const content = await generateTextFromNotionData(message, topics, notionApiKey);
+async function handleReadForTopics(
+  topics: Topic[],
+  message: string,
+  notionApiKey: string,
+  databaseMap: Record<string, string>
+) {
+  const content = await generateTextFromNotionData(message, topics, notionApiKey, databaseMap);
   return { content };
 }
 
@@ -37,14 +43,16 @@ export async function POST(request: Request) {
     const forcedTopicId = typeof body?.topicId === "string" ? body.topicId : "";
     const originalMessage = typeof body?.originalMessage === "string" ? body.originalMessage.trim() : "";
 
-    const notionApiKey = await resolveNotionApiKey();
+    const session = await resolveNotionSession();
+    const notionApiKey = session?.accessToken ?? null;
+    const databaseMap = session ? await getUserDatabaseMap(session.userId) : {};
 
     // 登録内容の確認が取れている場合は、そのまま書き込みを実行する
     if (confirmRegistration && typeof confirmRegistration === "object") {
       if (!notionApiKey) {
         return NextResponse.json({ error: "Notionと連携されていません" }, { status: 401 });
       }
-      const content = await commitRegistration(confirmRegistration, notionApiKey);
+      const content = await commitRegistration(confirmRegistration, notionApiKey, databaseMap);
       return NextResponse.json({ content });
     }
 
@@ -60,7 +68,7 @@ export async function POST(request: Request) {
       if (!notionApiKey) {
         return NextResponse.json({ error: "Notionと連携されていません" }, { status: 401 });
       }
-      const result = await handleReadForTopics([topic], originalMessage, notionApiKey);
+      const result = await handleReadForTopics([topic], originalMessage, notionApiKey, databaseMap);
       return NextResponse.json(result);
     }
 
@@ -97,7 +105,7 @@ export async function POST(request: Request) {
     if (!notionApiKey) {
       return NextResponse.json({ error: "Notionと連携されていません" }, { status: 401 });
     }
-    const result = await handleReadForTopics(matchedTopics, message, notionApiKey);
+    const result = await handleReadForTopics(matchedTopics, message, notionApiKey, databaseMap);
     return NextResponse.json(result);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "不明なエラーです";

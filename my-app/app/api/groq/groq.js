@@ -4,7 +4,14 @@
 //
 // 例：test.js での呼び出し例があります。参考にしてください。
 
-import { queryNotionDatabase, searchNotionPages, collectNotionPageInfo, createDatabasePage } from "../notion/notion.js";
+import { queryNotionDatabase, searchNotionPages, collectNotionPageInfo, createDatabasePage, getDatabaseSchema } from "../notion/notion.js";
+
+// 実際のデータベースのプロパティ一覧から、type: "title" のプロパティ名を探す
+// （個人ワークスペースではタイトル用プロパティの名前が共有ワークスペースと違うことがあるため）
+function findTitlePropertyName(actualProperties, fallback) {
+  const found = Object.entries(actualProperties || {}).find(([, def]) => def?.type === "title")?.[0];
+  return found || fallback;
+}
 
 // Notion側の1件あたりのプロンプト行数が多すぎるとプロンプトが肥大化するため、
 // 1件あたりの propertiesList 行数と全体の文字数に上限を設ける
@@ -427,21 +434,29 @@ export function buildRegistrationPreview(topicId, text) {
 }
 
 // 複数日の範囲（multiDates）が指定されている場合、各日を0:00〜23:58の終日予定として1件ずつ登録する
-async function commitMultiDayRegistration(notionApiKey, title, dates) {
-  const topic = NOTION_TOPICS.find((t) => t.id === "schedule");
+async function commitMultiDayRegistration(notionApiKey, title, dates, databaseId) {
+  // 個人ワークスペースではプロパティ名・構成が違うことがあるので、実際のスキーマを見てから書き込む
+  const actualSchema = await getDatabaseSchema(notionApiKey, databaseId);
+  const actualProperties = actualSchema?.properties || {};
+  const titleProperty = findTitlePropertyName(actualProperties, "予定");
+  const hasDateProperty = actualProperties?.["日時"]?.type === "date";
 
   for (const date of dates) {
-    await createDatabasePage(notionApiKey, topic.databaseId, {
-      予定: { title: [{ text: { content: title } }] },
-      日時: { date: { start: `${date}T00:00:00+09:00`, end: `${date}T23:58:00+09:00` } },
-    });
+    const properties = {
+      [titleProperty]: { title: [{ text: { content: title } }] },
+    };
+    if (hasDateProperty) {
+      properties["日時"] = { date: { start: `${date}T00:00:00+09:00`, end: `${date}T23:58:00+09:00` } };
+    }
+    await createDatabasePage(notionApiKey, databaseId, properties);
   }
 
   return `スケジュールに「${title}」を${dates.join("、")}の${dates.length}日、各日0:00〜23:58で登録しといたよ。予定は事前に準備しておくと安心だね！`;
 }
 
 // 確認が取れた後に、実際にNotionへ1件書き込む
-export async function commitRegistration(item, notionApiKey) {
+// databaseMap: トピックID -> 実際に使うデータベースID（ユーザーが個人ワークスペース用に上書きしている場合はそちら）
+export async function commitRegistration(item, notionApiKey, databaseMap = {}) {
   if (!notionApiKey) {
     return "Notionと連携されていないため、登録できませんでした。";
   }
@@ -452,7 +467,9 @@ export async function commitRegistration(item, notionApiKey) {
       return "登録内容が読み取れませんでした。もう一度お願いします。";
     }
     try {
-      return await commitMultiDayRegistration(notionApiKey, title, item.multiDates);
+      const scheduleTopic = NOTION_TOPICS.find((t) => t.id === "schedule");
+      const databaseId = databaseMap.schedule || scheduleTopic.databaseId;
+      return await commitMultiDayRegistration(notionApiKey, title, item.multiDates, databaseId);
     } catch (error) {
       console.error("Notion登録エラー:", error.message);
       return "スケジュールへの登録に失敗しました。もう一度試してみてください。";
@@ -468,40 +485,57 @@ export async function commitRegistration(item, notionApiKey) {
     return "登録内容が読み取れませんでした。もう一度お願いします。";
   }
 
-  const properties = {
-    [schema.titleProperty]: { title: [{ text: { content: title } }] },
-  };
-
-  // 「未分類メモ」はタイトル自体が本文を兼ねるため、rich_text側にも同じ内容を入れておく
-  if (item.topicId === "memo") {
-    properties["メモ内容"] = { rich_text: [{ text: { content: title } }] };
-  }
-
-  for (const field of schema.fields) {
-    const value = values[field.key];
-    if (value === null || value === undefined || value === "") continue;
-
-    if (field.type === "number") {
-      properties[field.property] = { number: value };
-    } else if (field.type === "rich_text") {
-      properties[field.property] = { rich_text: [{ text: { content: String(value) } }] };
-    } else if (field.type === "date") {
-      // スケジュールは終了時刻が指定されないことが多いので、未指定なら同日23:58を終了時刻として登録する
-      if (item.topicId === "schedule") {
-        const datePart = String(value).slice(0, 10);
-        properties[field.property] = { date: { start: value, end: `${datePart}T23:58:00+09:00` } };
-      } else {
-        properties[field.property] = { date: { start: value } };
-      }
-    } else if (field.type === "status") {
-      properties[field.property] = { status: { name: value } };
-    } else if (field.type === "select") {
-      properties[field.property] = { select: { name: value } };
-    }
-  }
+  const databaseId = databaseMap[item.topicId] || topic.databaseId;
 
   try {
-    await createDatabasePage(notionApiKey, topic.databaseId, properties);
+    // 個人ワークスペースではプロパティの名前・型が共有ワークスペースと完全には一致しないことがあるため、
+    // 実際のデータベースのプロパティ構成を見て、存在して型も一致するものだけを書き込む
+    const actualSchema = await getDatabaseSchema(notionApiKey, databaseId);
+    const actualProperties = actualSchema?.properties || {};
+    const titleProperty = findTitlePropertyName(actualProperties, schema.titleProperty);
+
+    const properties = {
+      [titleProperty]: { title: [{ text: { content: title } }] },
+    };
+
+    // 「未分類メモ」はタイトル自体が本文を兼ねるため、rich_text型のプロパティが他にあればそこにも同じ内容を入れておく
+    if (item.topicId === "memo") {
+      const memoBodyProperty = Object.entries(actualProperties).find(
+        ([name, def]) => name !== titleProperty && def?.type === "rich_text"
+      )?.[0];
+      if (memoBodyProperty) {
+        properties[memoBodyProperty] = { rich_text: [{ text: { content: title } }] };
+      }
+    }
+
+    for (const field of schema.fields) {
+      const value = values[field.key];
+      if (value === null || value === undefined || value === "") continue;
+
+      // 実際のデータベースに同名・同型のプロパティが無ければスキップする（個人ワークスペースの構成差を許容する）
+      const actualDef = actualProperties[field.property];
+      if (!actualDef || actualDef.type !== field.type) continue;
+
+      if (field.type === "number") {
+        properties[field.property] = { number: value };
+      } else if (field.type === "rich_text") {
+        properties[field.property] = { rich_text: [{ text: { content: String(value) } }] };
+      } else if (field.type === "date") {
+        // スケジュールは終了時刻が指定されないことが多いので、未指定なら同日23:58を終了時刻として登録する
+        if (item.topicId === "schedule") {
+          const datePart = String(value).slice(0, 10);
+          properties[field.property] = { date: { start: value, end: `${datePart}T23:58:00+09:00` } };
+        } else {
+          properties[field.property] = { date: { start: value } };
+        }
+      } else if (field.type === "status") {
+        properties[field.property] = { status: { name: value } };
+      } else if (field.type === "select") {
+        properties[field.property] = { select: { name: value } };
+      }
+    }
+
+    await createDatabasePage(notionApiKey, databaseId, properties);
     const summaryParts = summarizeFields(schema, values);
     const summary = summaryParts.length > 0 ? `（${summaryParts.join("、")}）` : "";
     return `${topic.label}に「${title}」を登録しといたよ${summary}。他にも何かあれば言ってね！`;
@@ -512,14 +546,14 @@ export async function commitRegistration(item, notionApiKey) {
 }
 
 // 特定のデータベース1つだけを取得する
-async function fetchTopicData(topic, notionApiKey) {
+async function fetchTopicData(topic, notionApiKey, databaseId) {
   if (!notionApiKey) {
     console.error("Notionデータ取得エラー: Notionと連携されていません");
     return [];
   }
 
   try {
-    const pages = await queryNotionDatabase(notionApiKey, topic.databaseId, 50, 2);
+    const pages = await queryNotionDatabase(notionApiKey, databaseId || topic.databaseId, 50, 2);
     return pages.map((page) => collectNotionPageInfo(page));
   } catch (error) {
     console.error(`Notionデータ取得エラー(${topic.label}):`, error.message);
@@ -641,7 +675,7 @@ export async function generateText(promptText) {
     : "";
 }
 
-async function buildNotionPrompt(question, forcedTopics, notionApiKey) {
+async function buildNotionPrompt(question, forcedTopics, notionApiKey, databaseMap = {}) {
   const questionText = typeof question === "string" ? question.trim() : "";
   if (!questionText) {
     throw new Error("質問文が必要です");
@@ -656,7 +690,7 @@ async function buildNotionPrompt(question, forcedTopics, notionApiKey) {
     // 話題ごとにデータベースを絞り込んで取得し、無関係なデータを混ぜない
     const sections = await Promise.all(
       matchedTopics.map(async (topic) => {
-        const results = await fetchTopicData(topic, notionApiKey);
+        const results = await fetchTopicData(topic, notionApiKey, databaseMap[topic.id]);
         return formatNotionResultsForPrompt(results, topic.label);
       })
     );
@@ -683,7 +717,7 @@ async function buildNotionPrompt(question, forcedTopics, notionApiKey) {
 
 export { buildNotionPrompt };
 
-export async function generateTextFromNotionData(question, forcedTopics, notionApiKey) {
-  const promptText = await buildNotionPrompt(question, forcedTopics, notionApiKey);
+export async function generateTextFromNotionData(question, forcedTopics, notionApiKey, databaseMap = {}) {
+  const promptText = await buildNotionPrompt(question, forcedTopics, notionApiKey, databaseMap);
   return generateText(promptText);
 }
