@@ -307,12 +307,32 @@ export default function HomeClient({
         .then((data) => {
           const rawResults = Array.isArray(data.results) ? data.results : [];
 
+          const parseNotionDate = (value: string) => {
+            // 日付のみ（例: "2026-07-09"）はUTC 0時として解釈されてしまうため、
+            // ローカル日付として明示的に組み立てる
+            const dateOnlyMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            if (dateOnlyMatch) {
+              const [, y, m, d] = dateOnlyMatch;
+              return { date: new Date(Number(y), Number(m) - 1, Number(d)), isDateOnly: true };
+            }
+            return { date: new Date(value), isDateOnly: false };
+          };
+
           const events = rawResults
             .map((item: any) => {
-              const dateProp = item.properties?.['日時'];
+              // プロパティ名が「日時」でない場合に備え、date型（{start, end}を持つ値）を持つプロパティを探す
+              const dateProp =
+                item.properties?.['日時'] ??
+                Object.values(item.properties ?? {}).find(
+                  (value: any) => value && typeof value === 'object' && typeof value.start === 'string'
+                );
               if (!dateProp || !dateProp.start) return null;
-              const start = new Date(dateProp.start);
-              const end = dateProp.end ? new Date(dateProp.end) : new Date(start.getTime() + 60 * 60 * 1000);
+              const { date: start, isDateOnly } = parseNotionDate(dateProp.start);
+              const end = dateProp.end
+                ? parseNotionDate(dateProp.end).date
+                : isDateOnly
+                ? new Date(start.getFullYear(), start.getMonth(), start.getDate(), 23, 59, 59)
+                : new Date(start.getTime() + 60 * 60 * 1000);
               const label = item.properties?.['予定'] || item.title || '無題';
               return { id: item.id, label, start, end };
             })
