@@ -583,10 +583,12 @@ export async function commitRegistration(item, notionApiKey, databaseMap = {}) {
       } else if (field.type === "rich_text") {
         properties[field.property] = { rich_text: [{ text: { content: String(value) } }] };
       } else if (field.type === "date") {
-        // スケジュールは終了時刻が指定されないことが多いので、未指定なら同日23:58を終了時刻として登録する
+        // スケジュールは常に開始・終了とも時刻まで明示して登録する。
+        // 時刻が読み取れず日付だけの場合はstartを0:00で補完し、終了時刻は未指定なら同日23:58とする。
         if (item.topicId === "schedule") {
           const datePart = String(value).slice(0, 10);
-          properties[field.property] = { date: { start: value, end: `${datePart}T23:58:00+09:00` } };
+          const startValue = String(value).includes("T") ? value : `${datePart}T00:00:00+09:00`;
+          properties[field.property] = { date: { start: startValue, end: `${datePart}T23:58:00+09:00` } };
         } else {
           properties[field.property] = { date: { start: value } };
         }
