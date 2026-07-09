@@ -136,6 +136,16 @@ function normalizeFullWidthDigits(text) {
   return text.replace(/[０-９]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xfee0));
 }
 
+// 現在時刻をJST（日本時間）の "YYYY/MM/DD HH:mm" 形式で返す。
+// サーバーの実行環境（Vercel等）はUTCで動くことが多いため、new Date()のgetHours()等をそのまま使うと
+// 日本時間からずれてしまう。UTC時刻に9時間分を加算してからUTCゲッターで読むことで、
+// サーバーのタイムゾーン設定に関わらず常に日本時間になるようにする。
+function formatNowJST() {
+  const jst = new Date(Date.now() + 9 * 60 * 60 * 1000);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${jst.getUTCFullYear()}/${pad(jst.getUTCMonth() + 1)}/${pad(jst.getUTCDate())} ${pad(jst.getUTCHours())}:${pad(jst.getUTCMinutes())}`;
+}
+
 // メッセージから日付・時刻を読み取り、Notionのdateプロパティ用ISO文字列と表示用文字列を返す
 function extractDateTimeFromText(text) {
   const normalized = normalizeFullWidthDigits(text);
@@ -304,13 +314,22 @@ function extractFieldsFromMessage(topicId, rawText) {
   // 全角数字（３個、１４時など）も拾えるように、以降の処理はすべて正規化済みテキストに対して行う
   const text = normalizeFullWidthDigits(rawText);
 
-  // 「未分類メモ」はタイトル自体が本文を兼ねるため、メモ注釈パターン（「メモは〜」等）の抽出・除去は行わない
-  // （行うと、本文全体がメモ注釈として吸われてタイトルが空になってしまうため）
-  const isMemoTopic = topicId === "memo";
+  // 「未分類メモ」は、送ったメッセージをそのまま本文として貼り付けたいので、
+  // 数量・日付・キーワード除去などの整形処理を一切かけず、生のテキストをそのまま使う。
+  // タイトル（メモ登録日時）は本文からではなく、送信時刻から別途組み立てる。
+  if (topicId === "memo") {
+    const content = rawText.trim();
+    return {
+      topic,
+      schema,
+      title: content,
+      values: { content, registeredAt: formatNowJST() },
+    };
+  }
+
   const quantityMatch = text.match(/(\d+)\s*(個|つ|本|パック|袋|枚|箱|kg|g)/);
-  const memoMatch = isMemoTopic
-    ? null
-    : text.match(/メモ(?:は|:|：)\s*(.+?)(?:で登録|。|$)/) || text.match(/(.+?)というメモ/);
+  const memoMatch =
+    text.match(/メモ(?:は|:|：)\s*(.+?)(?:で登録|。|$)/) || text.match(/(.+?)というメモ/);
   const dateInfo = extractDateTimeFromText(text);
 
   const values = {};
@@ -364,11 +383,6 @@ function extractFieldsFromMessage(topicId, rawText) {
     .replaceAll("リスト", "")
     .replace(/(まで|して|ください|お願い|に|へ|を|で|、|。|\s)+/g, " ")
     .trim();
-
-  // 未分類メモは、整形後の本文をそのままタイトル・rich_text両方の値として使う
-  if (isMemoTopic) {
-    values.content = title;
-  }
 
   return { topic, schema, title, values };
 }
@@ -536,12 +550,18 @@ export async function commitRegistration(item, notionApiKey, databaseMap = {}) {
     const actualProperties = actualSchema?.properties || {};
     const titleProperty = findTitlePropertyName(actualProperties, schema.titleProperty);
 
+    // 「未分類メモ」は、タイトル（メモ登録日時）にはチャットを送った時刻を、
+    // 本文にはメッセージの文字列をそのまま入れる（他のトピックはタイトル欄に登録内容の名前を入れる）
+    const isMemo = item.topicId === "memo";
+    const titleValue = isMemo && typeof values.registeredAt === "string" && values.registeredAt
+      ? values.registeredAt
+      : title;
+
     const properties = {
-      [titleProperty]: { title: [{ text: { content: title } }] },
+      [titleProperty]: { title: [{ text: { content: titleValue } }] },
     };
 
-    // 「未分類メモ」はタイトル自体が本文を兼ねるため、rich_text型のプロパティが他にあればそこにも同じ内容を入れておく
-    if (item.topicId === "memo") {
+    if (isMemo) {
       const memoBodyProperty = Object.entries(actualProperties).find(
         ([name, def]) => name !== titleProperty && def?.type === "rich_text"
       )?.[0];
