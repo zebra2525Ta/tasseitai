@@ -340,12 +340,8 @@ function extractFieldsFromMessage(topicId, rawText) {
       values[field.key] = memoMatch ? memoMatch[1].trim() : field.default;
     } else if (field.type === "date") {
       values[field.key] = dateInfo ? dateInfo.iso : field.default;
-      // スケジュールは終了時刻が指定されないことが多いので、表示上は23:58までとして分かりやすくしておく
-      values[`${field.key}Display`] = dateInfo
-        ? topicId === "schedule"
-          ? `${dateInfo.display}〜23:58`
-          : dateInfo.display
-        : null;
+      // 終了時刻が指定されないことが多いので、表示上も実際の登録内容に合わせて23:58までとしておく
+      values[`${field.key}Display`] = dateInfo ? `${dateInfo.display}〜23:58` : null;
     } else if (field.type === "status" || field.type === "select") {
       values[field.key] = (field.options && extractOptionFromText(text, field.options)) || field.default;
     }
@@ -583,15 +579,11 @@ export async function commitRegistration(item, notionApiKey, databaseMap = {}) {
       } else if (field.type === "rich_text") {
         properties[field.property] = { rich_text: [{ text: { content: String(value) } }] };
       } else if (field.type === "date") {
-        // スケジュールは常に開始・終了とも時刻まで明示して登録する。
+        // トピックによらず、常に開始・終了とも時刻まで明示して登録する。
         // 時刻が読み取れず日付だけの場合はstartを0:00で補完し、終了時刻は未指定なら同日23:58とする。
-        if (item.topicId === "schedule") {
-          const datePart = String(value).slice(0, 10);
-          const startValue = String(value).includes("T") ? value : `${datePart}T00:00:00+09:00`;
-          properties[field.property] = { date: { start: startValue, end: `${datePart}T23:58:00+09:00` } };
-        } else {
-          properties[field.property] = { date: { start: value } };
-        }
+        const datePart = String(value).slice(0, 10);
+        const startValue = String(value).includes("T") ? value : `${datePart}T00:00:00+09:00`;
+        properties[field.property] = { date: { start: startValue, end: `${datePart}T23:58:00+09:00` } };
       } else if (field.type === "status") {
         properties[field.property] = { status: { name: value } };
       } else if (field.type === "select") {
