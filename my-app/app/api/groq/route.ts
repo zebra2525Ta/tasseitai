@@ -111,6 +111,11 @@ export async function POST(request: Request) {
       if (!notionApiKey) {
         return NextResponse.json({ error: "Notionと連携されていません" }, { status: 401 });
       }
+      if (unresolved.includes(forcedTopicId)) {
+        return NextResponse.json({
+          content: `Notionで「${topic.label}」という名前のデータベースが見つからなかったよ。データベース名を確認するか、設定画面から直接データベースIDを指定してね。`,
+        });
+      }
       const result = await handleReadForTopics([topic], originalMessage, notionApiKey, databaseMap);
       return NextResponse.json(result);
     }
@@ -167,6 +172,11 @@ export async function POST(request: Request) {
     }
     if (!notionApiKey) {
       return NextResponse.json({ error: "Notionと連携されていません" }, { status: 401 });
+    }
+    if (unresolved.includes(matchedTopics[0].id as any)) {
+      return NextResponse.json({
+        content: `Notionで「${matchedTopics[0].label}」という名前のデータベースが見つからなかったよ。データベース名を確認するか、設定画面から直接データベースIDを指定してね。`,
+      });
     }
     const result = await handleReadForTopics(matchedTopics, message, notionApiKey, databaseMap);
     return NextResponse.json(result);

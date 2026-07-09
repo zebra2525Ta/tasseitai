@@ -107,8 +107,17 @@ export default function ChatClient() {
     setPendingOriginalMessage(typeof data?.originalMessage === "string" ? data.originalMessage : "");
 
     const assistantText = typeof data.content === "string" ? data.content : "";
+    const hasChoices = Array.isArray(data?.topicChoices) && data.topicChoices.length > 0;
+    const hasPendingItem = data?.pendingItem && typeof data.pendingItem === "object";
     if (assistantText.trim()) {
       setMessages((prev) => [...prev, { role: "assistant", text: assistantText }]);
+    } else if (!hasChoices && !hasPendingItem) {
+      // サーバーが本文なし・選択肢なし・登録待ちなしを返した場合、ユーザーには何も起きていないように
+      // 見えてしまうため、必ず何かしらのフィードバックを表示する
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", text: "うまく取得できなかったみたい。もう一度試してみてね。" },
+      ]);
     }
   };
 
