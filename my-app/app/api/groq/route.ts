@@ -16,8 +16,11 @@ export const runtime = "nodejs";
 
 type Topic = { id: string; label: string };
 
-function topicChoices() {
-  return NOTION_TOPICS.map((topic: Topic) => ({ id: topic.id, label: topic.label }));
+function topicChoices(unresolved: string[] = []) {
+  return NOTION_TOPICS.filter((topic: Topic) => !unresolved.includes(topic.id)).map((topic: Topic) => ({
+    id: topic.id,
+    label: topic.label,
+  }));
 }
 
 function handleRegisterAtTopic(topic: Topic, originalMessage: string) {
@@ -98,11 +101,18 @@ export async function POST(request: Request) {
     if (isAmbiguous) {
       // 2件以上のトピックに同時ヒットした場合も、Notionを見る意図があるのは明らかなので選択肢を出す
       if (isRegister || hasGeneralNotionIntent(message) || matchedTopics.length > 0) {
+        const choices = topicChoices(unresolved);
+        if (choices.length === 0) {
+          return NextResponse.json({
+            content:
+              "利用できるNotionデータベースが見つかりませんでした。Notion側でデータベースを連携しているか確認してください。",
+          });
+        }
         return NextResponse.json({
           content: isRegister
             ? "どこに登録すればいいか迷っちゃった。下から選んでね。"
             : "どの情報について知りたいか迷っちゃった。下から選んでね。",
-          topicChoices: topicChoices(),
+          topicChoices: choices,
           originalMessage: message,
         });
       }
