@@ -186,8 +186,14 @@ export function getSavedNotionTestData() {
 }
 
 export function extractNotionTitle(page) {
+  // データベースオブジェクトはトップレベルの title 配列にタイトルを持つ
+  if (Array.isArray(page.title)) {
+    const text = plainTextFromRichText(page.title);
+    if (text) return text;
+  }
+
   const titleProperty = Object.values(page.properties || {}).find(
-    (property) => property?.type === "title"
+    (property) => property?.type === "title" && Array.isArray(property.title)
   );
   if (titleProperty) {
     return plainTextFromRichText(titleProperty.title);
@@ -199,6 +205,7 @@ export function extractNotionTitle(page) {
 export function collectNotionPageInfo(page) {
   return {
     id: page.id,
+    object: page.object ?? null,
     url: page.url ?? null,
     title: extractNotionTitle(page),
     parent: page.parent ?? null,
@@ -251,6 +258,29 @@ async function fetchNotionJson(url, apiKey, body) {
   return response.json();
 }
 
+// 指定したデータベースに新しいページ（レコード）を1件作成する
+export async function createDatabasePage(apiKeyValue, databaseIdValue, properties) {
+  return fetchNotionJson("https://api.notion.com/v1/pages", apiKeyValue, {
+    parent: { database_id: databaseIdValue },
+    properties,
+  });
+}
+
+// データベースのスキーマ（プロパティの型定義）を取得する
+export async function getDatabaseSchema(apiKeyValue, databaseIdValue) {
+  const response = await fetch(`https://api.notion.com/v1/databases/${databaseIdValue}`, {
+    method: "GET",
+    headers: buildHeaders(apiKeyValue),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Notion API error: ${response.status} ${response.statusText} - ${errorText}`);
+  }
+
+  return response.json();
+}
+
 export async function queryNotionDatabase(
   apiKeyValue,
   databaseIdValue,
@@ -287,7 +317,7 @@ export async function queryNotionDatabase(
   return results;
 }
 
-export async function searchNotionPages(apiKeyValue, query, pageSize = 50, maxPages = 3) {
+export async function searchNotionPages(apiKeyValue, query, pageSize = 50, maxPages = 3, filterType = null) {
   const results = [];
   let nextCursor = null;
   const safePageSize = Math.min(Math.max(pageSize, 1), 100);
@@ -295,13 +325,13 @@ export async function searchNotionPages(apiKeyValue, query, pageSize = 50, maxPa
 
   do {
     const body = {
-      query,
-      filter: {
-        value: "page",
-        property: "object",
-      },
+      query: query || "",
       page_size: safePageSize,
     };
+    // filterType省略時はページ・データベース両方が対象になる（Notion検索APIの仕様）
+    if (filterType === "page" || filterType === "database") {
+      body.filter = { value: filterType, property: "object" };
+    }
     if (nextCursor) body.start_cursor = nextCursor;
 
     const data = await fetchNotionJson("https://api.notion.com/v1/search", apiKeyValue, body);
@@ -315,6 +345,44 @@ export async function searchNotionPages(apiKeyValue, query, pageSize = 50, maxPa
   return results;
 }
 
+// タイトルでデータベースを検索し、integrationに許可された範囲内から一意に見つかった場合だけIDを返す。
+// 同名が複数あった場合や見つからない場合はnullを返す（＝わからないものを勝手に選ばない）。
+export async function findDatabaseIdByTitle(apiKeyValue, titleQuery) {
+  const results = await searchNotionPages(apiKeyValue, titleQuery, 20, 2, "database");
+  const exactMatches = results.filter((page) => extractNotionTitle(page).trim() === titleQuery.trim());
+  return exactMatches.length === 1 ? exactMatches[0].id : null;
+}
+
+// integrationに許可された範囲内にある、すべてのデータベースの一覧（id・タイトル）を返す。
+// 固定の5トピックに当てはまらない、ユーザー独自のデータベースをチャットの選択肢に含めるために使う。
+export async function listAllDatabases(apiKeyValue, pageSize = 20) {
+  const results = await searchNotionPages(apiKeyValue, "", pageSize, 1, "database");
+  return results.map((page) => ({ id: page.id, title: extractNotionTitle(page) }));
+}
+
+// データベースのプロパティ構成（getDatabaseSchemaの戻り値のproperties）から、型ごとの個数を集計する
+export function getPropertyTypeCounts(properties = {}) {
+  const counts = {};
+  for (const definition of Object.values(properties || {})) {
+    const type = definition?.type;
+    if (!type) continue;
+    counts[type] = (counts[type] || 0) + 1;
+  }
+  return counts;
+}
+
+// 実際のデータベースが持つ型の個数(actualCounts)が、期待される型の個数(expectedCounts)をどれだけ満たすかを採点する。
+// 型ごとに期待数を超えて加点はしない（余分なプロパティがあっても減点も加点もしない）。
+export function scoreTypeCounts(actualCounts, expectedCounts) {
+  let matched = 0;
+  let total = 0;
+  for (const [type, expectedCount] of Object.entries(expectedCounts || {})) {
+    total += expectedCount;
+    matched += Math.min(actualCounts?.[type] || 0, expectedCount);
+  }
+  return { matched, total };
+}
+
 export async function fetchNotionPages({
   apiKeyValue,
   databaseIdValue,
@@ -322,6 +390,7 @@ export async function fetchNotionPages({
   searchType = "database",
   pageSize = 50,
   maxPages = 3,
+  filterType = null,
 }) {
   if (!apiKeyValue) {
     throw new Error("apiKeyValue is required to fetch Notion pages.");
@@ -330,7 +399,7 @@ export async function fetchNotionPages({
   const source = searchType === "search" ? "search" : "database";
   const pages =
     source === "search"
-      ? await searchNotionPages(apiKeyValue, query, pageSize, maxPages)
+      ? await searchNotionPages(apiKeyValue, query, pageSize, maxPages, filterType)
       : await queryNotionDatabase(apiKeyValue, databaseIdValue, pageSize, maxPages);
 
   const results = pages.map((page) => collectNotionPageInfo(page));

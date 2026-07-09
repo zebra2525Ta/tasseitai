@@ -3,6 +3,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import styles from '@/app/settings/settings.module.css'; // 設定画面と同じCSSを再利用
+import {
+  checkPushSupport,
+  registerServiceWorker,
+  getOrCreateSubscription,
+  persistSubscription,
+} from '@/app/components/pushSubscription';
 
 // ========================================
 // 型定義
@@ -42,46 +48,8 @@ const ERROR_MESSAGES = {
 // ユーティリティ関数
 // ========================================
 
-function urlBase64ToArrayBuffer(base64String: string): ArrayBuffer {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const rawData = typeof window !== 'undefined' ? window.atob(base64) : '';
-  
-  const buffer = new ArrayBuffer(rawData.length);
-  const view = new Uint8Array(buffer);
-  
-  for (let i = 0; i < rawData.length; i += 1) {
-    view[i] = rawData.charCodeAt(i);
-  }
-  
-  return buffer;
-}
-
-function checkBrowserSupport(): boolean {
-  return 'serviceWorker' in navigator && typeof Notification !== 'undefined';
-}
-
 function extractErrorMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
-}
-
-// ========================================
-// Service Worker関連の処理
-// ========================================
-
-async function registerServiceWorker(): Promise<{
-  registration: ServiceWorkerRegistration;
-  existingSubscription: PushSubscription | null;
-}> {
-  const existing = await navigator.serviceWorker.getRegistration();
-  const activeReg = existing ?? (await navigator.serviceWorker.register('/sw.js'));
-  const readyReg = activeReg ?? (await navigator.serviceWorker.ready);
-  const existingSubscription = await readyReg.pushManager.getSubscription();
-  
-  return {
-    registration: readyReg,
-    existingSubscription,
-  };
 }
 
 async function showLocalNotification(
@@ -96,36 +64,6 @@ async function showLocalNotification(
 }
 
 // ========================================
-// プッシュ購読関連の処理
-// ========================================
-
-async function createPushSubscription(
-  registration: ServiceWorkerRegistration,
-  vapidKey: string
-): Promise<PushSubscription> {
-  const appServerKey = urlBase64ToArrayBuffer(vapidKey);
-  
-  return await registration.pushManager.subscribe({
-    userVisibleOnly: true,
-    applicationServerKey: appServerKey,
-  });
-}
-
-async function getOrCreateSubscription(
-  registration: ServiceWorkerRegistration,
-  vapidKey: string
-): Promise<{ subscription: PushSubscription; isExisting: boolean }> {
-  const existing = await registration.pushManager.getSubscription();
-  
-  if (existing) {
-    return { subscription: existing, isExisting: true };
-  }
-  
-  const newSubscription = await createPushSubscription(registration, vapidKey);
-  return { subscription: newSubscription, isExisting: false };
-}
-
-// ========================================
 // サーバー通信
 // ========================================
 
@@ -135,7 +73,7 @@ async function requestServerPush(subscription: PushSubscription): Promise<void> 
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ subscription: subscription.toJSON() }),
   });
-  
+
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
     throw new Error(data?.error || 'サーバー通知の送信に失敗しました');
@@ -161,7 +99,7 @@ const NotificationDemoPage: React.FC = () => {
       setPermission(Notification.permission);
     }
 
-    if (!checkBrowserSupport()) {
+    if (!checkPushSupport()) {
       setSupportState('unsupported');
       setMessage(ERROR_MESSAGES.unsupportedBrowser);
       return;
@@ -245,9 +183,10 @@ const NotificationDemoPage: React.FC = () => {
         registration,
         publicVapidKey
       );
-      
+
       setSubscription({ endpoint: sub.endpoint, raw: sub });
-      setMessage(isExisting ? '既存の購読を再利用します' : '購読を作成しました');
+      await persistSubscription(sub);
+      setMessage(isExisting ? '既存の購読を再利用します（サーバーにも保存済み）' : '購読を作成し、サーバーに保存しました');
     } catch (error) {
       setMessage(extractErrorMessage(error, '購読に失敗しました'));
     } finally {
