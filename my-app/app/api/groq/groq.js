@@ -697,6 +697,11 @@ export async function generateText(promptText) {
           { role: "system", content: NOIR_SYSTEM_PROMPT },
           { role: "user", content: promptText.trim() },
         ],
+        // gpt-oss系は推論モデルのため、reasoning_effortを下げて回答本文用のトークンを確保する。
+        // 指定しないとGroq側のデフォルト（高め）になり、複雑な指示（期日ソート等）で
+        // 推論だけでトークンを使い切りcontentが空文字で返ってくることがある。
+        reasoning_effort: "low",
+        max_completion_tokens: 2048,
       }),
     });
   } catch (error) {
@@ -712,9 +717,12 @@ export async function generateText(promptText) {
   }
 
   const data = await res.json().catch(() => null);
-  return typeof data?.choices?.[0]?.message?.content === "string"
-    ? data.choices[0].message.content.trim()
-    : "";
+  const content = data?.choices?.[0]?.message?.content;
+  if (typeof content !== "string" || !content.trim()) {
+    console.error("GROQ応答が空文字でした。finish_reason:", data?.choices?.[0]?.finish_reason);
+    return "";
+  }
+  return content.trim();
 }
 
 async function buildNotionPrompt(question, forcedTopics, notionApiKey, databaseMap = {}) {
