@@ -353,6 +353,29 @@ export async function findDatabaseIdByTitle(apiKeyValue, titleQuery) {
   return exactMatches.length === 1 ? exactMatches[0].id : null;
 }
 
+// データベースのプロパティ構成（getDatabaseSchemaの戻り値のproperties）から、型ごとの個数を集計する
+export function getPropertyTypeCounts(properties = {}) {
+  const counts = {};
+  for (const definition of Object.values(properties || {})) {
+    const type = definition?.type;
+    if (!type) continue;
+    counts[type] = (counts[type] || 0) + 1;
+  }
+  return counts;
+}
+
+// 実際のデータベースが持つ型の個数(actualCounts)が、期待される型の個数(expectedCounts)をどれだけ満たすかを採点する。
+// 型ごとに期待数を超えて加点はしない（余分なプロパティがあっても減点も加点もしない）。
+export function scoreTypeCounts(actualCounts, expectedCounts) {
+  let matched = 0;
+  let total = 0;
+  for (const [type, expectedCount] of Object.entries(expectedCounts || {})) {
+    total += expectedCount;
+    matched += Math.min(actualCounts?.[type] || 0, expectedCount);
+  }
+  return { matched, total };
+}
+
 export async function fetchNotionPages({
   apiKeyValue,
   databaseIdValue,

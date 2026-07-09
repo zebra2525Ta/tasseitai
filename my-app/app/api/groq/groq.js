@@ -84,7 +84,7 @@ export function hasRegisterIntent(text) {
 // トピックごとの登録スキーマ。Notionの実際のプロパティ型（GET /api/notion?databaseId=...で確認済み）に合わせてある。
 // titleProperty: タイトル（名前）として使うプロパティ名
 // fields: タイトル以外に埋められるプロパティの定義（type は Notion API のプロパティ型と一致させる）
-const TOPIC_REGISTRATION_SCHEMAS = {
+export const TOPIC_REGISTRATION_SCHEMAS = {
   shopping: {
     titleProperty: "商品名",
     fields: [
