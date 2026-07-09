@@ -345,6 +345,14 @@ export async function searchNotionPages(apiKeyValue, query, pageSize = 50, maxPa
   return results;
 }
 
+// タイトルでデータベースを検索し、integrationに許可された範囲内から一意に見つかった場合だけIDを返す。
+// 同名が複数あった場合や見つからない場合はnullを返す（＝わからないものを勝手に選ばない）。
+export async function findDatabaseIdByTitle(apiKeyValue, titleQuery) {
+  const results = await searchNotionPages(apiKeyValue, titleQuery, 20, 2, "database");
+  const exactMatches = results.filter((page) => extractNotionTitle(page).trim() === titleQuery.trim());
+  return exactMatches.length === 1 ? exactMatches[0].id : null;
+}
+
 export async function fetchNotionPages({
   apiKeyValue,
   databaseIdValue,

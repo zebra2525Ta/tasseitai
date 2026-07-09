@@ -61,9 +61,16 @@ type NotificationGateStatus = 'checking' | 'blocked' | 'passed';
 type HomeClientProps = {
   scheduleDatabaseId: string;
   todoDatabaseId: string;
+  scheduleUnresolved: boolean;
+  todoUnresolved: boolean;
 };
 
-export default function HomeClient({ scheduleDatabaseId, todoDatabaseId }: HomeClientProps) {
+export default function HomeClient({
+  scheduleDatabaseId,
+  todoDatabaseId,
+  scheduleUnresolved,
+  todoUnresolved,
+}: HomeClientProps) {
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
   const [notificationGate, setNotificationGate] = useState<NotificationGateStatus>('checking');
@@ -276,6 +283,10 @@ export default function HomeClient({ scheduleDatabaseId, todoDatabaseId }: HomeC
         )
       );
 
+      if (scheduleUnresolved) {
+        setScheduleError('スケジュール用のデータベースが見つかりませんでした');
+        setScheduleLoading(false);
+      } else {
       fetch('/api/notion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -343,8 +354,13 @@ export default function HomeClient({ scheduleDatabaseId, todoDatabaseId }: HomeC
           setScheduleError('読み込みに失敗しました');
           setScheduleLoading(false);
         });
+      }
 
       // Notion「進捗管理」データベースからタスクを取得
+      if (todoUnresolved) {
+        setTodoError('進捗管理用のデータベースが見つかりませんでした');
+        setTodoLoading(false);
+      } else {
       fetch('/api/notion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -395,9 +411,10 @@ export default function HomeClient({ scheduleDatabaseId, todoDatabaseId }: HomeC
           setTodoError('読み込みに失敗しました');
           setTodoLoading(false);
         });
+      }
     }, 0); // 0秒ディレイで画面描画の直後に実行
 
-  }, [router, scheduleDatabaseId, todoDatabaseId]);
+  }, [router, scheduleDatabaseId, todoDatabaseId, scheduleUnresolved, todoUnresolved]);
 
   // ポップアップのボタン用：ブラウザのネイティブ許可ダイアログを表示させ、
   // 「許可」「拒否」どちらが選ばれてもホームへ進む（未決定のまま進めることだけを防ぐ）

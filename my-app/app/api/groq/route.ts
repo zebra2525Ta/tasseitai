@@ -45,12 +45,24 @@ export async function POST(request: Request) {
 
     const session = await resolveNotionSession();
     const notionApiKey = session?.accessToken ?? null;
-    const databaseMap = session ? await getUserDatabaseMap(session.userId) : {};
+    const { databases: databaseMap, unresolved } = session
+      ? await getUserDatabaseMap(session.userId, session.accessToken)
+      : { databases: {} as Record<string, string>, unresolved: [] as string[] };
 
     // 登録内容の確認が取れている場合は、そのまま書き込みを実行する
     if (confirmRegistration && typeof confirmRegistration === "object") {
       if (!notionApiKey) {
         return NextResponse.json({ error: "Notionと連携されていません" }, { status: 401 });
+      }
+      const targetTopicId =
+        Array.isArray(confirmRegistration.multiDates) && confirmRegistration.multiDates.length > 0
+          ? "schedule"
+          : confirmRegistration.topicId;
+      if (targetTopicId && unresolved.includes(targetTopicId)) {
+        return NextResponse.json({
+          content:
+            "登録先のデータベースが見つからなかったため、登録できませんでした。Notion側でデータベース名を確認するか、設定画面から直接データベースIDを指定してください。",
+        });
       }
       const content = await commitRegistration(confirmRegistration, notionApiKey, databaseMap);
       return NextResponse.json({ content });

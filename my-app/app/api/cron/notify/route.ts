@@ -316,7 +316,7 @@ export async function GET(request: NextRequest) {
     const apiKey = await getNotionToken(userId);
     if (!apiKey) continue;
 
-    const databaseMap = await getUserDatabaseMap(userId);
+    const { databases: databaseMap } = await getUserDatabaseMap(userId, apiKey);
 
     try {
       const notificationBody =

@@ -10,6 +10,13 @@ export default async function HomePage() {
     redirect("/login");
   }
 
-  const databases = await getUserDatabaseMap(session.userId!);
-  return <HomeClient scheduleDatabaseId={databases.schedule} todoDatabaseId={databases.todo} />;
+  const { databases, unresolved } = await getUserDatabaseMap(session.userId!, session.accessToken);
+  return (
+    <HomeClient
+      scheduleDatabaseId={databases.schedule}
+      todoDatabaseId={databases.todo}
+      scheduleUnresolved={unresolved.includes("schedule")}
+      todoUnresolved={unresolved.includes("todo")}
+    />
+  );
 }

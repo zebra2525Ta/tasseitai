@@ -293,7 +293,7 @@ export default function SettingsPage() {
         <div className={styles.sectionHeader}>
           <span className={styles.sectionTitle}>Notionデータベース設定</span>
           <p className={styles.inputHelp}>
-            ※ 自分専用のNotionワークスペースを使う場合、各項目に対応するデータベースのIDを入力してください。空欄のままなら共有ワークスペースの既定のデータベースが使われます。
+            ※ 自分専用のNotionワークスペースを使う場合、下記のデータベース名（例:「進捗管理」）と同じ名前のデータベースを連携済みの範囲内から自動で探します。通常はこの欄を空欄のままで問題ありません。同名のデータベースが複数あるなど自動で見つけられない場合のみ、該当するデータベースのIDを直接入力してください。
           </p>
           <div className={styles.rowContainer}>
             {NOTION_DATABASE_TOPICS.map((topic) => (

@@ -472,7 +472,7 @@ export async function commitRegistration(item, notionApiKey, databaseMap = {}) {
       return await commitMultiDayRegistration(notionApiKey, title, item.multiDates, databaseId);
     } catch (error) {
       console.error("Notion登録エラー:", error.message);
-      return "スケジュールへの登録に失敗しました。もう一度試してみてください。";
+      return "スケジュール用のデータベースが見つからず、登録できませんでした。Notion側でデータベース名を確認するか、設定画面から直接データベースIDを指定してください。";
     }
   }
 
@@ -541,7 +541,7 @@ export async function commitRegistration(item, notionApiKey, databaseMap = {}) {
     return `${topic.label}に「${title}」を登録しといたよ${summary}。他にも何かあれば言ってね！`;
   } catch (error) {
     console.error("Notion登録エラー:", error.message);
-    return `${topic.label}への登録に失敗しました。もう一度試してみてください。`;
+    return `${topic.label}用のデータベースが見つからず、登録できませんでした。Notion側でデータベース名を確認するか、設定画面から直接データベースIDを指定してください。`;
   }
 }
 
