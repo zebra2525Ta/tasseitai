@@ -353,6 +353,13 @@ export async function findDatabaseIdByTitle(apiKeyValue, titleQuery) {
   return exactMatches.length === 1 ? exactMatches[0].id : null;
 }
 
+// integrationに許可された範囲内にある、すべてのデータベースの一覧（id・タイトル）を返す。
+// 固定の5トピックに当てはまらない、ユーザー独自のデータベースをチャットの選択肢に含めるために使う。
+export async function listAllDatabases(apiKeyValue, pageSize = 20) {
+  const results = await searchNotionPages(apiKeyValue, "", pageSize, 1, "database");
+  return results.map((page) => ({ id: page.id, title: extractNotionTitle(page) }));
+}
+
 // データベースのプロパティ構成（getDatabaseSchemaの戻り値のproperties）から、型ごとの個数を集計する
 export function getPropertyTypeCounts(properties = {}) {
   const counts = {};

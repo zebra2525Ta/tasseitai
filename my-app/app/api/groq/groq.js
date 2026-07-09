@@ -382,6 +382,21 @@ function summarizeFields(schema, values) {
     });
 }
 
+// 固定の5トピックに当てはまらない、ユーザー独自のデータベース向けの登録プレビュー（タイトルのみの簡易版）
+export function buildGenericRegistrationPreview(databaseId, databaseLabel, text) {
+  const title = extractTitleExcluding(normalizeFullWidthDigits(text), null);
+  if (!title) {
+    return {
+      item: null,
+      message: `何を「${databaseLabel}」に登録すればいいか読み取れませんでした。名前を教えてください。`,
+    };
+  }
+  return {
+    item: { databaseId, title },
+    message: `「${databaseLabel}」に「${title}」を登録するね。これで合ってる？`,
+  };
+}
+
 // 「登録して」と言われた直後にいきなり書き込まず、まず内容を提示して確認を取るためのプレビューを作る。
 // 実際の書き込みは、ユーザーが確認した後に commitRegistration で行う。
 export function buildRegistrationPreview(topicId, text) {
@@ -454,11 +469,38 @@ async function commitMultiDayRegistration(notionApiKey, title, dates, databaseId
   return `スケジュールに「${title}」を${dates.join("、")}の${dates.length}日、各日0:00〜23:58で登録しといたよ。予定は事前に準備しておくと安心だね！`;
 }
 
+// 固定の5トピックに当てはまらない、ユーザー独自のデータベースへの登録。
+// スキーマが分からないため、タイトルだけを書き込む簡易版（詳細な項目はNotion側で追記してもらう想定）
+async function commitGenericRegistration(databaseId, title, notionApiKey) {
+  try {
+    const actualSchema = await getDatabaseSchema(notionApiKey, databaseId);
+    const actualProperties = actualSchema?.properties || {};
+    const titleProperty = findTitlePropertyName(actualProperties, "名前");
+
+    await createDatabasePage(notionApiKey, databaseId, {
+      [titleProperty]: { title: [{ text: { content: title } }] },
+    });
+    return `登録しといたよ。他にも何かあれば言ってね！`;
+  } catch (error) {
+    console.error("Notion登録エラー:", error.message);
+    return "登録先のデータベースが見つからず、登録できませんでした。";
+  }
+}
+
 // 確認が取れた後に、実際にNotionへ1件書き込む
 // databaseMap: トピックID -> 実際に使うデータベースID（ユーザーが個人ワークスペース用に上書きしている場合はそちら）
 export async function commitRegistration(item, notionApiKey, databaseMap = {}) {
   if (!notionApiKey) {
     return "Notionと連携されていないため、登録できませんでした。";
+  }
+
+  // 固定5トピック以外の、ユーザー独自データベースへの登録
+  if (item?.databaseId) {
+    const title = typeof item?.title === "string" ? item.title.trim() : "";
+    if (!title) {
+      return "登録内容が読み取れませんでした。もう一度お願いします。";
+    }
+    return commitGenericRegistration(item.databaseId, title, notionApiKey);
   }
 
   if (Array.isArray(item?.multiDates) && item.multiDates.length > 0) {
@@ -719,5 +761,32 @@ export { buildNotionPrompt };
 
 export async function generateTextFromNotionData(question, forcedTopics, notionApiKey, databaseMap = {}) {
   const promptText = await buildNotionPrompt(question, forcedTopics, notionApiKey, databaseMap);
+  return generateText(promptText);
+}
+
+// 固定の5トピックに当てはまらない、ユーザー独自のデータベースを指定して読む
+export async function generateTextFromArbitraryDatabase(question, databaseId, databaseLabel, notionApiKey) {
+  const questionText = typeof question === "string" ? question.trim() : "";
+  if (!questionText) {
+    throw new Error("質問文が必要です");
+  }
+
+  const pages = await queryNotionDatabase(notionApiKey, databaseId, 50, 2);
+  const results = pages.map((page) => collectNotionPageInfo(page));
+  let propertiesText = formatNotionResultsForPrompt(results, databaseLabel);
+
+  if (propertiesText.length > NOTION_PROMPT_MAX_CHARS) {
+    propertiesText = propertiesText.slice(0, NOTION_PROMPT_MAX_CHARS) + "\n...(以下省略)";
+  }
+
+  const promptText = [
+    "以下は Notion から取得した情報です。",
+    "これらのデータをもとに、質問に回答してください。",
+    "",
+    propertiesText || "(該当するNotionデータが見つかりませんでした)",
+    "",
+    `質問: ${questionText}`,
+  ].join("\n");
+
   return generateText(promptText);
 }

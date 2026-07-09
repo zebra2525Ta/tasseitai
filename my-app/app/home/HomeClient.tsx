@@ -284,7 +284,7 @@ export default function HomeClient({
       );
 
       if (scheduleUnresolved) {
-        setScheduleError('スケジュール用のデータベースが見つかりませんでした');
+        setScheduleError('Notionで「スケジュール」という名前のデータベースを連携すると、ここに表示されます');
         setScheduleLoading(false);
       } else {
       fetch('/api/notion', {
@@ -358,7 +358,7 @@ export default function HomeClient({
 
       // Notion「進捗管理」データベースからタスクを取得
       if (todoUnresolved) {
-        setTodoError('進捗管理用のデータベースが見つかりませんでした');
+        setTodoError('Notionで「進捗管理」という名前のデータベースを連携すると、ここに表示されます');
         setTodoLoading(false);
       } else {
       fetch('/api/notion', {

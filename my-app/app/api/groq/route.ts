@@ -2,15 +2,20 @@ import { NextResponse } from "next/server";
 import {
   generateText,
   generateTextFromNotionData,
+  generateTextFromArbitraryDatabase,
   detectNotionTopics,
   hasRegisterIntent,
   hasGeneralNotionIntent,
   buildRegistrationPreview,
+  buildGenericRegistrationPreview,
   commitRegistration,
   NOTION_TOPICS,
 } from "./groq.js";
+import { listAllDatabases, getDatabaseSchema, extractNotionTitle } from "../notion/notion.js";
 import { resolveNotionSession } from "@/lib/notionAuth";
 import { getUserDatabaseMap } from "@/lib/notionDatabaseMap";
+
+const DISCOVERED_TOPIC_PREFIX = "db:";
 
 export const runtime = "nodejs";
 
@@ -73,6 +78,29 @@ export async function POST(request: Request) {
 
     // 曖昧だったため選択肢から選んでもらった後の再リクエスト
     if (forcedTopicId && originalMessage) {
+      // 固定5トピック以外の、ユーザー独自データベースが選ばれた場合
+      if (forcedTopicId.startsWith(DISCOVERED_TOPIC_PREFIX)) {
+        if (!notionApiKey) {
+          return NextResponse.json({ error: "Notionと連携されていません" }, { status: 401 });
+        }
+        const databaseId = forcedTopicId.slice(DISCOVERED_TOPIC_PREFIX.length);
+        let databaseLabel = "このデータベース";
+        try {
+          const schema = await getDatabaseSchema(notionApiKey, databaseId);
+          databaseLabel = extractNotionTitle(schema) || databaseLabel;
+        } catch {
+          return NextResponse.json({ error: "指定されたデータベースが見つかりませんでした" }, { status: 404 });
+        }
+
+        if (hasRegisterIntent(originalMessage)) {
+          const preview = buildGenericRegistrationPreview(databaseId, databaseLabel, originalMessage);
+          return NextResponse.json({ content: preview.message, pendingItem: preview.item });
+        }
+
+        const content = await generateTextFromArbitraryDatabase(originalMessage, databaseId, databaseLabel, notionApiKey);
+        return NextResponse.json({ content });
+      }
+
       const topic = NOTION_TOPICS.find((t: Topic) => t.id === forcedTopicId);
       if (!topic) {
         return NextResponse.json({ error: "不明なトピックです" }, { status: 400 });
@@ -101,7 +129,20 @@ export async function POST(request: Request) {
     if (isAmbiguous) {
       // 2件以上のトピックに同時ヒットした場合も、Notionを見る意図があるのは明らかなので選択肢を出す
       if (isRegister || hasGeneralNotionIntent(message) || matchedTopics.length > 0) {
-        const choices = topicChoices(unresolved);
+        const knownChoices = topicChoices(unresolved);
+        let discoveredChoices: { id: string; label: string }[] = [];
+        if (notionApiKey) {
+          try {
+            const usedIds = new Set(Object.values(databaseMap));
+            const allDatabases = await listAllDatabases(notionApiKey, 20);
+            discoveredChoices = allDatabases
+              .filter((db: any) => !usedIds.has(db.id))
+              .map((db: any) => ({ id: `${DISCOVERED_TOPIC_PREFIX}${db.id}`, label: db.title || "(無題)" }));
+          } catch (error) {
+            console.error("Notionデータベース一覧の取得に失敗:", error);
+          }
+        }
+        const choices = [...knownChoices, ...discoveredChoices];
         if (choices.length === 0) {
           return NextResponse.json({
             content:
