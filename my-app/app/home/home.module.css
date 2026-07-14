@@ -384,6 +384,11 @@
     flex-direction: column;
     gap: 16px;
   }
+
+  /* PC時は下部ナビを非表示にする */
+  .bottomNav {
+    display: none;
+  }
 }
 .bottomNav {
   position: fixed;
