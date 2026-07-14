@@ -320,36 +320,6 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* 通知機能設定セクション */}
-      <div className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <span className={styles.sectionTitle}>通知機能</span>
-          <div className={styles.rowContainer}>
-
-            {/* 💡 追加：テストデモ画面へ遷移するボタン */}
-            <div className={styles.inputRow} style={{ marginTop: '12px' }}>
-              <Link 
-                href="/notification-demo" 
-                className={styles.textField} 
-                style={{ 
-                  textDecoration: 'none', 
-                  display: 'flex', 
-                  justifyContent: 'center', 
-                  alignItems: 'center',
-                  backgroundColor: 'rgba(124, 92, 255, 0.15)', // 薄いインディゴの背景
-                  border: '1px solid #7c5cff', // インディゴの枠線
-                  color: '#a48bff', // インディゴの文字
-                  fontWeight: 'bold',
-                  cursor: 'pointer'
-                }}
-              >
-                🔔 通知のテスト・再設定を行う
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* アカウント操作エリア */}
       <div className={styles.dangerSection}>
         <button className={styles.dangerBtn} onClick={handleLogout}>
