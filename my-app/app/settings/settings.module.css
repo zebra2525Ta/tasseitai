@@ -2,7 +2,11 @@
   width: 100%;
   margin: 0;
   padding: 24px 16px;
-  background-color: #14141a; /* 🏠 ホーム画面とお揃いのチャコール背景 */
+  background:
+    radial-gradient(ellipse 700px 500px at 8% -10%, rgba(124, 92, 255, 0.12), transparent 60%),
+    radial-gradient(ellipse 700px 500px at 100% 0%, rgba(240, 185, 62, 0.08), transparent 55%),
+    #14141a; /* 🏠 ホーム画面とお揃いのチャコール背景 + 淡いアンビエントグロー */
+  background-attachment: fixed;
   min-height: 100vh;
   color: #f2f1ee;
   font-family: sans-serif;
@@ -40,13 +44,24 @@
 
 /* 🧱 セクション配置 */
 .section {
+  position: relative;
   display: flex;
   flex-direction: column;
-  padding: 20px; /* 少し余白を広げて見やすく */
-  background-color: #1d1d26; /* ホームのカードと揃えたフラットな面 */
-  border-radius: 12px;
+  padding: 22px 20px 20px; /* 少し余白を広げて見やすく */
+  background: linear-gradient(165deg, #232330, #1d1d26 55%); /* ホームのカードと揃えた斜めグラデーション */
+  border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.24);
   margin-bottom: 20px;
+}
+.section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 20px;
+  right: 20px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(240, 185, 62, 0.5), transparent);
 }
 
 .sectionHeader {
@@ -56,9 +71,11 @@
 }
 
 .sectionTitle {
+  font-family: Georgia, "Times New Roman", serif;
   font-size: 1rem;
-  font-weight: bold;
-  color: #f2f1ee;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #ffd27a;
   min-width: 90px; /* ⭕ 横幅を「70px」から「90px」に広げて、文字の潰れを完全に解消 */
   padding-top: 2px;
   flex-shrink: 0;
