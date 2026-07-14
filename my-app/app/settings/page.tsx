@@ -30,11 +30,6 @@ const NEWS_CATEGORY_OPTIONS = [
 export default function SettingsPage() {
   const [isMounted, setIsMounted] = useState(false);
 
-  // 各トグルの状態管理
-  const [aiBusiness, setAiBusiness] = useState(true);
-  const [aiDaily, setAiDaily] = useState(true);
-  const [notifications, setNotifications] = useState(true);
-  
   // 💡 修正1: GitHubリポジトリ名の初期状態をデフォルトなし（空っぽ）に変更
   const [githubRepo, setGithubRepo] = useState('');
 
@@ -46,17 +41,10 @@ export default function SettingsPage() {
 
   // 起動時にLocalStorageから設定を復元
   useEffect(() => {
-    const savedBusiness = localStorage.getItem('setting_aiBusiness');
-    const savedDaily = localStorage.getItem('setting_aiDaily');
-    const savedNotif = localStorage.getItem('setting_notifications');
     const savedRepo = localStorage.getItem('setting_githubRepo');
     const savedRegion = localStorage.getItem('setting_weatherRegion');
     const savedCategory = localStorage.getItem('setting_newsCategory');
 
-    setAiBusiness(savedBusiness !== null ? JSON.parse(savedBusiness) : true);
-    setAiDaily(savedDaily !== null ? JSON.parse(savedDaily) : true);
-    setNotifications(savedNotif !== null ? JSON.parse(savedNotif) : true);
-    
     // 💡 修正2: 保存されたデータがあればそれを入れ、無ければ確実に空っぽにする
     setGithubRepo(savedRepo !== null ? savedRepo : '');
 
@@ -70,14 +58,6 @@ export default function SettingsPage() {
 
     setIsMounted(true);
   }, []);
-
-  const handleToggle = (key: 'aiBusiness' | 'aiDaily' | 'notifications', value: boolean) => {
-    if (key === 'aiBusiness') setAiBusiness(value);
-    if (key === 'aiDaily') setAiDaily(value);
-    if (key === 'notifications') setNotifications(value);
-
-    localStorage.setItem(`setting_${key}`, JSON.stringify(value));
-  };
 
   // GitHubリポジトリ名をLocalStorageに保存する関数
   const handleRepoChange = (value: string) => {
@@ -125,48 +105,6 @@ export default function SettingsPage() {
           ←
         </Link>
         <h1 className={styles.title}>設定画面</h1>
-      </div>
-
-      {/* AI設定セクション */}
-      <div className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <span className={styles.sectionTitle}>AI設定</span>
-          <div className={styles.rowContainer}>
-            <div className={styles.settingRow}>
-              <span className={styles.subLabel}>ビジネス用</span>
-              <div className={styles.toggleWrapper}>
-                <span className={aiBusiness ? styles.textOn : styles.textOff}>
-                  {aiBusiness ? 'ON' : 'OFF'}
-                </span>
-                <label className={styles.switch}>
-                  <input 
-                    type="checkbox" 
-                    checked={aiBusiness} 
-                    onChange={(e) => handleToggle('aiBusiness', e.target.checked)} 
-                  />
-                  <span className={styles.slider}></span>
-                </label>
-              </div>
-            </div>
-
-            <div className={styles.settingRow}>
-              <span className={styles.subLabel}>日常生活用</span>
-              <div className={styles.toggleWrapper}>
-                <span className={aiDaily ? styles.textOn : styles.textOff}>
-                  {aiDaily ? 'ON' : 'OFF'}
-                </span>
-                <label className={styles.switch}>
-                  <input 
-                    type="checkbox" 
-                    checked={aiDaily} 
-                    onChange={(e) => handleToggle('aiDaily', e.target.checked)} 
-                  />
-                  <span className={styles.slider}></span>
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* 天気地域設定セクション */}
