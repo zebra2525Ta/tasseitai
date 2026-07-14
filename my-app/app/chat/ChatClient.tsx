@@ -171,7 +171,7 @@ export default function ChatClient() {
       {/* ヘッダー */}
       <div className={styles.header}>
         <button className={styles.backBtn} onClick={() => router.back()}>
-          <ArrowLeftIcon size={20} color="#ffffff" />
+          <ArrowLeftIcon size={20} color="#f2f1ee" />
         </button>
       </div>
 
@@ -181,8 +181,8 @@ export default function ChatClient() {
         {messages.length === 0 && !pendingItem && topicChoices.length === 0 && (
           <div className={styles.emptyStateMark}>
             <svg viewBox="0 0 100 100" width="140" height="140" aria-hidden="true">
-              <polygon points="10,15 10,85 50,50" fill="#6a67ff" />
-              <polygon points="90,15 90,85 50,50" fill="#9aa0b5" />
+              <polygon points="10,15 10,85 50,50" fill="#5b57d1" />
+              <polygon points="90,15 90,85 50,50" fill="#8b8d99" />
             </svg>
             <span className={styles.emptyStateLabel}>Noir</span>
           </div>

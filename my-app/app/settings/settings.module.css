@@ -2,9 +2,9 @@
   width: 100%;
   margin: 0;
   padding: 24px 16px;
-  background-color: #3b3a4e; /* 🏠 ホーム画面とお揃いの背景色 */
+  background-color: #14141a; /* 🏠 ホーム画面とお揃いのチャコール背景 */
   min-height: 100vh;
-  color: #ffffff;
+  color: #f2f1ee;
   font-family: sans-serif;
   position: relative;
   box-sizing: border-box;
@@ -23,7 +23,7 @@
   background: none;
   border: none;
   font-size: 1.5rem;
-  color: #ffffff; /* 矢印をくっきり白に */
+  color: #f2f1ee;
   cursor: pointer;
   padding: 0;
   display: flex;
@@ -35,7 +35,7 @@
   font-size: 1.25rem;
   font-weight: bold;
   margin: 0;
-  color: #ffffff; /* タイトルをくっきり白に */
+  color: #f2f1ee;
 }
 
 /* 🧱 セクション配置 */
@@ -43,9 +43,9 @@
   display: flex;
   flex-direction: column;
   padding: 20px; /* 少し余白を広げて見やすく */
-  background-color: rgba(255, 255, 255, 0.06); /* ホームに合わせた薄い透過背景 */
+  background-color: #1d1d26; /* ホームのカードと揃えたフラットな面 */
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   margin-bottom: 20px;
 }
 
@@ -58,7 +58,7 @@
 .sectionTitle {
   font-size: 1rem;
   font-weight: bold;
-  color: #ffffff; /* ✨ 左側のメインタイトル（AI設定、地域設定など）をくっきり白に！ */
+  color: #f2f1ee;
   min-width: 90px; /* ⭕ 横幅を「70px」から「90px」に広げて、文字の潰れを完全に解消 */
   padding-top: 2px;
   flex-shrink: 0;
@@ -88,7 +88,7 @@
 
 .subLabel {
   font-size: 0.95rem;
-  color: #ffffff; /* ✨ 「ビジネス用」「日常生活用」などの文字をくっきり白に！ */
+  color: #f2f1ee;
 }
 
 /* ON/OFFテキストとスイッチの並び */
@@ -101,7 +101,7 @@
 .textOn {
   font-size: 0.8rem;
   font-weight: bold;
-  color: #22c55e;
+  color: #34d399;
   width: 30px;
   display: inline-block;
   text-align: center;
@@ -110,7 +110,7 @@
 .textOff {
   font-size: 0.8rem;
   font-weight: bold;
-  color: #3b82f6;
+  color: #8b8d99;
   width: 30px;
   display: inline-block;
   text-align: center;
@@ -137,7 +137,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(255, 255, 255, 0.3); /* OFFの時のスイッチの土台を見やすく調整 */
+  background-color: rgba(255, 255, 255, 0.18); /* OFFの時のスイッチの土台 */
   transition: .2s;
   border-radius: 22px;
 }
@@ -149,13 +149,13 @@
   width: 16px;
   left: 3px;
   bottom: 3px;
-  background-color: white;
+  background-color: #f2f1ee;
   transition: .2s;
   border-radius: 50%;
 }
 
 .switch input:checked + .slider {
-  background-color: #22c55e;
+  background-color: #34d399;
 }
 
 .switch input:checked + .slider:before {
@@ -173,10 +173,10 @@
 .textField {
   width: 100%;
   padding: 12px;
-  background-color: rgba(255, 255, 255, 0.08); /* 入力欄自体の背景を少し明るく */
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background-color: #101017; /* 入力欄は一段深い面に */
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 6px;
-  color: #ffffff; /* 入力・選択された文字を白に固定 */
+  color: #f2f1ee;
   font-size: 0.95rem;
   box-sizing: border-box;
   transition: border-color 0.2s, box-shadow 0.2s;
@@ -184,14 +184,14 @@
 
 .textField:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
+  border-color: #5b57d1;
+  box-shadow: 0 0 8px rgba(91, 87, 209, 0.4);
 }
 
 /* 💡 注釈・ヒントテキストの装飾 */
 .inputHelp {
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.7); /* ✨ 薄すぎて消えていた「※ ホーム画面に〜」の文字を明るい白に！ */
+  color: rgba(242, 241, 238, 0.7);
   margin: 0;
   padding-left: 2px;
 }
@@ -208,11 +208,11 @@
 
 .dangerBtn {
   background: none;
-  border: 2px solid #ef4444; /* ⭕ ボタンらしさを出すために、赤枠のスタイリッシュなデザインに */
+  border: 2px solid #ef6b62; /* ⭕ ボタンらしさを出すために、赤枠のスタイリッシュなデザインに */
   padding: 12px 40px;        /* 内側に余白を作って押しやすく */
   font-size: 1rem;
   font-weight: bold;
-  color: #ef4444;            /* 赤文字 */
+  color: #ef6b62;            /* 赤文字 */
   border-radius: 30px;       /* きれいな丸薬型カプセルボタンに */
   cursor: pointer;
   text-align: center;
@@ -221,7 +221,7 @@
 
 /* ボタンを触ったときのエフェクト */
 .dangerBtn:hover {
-  background-color: #ef4444; /* 背景が赤色に染まる */
+  background-color: #ef6b62; /* 背景が赤色に染まる */
   color: #ffffff;            /* 文字が白色に */
 }
 

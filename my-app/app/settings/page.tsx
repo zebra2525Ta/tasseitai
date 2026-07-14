@@ -225,7 +225,7 @@ export default function SettingsPage() {
               <select
                 id="weatherRegionSelect"
                 className={styles.textField}
-                style={{ cursor: 'pointer', color: '#ffffff', backgroundColor: 'rgba(255, 255, 255, 0.07)' }}
+                style={{ cursor: 'pointer', color: '#f2f1ee', backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
                 value={weatherRegion}
                 onChange={(e) => handleRegionChange(e.target.value)}
               >
@@ -251,7 +251,7 @@ export default function SettingsPage() {
               <select
                 id="newsCategorySelect"
                 className={styles.textField}
-                style={{ cursor: 'pointer', color: '#ffffff', backgroundColor: 'rgba(255, 255, 255, 0.07)' }}
+                style={{ cursor: 'pointer', color: '#f2f1ee', backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
                 value={newsCategory}
                 onChange={(e) => handleCategoryChange(e.target.value)}
               >
@@ -336,9 +336,9 @@ export default function SettingsPage() {
                   display: 'flex', 
                   justifyContent: 'center', 
                   alignItems: 'center',
-                  backgroundColor: 'rgba(59, 130, 246, 0.15)', // 薄い青色の背景
-                  border: '1px solid #3b82f6', // 青色の枠線
-                  color: '#3b82f6', // 青色の文字
+                  backgroundColor: 'rgba(91, 87, 209, 0.15)', // 薄いインディゴの背景
+                  border: '1px solid #5b57d1', // インディゴの枠線
+                  color: '#5b57d1', // インディゴの文字
                   fontWeight: 'bold',
                   cursor: 'pointer'
                 }}

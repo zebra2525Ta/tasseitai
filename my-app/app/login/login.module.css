@@ -1,24 +1,24 @@
-/* 画面全体の背景（チャットやホームと同じディープパープルグレー） */
+/* 画面全体の背景（ホームやチャットと同じチャコール） */
 .container {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-color: #3b3a4e; /* モックアップの暗い背景色 */
+  background-color: #14141a; /* 締まったチャコールの背景色 */
   font-family: sans-serif;
   padding: 16px;
 }
 
-/* 中央の白いカードをダークなコンテナに変更 */
+/* 中央のカード */
 .card {
-  background-color: rgba(255, 255, 255, 0.25);
-  border: 1px solid #4a4a5a;
+  background-color: #1d1d26;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 28px; /* 丸みを持たせてモダンに */
   padding: 48px 32px;
   max-width: 480px;
   width: 100%;
   text-align: center;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.24);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 /* ロゴの囲み */
@@ -32,8 +32,8 @@
 
 /* AIアイコン部分 */
 .logo {
-  background-color: #1a1a22; /* 入力欄などと同じ深い黒 */
-  color: #ffffff;
+  background-color: #101017; /* 入力欄などと同じ深い黒 */
+  color: #f2f1ee;
   font-weight: bold;
   font-size: 24px;
   width: 64px;
@@ -42,12 +42,12 @@
   align-items: center;
   justify-content: center;
   border-radius: 18px;
-  border: 1px solid #2d2d38;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* タイトル文字（白金・ゴールド系、または白） */
+/* タイトル文字 */
 .title {
-  color: #f5f5f7;
+  color: #f2f1ee;
   font-size: 24px;
   font-weight: bold;
   margin: 0;
@@ -55,16 +55,16 @@
 
 /* 説明文（視認性の高い明るいグレー） */
 .subtitle {
-  color: #9ba1b0;
+  color: #8b8d99;
   font-size: 14px;
   line-height: 1.6;
   margin: 0 0 40px 0;
   word-break: keep-all; /* 綺麗な改行のため */
 }
 
-/* Notionログインボタン（ホームのスケジュールなどで使われている鮮やかなブルーをイメージ） */
+/* Notionログインボタン（アプリ全体の操作アクセントであるインディゴ） */
 .loginButton {
-  background-color: #3b82f6; /* もし紫寄りが良ければ #4f46e5 */
+  background-color: #5b57d1;
   color: #ffffff;
   border: none;
   border-radius: 20px;
@@ -78,7 +78,7 @@
 
 /* ボタンホバー時 */
 .loginButton:hover {
-  background-color: #2563eb;
+  background-color: #4744b0;
 }
 
 /* ボタンクリック時 */

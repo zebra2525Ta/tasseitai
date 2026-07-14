@@ -4,8 +4,8 @@
   "description": "Notionと連携するAI秘書アプリ",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#3b3a4e",
-  "theme_color": "#3b3a4e",
+  "background_color": "#14141a",
+  "theme_color": "#14141a",
   "icons": [
     {
       "src": "/icon-192x192.png",

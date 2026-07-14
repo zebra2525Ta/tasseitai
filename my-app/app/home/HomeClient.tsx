@@ -447,7 +447,7 @@ export default function HomeClient({
   };
 
   if (!isMounted || notificationGate === 'checking') {
-    return <div className={styles.container} style={{ background: '#3b3a4e' }}></div>;
+    return <div className={styles.container} style={{ background: '#14141a' }}></div>;
   }
 
   if (notificationGate !== 'passed') {
@@ -479,7 +479,7 @@ export default function HomeClient({
           <span className={styles.appBrandName}>AI秘書 Noir</span>
         </div>
         <Link href="/settings" className={styles.iconBtn} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px' }}>
-          <SettingsIcon size={20} color="#a9a9a9" />
+          <SettingsIcon size={20} color="#8b8d99" />
         </Link>
       </div>
 
@@ -498,41 +498,41 @@ export default function HomeClient({
                   target="_blank"
                   rel="noopener noreferrer"
                   className={styles.cardTitle}
-                  style={{ textDecoration: 'none', color: '#e5c158', cursor: 'pointer', display: 'inline-block' }}
+                  style={{ textDecoration: 'none', color: '#c9a463', cursor: 'pointer', display: 'inline-block' }}
                 >
                   Weather ({currentRegionName})
                 </a>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '6px 0' }}>
                   <div style={{ width: '28px', height: '28px' }}>
-                    <weather.icon size={28} color="#e5c158" />
+                    <weather.icon size={28} color="#c9a463" />
                   </div>
                   <p className={styles.weatherInfo}>{weather.text}</p>
                 </div>
                 <p className={styles.weatherDetail} style={{ fontSize: '1rem', fontWeight: 'bold', margin: '2px 0 6px 0' }}>{weather.temp}</p>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '4px', paddingBottom: '4px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '4px', paddingBottom: '4px' }}>
                 <p className={styles.weatherDetail} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ width: '16px', height: '16px', display: 'flex', alignItems: 'center' }}>
-                    <DropIcon size={16} color="#87ceeb" />
+                    <DropIcon size={16} color="#8b8d99" />
                   </span>
                   降水確率: {weather.pop}
                 </p>
                 <p className={styles.weatherDetail} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ width: '16px', height: '16px', display: 'flex', alignItems: 'center' }}>
-                    <WindIcon size={16} color="#87ceeb" />
+                    <WindIcon size={16} color="#8b8d99" />
                   </span>
                   風速: {weather.windSpeed}
                 </p>
               </div>
 
               {weather.tomorrow.text && (
-                <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '6px', marginTop: '2px' }}>
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '6px', marginTop: '2px' }}>
                   <p className={styles.weatherDetail} style={{ opacity: 0.6, fontSize: '0.65rem', marginBottom: '2px' }}>明日の予報</p>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.8rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <div style={{ width: '20px', height: '20px' }}>
-                        <weather.tomorrow.icon size={20} color="#e5c158" />
+                        <weather.tomorrow.icon size={20} color="#c9a463" />
                       </div>
                       <span>{weather.tomorrow.text}</span>
                     </div>
@@ -550,7 +550,7 @@ export default function HomeClient({
               target="_blank"
               rel="noopener noreferrer"
               className={styles.githubTitle}
-              style={{ textDecoration: 'none', color: '#e5c158', cursor: 'pointer', display: 'inline-block' }}
+              style={{ textDecoration: 'none', color: '#c9a463', cursor: 'pointer', display: 'inline-block' }}
             >
               GitHub ({currentRepoName})
             </a>
@@ -623,8 +623,8 @@ export default function HomeClient({
                         top: 0,
                         bottom: 0,
                         width: '3px',
-                        backgroundColor: '#ff6b6b',
-                        boxShadow: '0 0 8px rgba(255, 107, 107, 0.8)',
+                        backgroundColor: '#ef6b62',
+                        boxShadow: '0 0 8px rgba(239, 107, 98, 0.8)',
                         zIndex: 10,
                         borderRadius: '2px',
                         transform: 'translateX(-50%)'
@@ -668,7 +668,7 @@ export default function HomeClient({
                             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{task.name}</span>
                             {task.overdue && (
                               <span style={{ width: '16px', height: '16px', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-                                <AlertIcon size={16} color="#ff6b6b" />
+                                <AlertIcon size={16} color="#ef6b62" />
                               </span>
                             )}
                           </span>
@@ -704,9 +704,9 @@ export default function HomeClient({
                           style={{
                             padding: '6px 10px',
                             borderRadius: '4px',
-                            border: '1px solid #e5c158',
-                            backgroundColor: 'rgba(51, 65, 85, 0.8)',
-                            color: '#ffffff',
+                            border: '1px solid #c9a463',
+                            backgroundColor: 'rgba(38, 38, 47, 0.95)',
+                            color: '#f2f1ee',
                             cursor: 'pointer',
                             fontSize: '0.85rem',
                             fontFamily: 'inherit',
@@ -733,7 +733,7 @@ export default function HomeClient({
               target="_blank"
               rel="noopener noreferrer"
               className={styles.cardTitle}
-              style={{ fontSize: '1rem', opacity: 1, textDecoration: 'none', color: '#e5c158', cursor: 'pointer', display: 'inline-block' }}
+              style={{ fontSize: '1rem', opacity: 1, textDecoration: 'none', color: '#c9a463', cursor: 'pointer', display: 'inline-block' }}
             >
               News
             </a>

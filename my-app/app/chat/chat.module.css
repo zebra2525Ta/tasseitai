@@ -3,8 +3,8 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background-color: #3b3a4e; /* モックアップの暗い背景色 */
-  color: #ffffff;
+  background-color: #14141a; /* 締まったチャコールの背景色 */
+  color: #f2f1ee;
   font-family: sans-serif;
 }
 
@@ -18,7 +18,7 @@
 .backBtn {
   background: none;
   border: none;
-  color: #ffffff;
+  color: #f2f1ee;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -30,7 +30,7 @@
 }
 
 .backBtn:hover {
-  background-color: #4a4a5a;
+  background-color: #26262f;
 }
 
 /* チャットエリア */
@@ -56,14 +56,14 @@
   gap: 12px;
   opacity: 0.9;
   pointer-events: none;
-  filter: drop-shadow(0 0 24px rgba(77, 74, 232, 0.55));
+  filter: drop-shadow(0 0 24px rgba(91, 87, 209, 0.5));
 }
 
 .emptyStateLabel {
   font-size: 1.4rem;
   font-weight: 600;
   letter-spacing: 0.15em;
-  color: #6a67ff;
+  color: #5b57d1;
 }
 
 /* アシスタント（左寄せ）の行 */
@@ -85,15 +85,15 @@
 /* 役割ラベル（Noirは左上、Userは右上になるように配置） */
 .roleLabel {
   font-size: 13px;
-  color: #9ba1b0;
+  color: #8b8d99;
   padding: 0 6px;
 }
 
 /* アシスタント（Noir）の吹き出し */
 .assistantBubble {
   align-self: flex-start;
-  background-color: #3b3b46; /* ホームのコンテナと同じ色 */
-  color: #e3e3e6;
+  background-color: #26262f;
+  color: #f2f1ee;
   padding: 12px 18px;
   border-radius: 12px;
   max-width: 80%;
@@ -104,8 +104,8 @@
 /* ユーザー（自分）の吹き出し */
 .userBubble {
   align-self: flex-end;
-  background-color: #1f1f26; /* 画像内のUserのダークな吹き出し色 */
-  color: #ffffff;
+  background-color: #101017;
+  color: #f2f1ee;
   padding: 12px 18px;
   border-radius: 12px;
   max-width: 80%;
@@ -128,8 +128,8 @@
 .inputWrapper {
   display: flex;
   align-items: center;
-  background-color: rgba(255, 255, 255, 0.25);
-  border: 1px solid #4a4a5a;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 28px;
   padding: 6px 14px;
   width: 100%;
@@ -138,26 +138,25 @@
 /* テキスト入力欄（内側の黒いカプセル型ボックス） */
 .textField {
   flex: 1;
-  background-color: #1a1a22 !important; /* 画像通りの内側のダークボックス色 */
-  border: 1px solid #2d2d38 !important;
+  background-color: #101017 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
   border-radius: 20px;
   padding: 10px 16px;
-  color: #ffffff;
+  color: #f2f1ee;
   font-size: 15px;
   outline: none;
   margin: 0 12px;
 }
 
 .textField::placeholder {
-  color: #696e79;
+  color: #8b8d99;
 }
 
-/* 右側の送信「▶」ボタン */
+/* 右側の送信ボタン */
 .sendBtn {
-  background: none;
+  background: #5b57d1;
   border: none;
-  font-size: 18px;
-  color: #9ba1b0;
+  color: #ffffff;
   cursor: pointer;
   width: 40px;
   height: 40px;
@@ -165,12 +164,11 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  transition: background-color 0.2s, color 0.2s;
+  transition: opacity 0.2s;
 }
 
 .sendBtn:hover {
-  background-color: #4a4a5a;
-  color: #ffffff;
+  opacity: 0.88;
 }
 
 /* Notion登録の確認・トピック選択ボタン行 */
@@ -192,13 +190,13 @@
 }
 
 .confirmYesBtn {
-  background-color: #4d4ae8;
+  background-color: #5b57d1;
   color: #ffffff;
 }
 
 .confirmNoBtn {
-  background-color: rgba(255, 255, 255, 0.15);
-  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.06);
+  color: #f2f1ee;
 }
 
 .confirmYesBtn:hover,

@@ -85,7 +85,7 @@ export default function NotionLogoutPage() {
           <p>別のアカウントでログインしますか？</p>
           <button onClick={handleSwitchAccount}>Notionで別アカウントログイン</button>
           {status === "blocked" && (
-            <p style={{ color: "red" }}>
+            <p style={{ color: "#ef6b62" }}>
               ポップアップがブロックされました。ブラウザの設定を確認してください。
             </p>
           )}
