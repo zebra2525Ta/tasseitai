@@ -632,7 +632,7 @@ export default function HomeClient({
             {/* ToDo（Notionの「進捗管理」データベースから取得） */}
             <div className={styles.todoCard}>
               <a
-                href="https://notion.so/38fa15fda3c180bd98d9ddcfe8406a93"
+                href={`https://notion.so/${todoDatabaseId.replace(/-/g, '')}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={styles.todoTitle}
