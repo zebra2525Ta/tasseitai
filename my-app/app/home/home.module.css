@@ -7,6 +7,7 @@
   width: 100%;       /* 画面の横幅いっぱいに広げる */
   margin: 0;         /* 中央寄せを解除 */
   padding: 16px;
+  padding-bottom: calc(60px + 16px); /* スマホ時は固定表示のbottomNav(高さ60px)の分、最後のカードが隠れないよう余白を足す */
   background-color: #3b3a4e; /* モックアップの暗い背景色 */
   min-height: 100vh;
   color: #ffffff;
@@ -341,6 +342,11 @@
    💻 画面幅が広いPC用のスタイル（ブレイクポイント: 768px以上）
    ========================================================================== */
 @media (min-width: 768px) {
+  /* PC時はbottomNav自体が非表示になるため、余白調整も不要 */
+  .container {
+    padding-bottom: 16px;
+  }
+
   /* PC時は元の左右2カラム構造に戻す */
   .mainGrid {
     display: grid;
