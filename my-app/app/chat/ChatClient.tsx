@@ -204,9 +204,9 @@ export default function ChatClient() {
         {/* 会話が始まる前は、中央にNoirマークの色違い（チャット用のブルー）を表示する */}
         {messages.length === 0 && !pendingItem && topicChoices.length === 0 && (
           <div className={styles.emptyStateMark}>
-            <svg viewBox="0 0 100 100" width="260" height="260" aria-hidden="true">
-              <polygon points="10,15 10,85 55,50" fill="#6a67ff" />
-              <polygon points="90,15 90,85 45,50" fill="#9aa0b5" />
+            <svg viewBox="0 0 100 100" width="140" height="140" aria-hidden="true">
+              <polygon points="10,15 10,85 50,50" fill="#6a67ff" />
+              <polygon points="90,15 90,85 50,50" fill="#9aa0b5" />
             </svg>
             <span className={styles.emptyStateLabel}>Noir</span>
           </div>
