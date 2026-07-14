@@ -36,6 +36,16 @@
   margin: 0 auto;
 }
 
+/* 会話が始まる前に中央へ表示するNoirマーク（色違い） */
+.emptyStateMark {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.25;
+  pointer-events: none;
+}
+
 /* アシスタント（左寄せ）の行 */
 .messageRowAssistant {
   display: flex;

@@ -201,6 +201,16 @@ export default function ChatClient() {
 
       {/* チャット履歴エリア */}
       <div className={styles.chatArea}>
+        {/* 会話が始まる前は、中央にNoirマークの色違い（チャット用のブルー）を表示する */}
+        {messages.length === 0 && !pendingItem && topicChoices.length === 0 && (
+          <div className={styles.emptyStateMark}>
+            <svg viewBox="0 0 100 100" width="180" height="180" aria-hidden="true">
+              <polygon points="10,15 10,85 55,50" fill="#4d4ae8" />
+              <polygon points="90,15 90,85 45,50" fill="#6b6f80" />
+            </svg>
+          </div>
+        )}
+
         {messages.map((msg, index) => (
           <div
             key={index}
