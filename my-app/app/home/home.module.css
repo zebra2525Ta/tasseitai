@@ -370,10 +370,6 @@
     gap: 16px;
   }
 
-  /* PC時は下部ナビを非表示にする */
-  .bottomNav {
-    display: none;
-  }
 }
 .bottomNav {
   position: fixed;
@@ -387,6 +383,12 @@
   justify-content: space-around;
   align-items: center;
   z-index: 1000;
+}
+/* PC時は下部ナビを非表示にする */
+@media (min-width: 768px) {
+  .bottomNav {
+    display: none;
+  }
 }
 .navItem {
   display: flex;
