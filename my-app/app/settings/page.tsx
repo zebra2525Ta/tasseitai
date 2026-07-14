@@ -27,21 +27,8 @@ const NEWS_CATEGORY_OPTIONS = [
   { id: 'entertainment', name: 'エンタメ' },
 ];
 
-// Notionデータベース設定で扱うトピック一覧
-const NOTION_DATABASE_TOPICS: { id: string; label: string; help: string }[] = [
-  { id: "shopping", label: "買い物リスト", help: "商品名(title) / 数量(number) / メモ(rich_text)" },
-  { id: "todo", label: "進捗管理", help: "タスク名(title) / ステータス(status) / 優先度(select) / 期日(date) / 説明(rich_text)" },
-  { id: "schedule", label: "スケジュール", help: "予定(title) / 日時(date) / メモ(rich_text)" },
-  { id: "jobhunting", label: "就活", help: "会社名(title) / ステータス(status) / 期日(date) / 説明(rich_text)" },
-  { id: "memo", label: "未分類メモ", help: "メモ登録日時(title) / メモ内容(rich_text)" },
-];
-
 export default function SettingsPage() {
   const [isMounted, setIsMounted] = useState(false);
-
-  // Notionデータベース設定（トピックID -> 入力中の値）。空欄なら共有ワークスペースの既定値を使う
-  const [notionDatabases, setNotionDatabases] = useState<Record<string, string>>({});
-  const [notionDatabaseStatus, setNotionDatabaseStatus] = useState<Record<string, 'idle' | 'saving' | 'saved' | 'error'>>({});
 
   // 各トグルの状態管理
   const [aiBusiness, setAiBusiness] = useState(true);
@@ -82,39 +69,7 @@ export default function SettingsPage() {
     }
 
     setIsMounted(true);
-
-    // 現在登録済みのNotionデータベースID（上書き設定分のみ）を取得しておく
-    fetch('/api/notion/databases')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data?.overrides) {
-          setNotionDatabases(data.overrides);
-        }
-      })
-      .catch(() => {
-        // 未ログインなどの場合は静かに諦める（設定画面自体は表示させる）
-      });
   }, []);
-
-  // Notionデータベース設定の入力欄が変わったときのハンドラ（フォーカスが外れたタイミングで保存する）
-  const handleNotionDatabaseChange = (topic: string, value: string) => {
-    setNotionDatabases((prev) => ({ ...prev, [topic]: value }));
-  };
-
-  const handleNotionDatabaseSave = async (topic: string) => {
-    setNotionDatabaseStatus((prev) => ({ ...prev, [topic]: 'saving' }));
-    try {
-      const response = await fetch('/api/notion/databases', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic, databaseId: notionDatabases[topic] || '' }),
-      });
-      if (!response.ok) throw new Error('save failed');
-      setNotionDatabaseStatus((prev) => ({ ...prev, [topic]: 'saved' }));
-    } catch {
-      setNotionDatabaseStatus((prev) => ({ ...prev, [topic]: 'error' }));
-    }
-  };
 
   const handleToggle = (key: 'aiBusiness' | 'aiDaily' | 'notifications', value: boolean) => {
     if (key === 'aiBusiness') setAiBusiness(value);
@@ -284,38 +239,6 @@ export default function SettingsPage() {
               />
             </div>
             <p className={styles.inputHelp}>※ 「アカウント名/リポジトリ名」の形式で入力してください</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Notionデータベース設定セクション（個人ワークスペース利用者向け） */}
-      <div className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <span className={styles.sectionTitle}>Notionデータベース設定</span>
-          <p className={styles.inputHelp}>
-            ※ 自分専用のNotionワークスペースを使う場合、下記のデータベース名（例:「進捗管理」）と同じ名前のデータベースを連携済みの範囲内から自動で探します。通常はこの欄を空欄のままで問題ありません。同名のデータベースが複数あるなど自動で見つけられない場合のみ、該当するデータベースのIDを直接入力してください。
-          </p>
-          <div className={styles.rowContainer}>
-            {NOTION_DATABASE_TOPICS.map((topic) => (
-              <div className={styles.inputRow} key={topic.id}>
-                <label className={styles.subLabel} htmlFor={`notionDb_${topic.id}`}>{topic.label}</label>
-                <input
-                  id={`notionDb_${topic.id}`}
-                  type="text"
-                  className={styles.textField}
-                  placeholder="未設定（共有ワークスペースの既定を使用）"
-                  value={notionDatabases[topic.id] || ''}
-                  onChange={(e) => handleNotionDatabaseChange(topic.id, e.target.value)}
-                  onBlur={() => handleNotionDatabaseSave(topic.id)}
-                />
-                <p className={styles.inputHelp}>
-                  必要なプロパティ: {topic.help}
-                  {notionDatabaseStatus[topic.id] === 'saving' && ' ・保存中...'}
-                  {notionDatabaseStatus[topic.id] === 'saved' && ' ・保存しました'}
-                  {notionDatabaseStatus[topic.id] === 'error' && ' ・保存に失敗しました'}
-                </p>
-              </div>
-            ))}
           </div>
         </div>
       </div>
