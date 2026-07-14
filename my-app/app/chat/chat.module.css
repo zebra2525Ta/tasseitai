@@ -56,14 +56,17 @@
   gap: 12px;
   opacity: 0.9;
   pointer-events: none;
-  filter: drop-shadow(0 0 24px rgba(91, 87, 209, 0.5));
+  filter: drop-shadow(0 0 28px rgba(124, 92, 255, 0.6));
 }
 
 .emptyStateLabel {
   font-size: 1.4rem;
   font-weight: 600;
   letter-spacing: 0.15em;
-  color: #5b57d1;
+  background: linear-gradient(120deg, #a48bff, #7c5cff 65%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 /* アシスタント（左寄せ）の行 */
@@ -154,7 +157,8 @@
 
 /* 右側の送信ボタン */
 .sendBtn {
-  background: #5b57d1;
+  background: linear-gradient(135deg, #a48bff, #7c5cff);
+  box-shadow: 0 0 16px rgba(124, 92, 255, 0.5);
   border: none;
   color: #ffffff;
   cursor: pointer;
@@ -190,7 +194,8 @@
 }
 
 .confirmYesBtn {
-  background-color: #5b57d1;
+  background: linear-gradient(135deg, #a48bff, #7c5cff);
+  box-shadow: 0 2px 10px rgba(124, 92, 255, 0.35);
   color: #ffffff;
 }
 

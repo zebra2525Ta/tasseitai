@@ -184,8 +184,8 @@
 
 .textField:focus {
   outline: none;
-  border-color: #5b57d1;
-  box-shadow: 0 0 8px rgba(91, 87, 209, 0.4);
+  border-color: #7c5cff;
+  box-shadow: 0 0 8px rgba(124, 92, 255, 0.45);
 }
 
 /* 💡 注釈・ヒントテキストの装飾 */

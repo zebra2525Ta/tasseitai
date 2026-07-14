@@ -498,13 +498,13 @@ export default function HomeClient({
                   target="_blank"
                   rel="noopener noreferrer"
                   className={styles.cardTitle}
-                  style={{ textDecoration: 'none', color: '#c9a463', cursor: 'pointer', display: 'inline-block' }}
+                  style={{ textDecoration: 'none', color: '#f0b93e', cursor: 'pointer', display: 'inline-block' }}
                 >
                   Weather ({currentRegionName})
                 </a>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '6px 0' }}>
                   <div style={{ width: '28px', height: '28px' }}>
-                    <weather.icon size={28} color="#c9a463" />
+                    <weather.icon size={28} color="#f0b93e" />
                   </div>
                   <p className={styles.weatherInfo}>{weather.text}</p>
                 </div>
@@ -532,7 +532,7 @@ export default function HomeClient({
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.8rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <div style={{ width: '20px', height: '20px' }}>
-                        <weather.tomorrow.icon size={20} color="#c9a463" />
+                        <weather.tomorrow.icon size={20} color="#f0b93e" />
                       </div>
                       <span>{weather.tomorrow.text}</span>
                     </div>
@@ -550,7 +550,7 @@ export default function HomeClient({
               target="_blank"
               rel="noopener noreferrer"
               className={styles.githubTitle}
-              style={{ textDecoration: 'none', color: '#c9a463', cursor: 'pointer', display: 'inline-block' }}
+              style={{ textDecoration: 'none', color: '#f0b93e', cursor: 'pointer', display: 'inline-block' }}
             >
               GitHub ({currentRepoName})
             </a>
@@ -704,7 +704,7 @@ export default function HomeClient({
                           style={{
                             padding: '6px 10px',
                             borderRadius: '4px',
-                            border: '1px solid #c9a463',
+                            border: '1px solid #f0b93e',
                             backgroundColor: 'rgba(38, 38, 47, 0.95)',
                             color: '#f2f1ee',
                             cursor: 'pointer',
@@ -733,7 +733,7 @@ export default function HomeClient({
               target="_blank"
               rel="noopener noreferrer"
               className={styles.cardTitle}
-              style={{ fontSize: '1rem', opacity: 1, textDecoration: 'none', color: '#c9a463', cursor: 'pointer', display: 'inline-block' }}
+              style={{ fontSize: '1rem', opacity: 1, textDecoration: 'none', color: '#f0b93e', cursor: 'pointer', display: 'inline-block' }}
             >
               News
             </a>

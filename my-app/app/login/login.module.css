@@ -64,7 +64,8 @@
 
 /* Notionログインボタン（アプリ全体の操作アクセントであるインディゴ） */
 .loginButton {
-  background-color: #5b57d1;
+  background: linear-gradient(135deg, #a48bff, #7c5cff);
+  box-shadow: 0 4px 18px rgba(124, 92, 255, 0.4);
   color: #ffffff;
   border: none;
   border-radius: 20px;
@@ -73,12 +74,12 @@
   font-size: 16px;
   font-weight: bold;
   cursor: pointer;
-  transition: background-color 0.2s, transform 0.1s;
+  transition: opacity 0.2s, transform 0.1s;
 }
 
 /* ボタンホバー時 */
 .loginButton:hover {
-  background-color: #4744b0;
+  opacity: 0.9;
 }
 
 /* ボタンクリック時 */

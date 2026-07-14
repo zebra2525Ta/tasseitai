@@ -336,9 +336,9 @@ export default function SettingsPage() {
                   display: 'flex', 
                   justifyContent: 'center', 
                   alignItems: 'center',
-                  backgroundColor: 'rgba(91, 87, 209, 0.15)', // 薄いインディゴの背景
-                  border: '1px solid #5b57d1', // インディゴの枠線
-                  color: '#5b57d1', // インディゴの文字
+                  backgroundColor: 'rgba(124, 92, 255, 0.15)', // 薄いインディゴの背景
+                  border: '1px solid #7c5cff', // インディゴの枠線
+                  color: '#a48bff', // インディゴの文字
                   fontWeight: 'bold',
                   cursor: 'pointer'
                 }}

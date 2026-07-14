@@ -34,7 +34,10 @@
 .appBrandName {
   font-size: 1rem;
   font-weight: 600;
-  color: #c9a463;
+  background: linear-gradient(120deg, #ffd27a, #f0b93e 60%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 /* 通知許可を強制するオーバーレイ（許可されるまでホーム画面本体は表示しない） */
@@ -51,7 +54,7 @@
 
 .notificationGateCard {
   background-color: #1d1d26;
-  border: 1px solid rgba(201, 164, 99, 0.4);
+  border: 1px solid rgba(240, 185, 62, 0.4);
   border-radius: 12px;
   padding: 24px;
   max-width: 360px;
@@ -65,7 +68,8 @@
 }
 
 .notificationBannerBtn {
-  background-color: #c9a463;
+  background: linear-gradient(135deg, #ffd27a, #f0b93e);
+  box-shadow: 0 4px 16px rgba(240, 185, 62, 0.35);
   color: #14141a;
   border: none;
   border-radius: 20px;
@@ -129,7 +133,7 @@
 .cardTitle {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #c9a463;
+  color: #f0b93e;
   opacity: 1;
 }
 
@@ -148,7 +152,7 @@
 .githubTitle {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #c9a463;
+  color: #f0b93e;
   margin-bottom: 4px;
 }
 .githubSub {
@@ -171,7 +175,7 @@
   opacity: 1.0;
   font-size: 1.1rem;
   font-weight: 600;
-  color: #c9a463;
+  color: #f0b93e;
   text-decoration: none;
 }
 .scheduleDate {
@@ -229,7 +233,7 @@
   border-radius: 10px;
 }
 .timelineBar {
-  background: #5b57d1; /* インディゴのスケジュールバー */
+  background: linear-gradient(135deg, #a48bff, #7c5cff); /* インディゴのスケジュールバー */
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 0.75rem;
@@ -247,7 +251,7 @@
   margin-bottom: 8px;
   font-size: 1.1rem;
   font-weight: 600;
-  color: #c9a463;
+  color: #f0b93e;
 }
 .todoList {
   display: flex;
@@ -265,15 +269,15 @@
   -webkit-appearance: none;
   width: 18px;
   height: 18px;
-  border: 2px solid #c9a463;
+  border: 2px solid #f0b93e;
   border-radius: 3px;
   cursor: pointer;
   background-color: transparent;
   transition: all 0.2s ease;
 }
 .todoLabel input[type="checkbox"]:checked {
-  background-color: #c9a463;
-  border-color: #c9a463;
+  background: linear-gradient(135deg, #ffd27a, #f0b93e);
+  border-color: #ffd27a;
 }
 .todoLabel input[type="checkbox"]:checked::after {
   content: '✓';
