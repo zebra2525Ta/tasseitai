@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import styles from './home.module.css';
@@ -477,6 +478,18 @@ export default function HomeClient({
 
         {/* 左カラム（AI、天気、GitHub） */}
         <div className={styles.leftColumn}>
+
+          {/* 現在開いているアプリを示すブランドアイコン */}
+          <div className={styles.appBrandCard}>
+            <Image
+              src="/icon-512x512.png"
+              alt="AI秘書 Noir"
+              width={36}
+              height={36}
+              className={styles.appBrandIcon}
+            />
+            <span className={styles.appBrandName}>AI秘書 Noir</span>
+          </div>
 
           {/* 天気予報 */}
           <div className={`${styles.card} ${styles.weatherCard}`}>
