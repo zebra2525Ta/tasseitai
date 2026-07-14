@@ -468,6 +468,16 @@ export default function HomeClient({
   return (
     <div className={styles.container}>
       <div className={styles.header}>
+        <div className={styles.appBrand}>
+          <Image
+            src="/icon-512x512.png"
+            alt="AI秘書 Noir"
+            width={28}
+            height={28}
+            className={styles.appBrandIcon}
+          />
+          <span className={styles.appBrandName}>AI秘書 Noir</span>
+        </div>
         <Link href="/settings" className={styles.iconBtn} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px' }}>
           <SettingsIcon size={20} color="#a9a9a9" />
         </Link>
@@ -478,18 +488,6 @@ export default function HomeClient({
 
         {/* 左カラム（AI、天気、GitHub） */}
         <div className={styles.leftColumn}>
-
-          {/* 現在開いているアプリを示すブランドアイコン */}
-          <div className={styles.appBrandCard}>
-            <Image
-              src="/icon-512x512.png"
-              alt="AI秘書 Noir"
-              width={36}
-              height={36}
-              className={styles.appBrandIcon}
-            />
-            <span className={styles.appBrandName}>AI秘書 Noir</span>
-          </div>
 
           {/* 天気予報 */}
           <div className={`${styles.card} ${styles.weatherCard}`}>

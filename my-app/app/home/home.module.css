@@ -14,11 +14,26 @@
   position: relative;
 }
 
-/* 歯車ヘッダー */
+/* ヘッダー（アプリブランド + 歯車） */
 .header {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   padding-bottom: 8px;
+}
+.appBrand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.appBrandIcon {
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+.appBrandName {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #e5c158;
 }
 
 /* 通知許可を強制するオーバーレイ（許可されるまでホーム画面本体は表示しない） */
@@ -89,8 +104,7 @@
 /* スマホ時の表示順（数字が小さい順に上から並びます） */
 .scheduleCard     { order: 3; } /* 3. Schedule */
 .todoCard         { order: 4; } /* 4. ToDo */
-.appBrandCard     { order: 5; } /* 5. 現在開いているアプリ表示（Weatherの直前） */
-.weatherCard      { order: 5; } /* 5. Weather（左カラム、appBrandCardの直後） */
+.weatherCard      { order: 5; } /* 5. Weather（左カラム） */
 .newsCard         { order: 6; } /* 6. News */
 .githubFullCard   { order: 7; } /* 7. GitHub（左カラム） */
 
@@ -115,23 +129,6 @@
   font-weight: 600;
   color: #e5c158;
   opacity: 1;
-}
-
-/* 現在開いているアプリを示すブランドアイコン */
-.appBrandCard {
-  composes: card;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.appBrandIcon {
-  border-radius: 8px;
-  flex-shrink: 0;
-}
-.appBrandName {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #e5c158;
 }
 
 /* 天気カード */
@@ -367,7 +364,6 @@
   }
 
   /* PC時はスマホ用の並び順(order)をすべて解除 */
-  .appBrandCard,
   .scheduleCard,
   .todoCard,
   .weatherCard,
