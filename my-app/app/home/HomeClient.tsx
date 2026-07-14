@@ -478,13 +478,6 @@ export default function HomeClient({
         {/* 左カラム（AI、天気、GitHub） */}
         <div className={styles.leftColumn}>
 
-          {/* AIチャットカード「Noir」 */}
-          <Link href="/chat" className={styles.aiChatFullCard}>
-            <div className={styles.chatLinkContentRow}>
-              <span className={styles.chatTextLarge}>Noir</span>
-            </div>
-          </Link>
-
           {/* 天気予報 */}
           <div className={`${styles.card} ${styles.weatherCard}`}>
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>

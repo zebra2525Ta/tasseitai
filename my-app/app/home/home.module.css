@@ -87,7 +87,6 @@
 }
 
 /* スマホ時の表示順（数字が小さい順に上から並びます） */
-.aiChatFullCard   { order: 1; } /* 1. Noir（左カラム） */
 .scheduleCard     { order: 3; } /* 3. Schedule */
 .todoCard         { order: 4; } /* 4. ToDo */
 .weatherCard      { order: 5; } /* 5. Weather（左カラム） */
@@ -109,19 +108,6 @@
 /* ==========================================================================
    個別のコンポーネントデザイン
    ========================================================================== */
-
-/* AIチャット（Noir） */
-.aiChatFullCard {
-  composes: card;
-  height: 140px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-  color: #e5c158; /* Noirのゴールド色 */
-  font-size: 2.5rem;
-  font-weight: bold;
-}
 
 .cardTitle {
   font-size: 1.1rem;
@@ -363,7 +349,6 @@
   }
 
   /* PC時はスマホ用の並び順(order)をすべて解除 */
-  .aiChatFullCard,
   .scheduleCard,
   .todoCard,
   .weatherCard,
