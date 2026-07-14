@@ -273,9 +273,11 @@ export default function HomeClient({
       const scheduleWindowEnd = new Date(scheduleWindowStart.getTime() + 24 * 60 * 60 * 1000);
       const scheduleWindowMs = scheduleWindowEnd.getTime() - scheduleWindowStart.getTime();
 
+      //終わりの日付いらないならこれ消しても大丈夫
       const endDate = new Date(scheduleWindowEnd);
+      //
       setScheduleDateLabel(
-        `${scheduleWindowStart.getMonth() + 1}月${scheduleWindowStart.getDate()}日 ${String(scheduleWindowStart.getHours()).padStart(2, '0')}:00 〜 ${endDate.getMonth() + 1}月${endDate.getDate()}日 ${String(endDate.getHours()).padStart(2, '0')}:00`
+        `${scheduleWindowStart.getMonth() + 1}月${scheduleWindowStart.getDate()}日（${WEEKDAY_NAMES[scheduleWindowStart.getDay()]}）`
       );
       setScheduleTimeMarkers(
         [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24].map((hourOffset) =>

@@ -185,6 +185,7 @@
   overflow-x: auto;
   overflow-y: hidden;
   width: 100%;
+  padding-bottom: 12px;
 }
 
 .timelineContent {
@@ -211,6 +212,18 @@
   flex-direction: column;
   gap: 6px;
   min-height: auto;
+}
+.timelineScroll::-webkit-scrollbar {
+  height: 10px;
+}
+
+.timelineScroll::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.1);
+}
+
+.timelineScroll::-webkit-scrollbar-thumb {
+  background: #b0b1ce70;
+  border-radius: 10px;
 }
 .timelineBar {
   background: #4d4ae8; /* 青いスケジュールバー */
