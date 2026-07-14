@@ -19,8 +19,18 @@
   background: none;
   border: none;
   color: #ffffff;
-  font-size: 20px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.backBtn:hover {
+  background-color: #4a4a5a;
 }
 
 /* チャットエリア */
@@ -125,27 +135,6 @@
   width: 100%;
 }
 
-/* 左側の「＋」ボタン */
-.plusBtn {
-  background: none;
-  border: none;
-  font-size: 22px;
-  color: #9ba1b0;
-  cursor: pointer;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: background-color 0.2s;
-}
-
-.plusBtn:hover {
-  background-color: #4a4a5a;
-  color: #ffffff;
-}
-
 /* テキスト入力欄（内側の黒いカプセル型ボックス） */
 .textField {
   flex: 1;
@@ -182,68 +171,6 @@
 .sendBtn:hover {
   background-color: #4a4a5a;
   color: #ffffff;
-}
-
-/* 画像プレビューエリア（入力欄の上に浮かぶコンテナ） */
-.filePreview {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  background-color: #3b3b46;
-  border: 1px solid #4a4a5a;
-  padding: 6px;
-  border-radius: 12px;
-  margin-bottom: 12px;
-  align-self: flex-start; /* 左寄せで画像サイズにフィット */
-}
-
-/* 選択した画像のミニサムネイル */
-.previewImage {
-  max-width: 120px;
-  max-height: 120px;
-  border-radius: 8px;
-  object-fit: cover;
-  display: block;
-}
-
-/* プレビューを消す ✕ ボタン */
-.clearFileBtn {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  background-color: #ff6b6b;
-  color: white;
-  border: none;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.clearFileBtn:hover {
-  background-color: #ff4a4a;
-}
-/* 送信された画像のコンテナ（テキストがある場合に備えて下に余白を確保） */
-.sentImageWrapper {
-  margin-bottom: 6px;
-}
-
-.sentImageWrapper:last-child {
-  margin-bottom: 0;
-}
-
-/* 送信された画像本体のスタイル */
-.sentImage {
-  max-width: 240px; /* 吹き出しからはみ出さない手頃なサイズ */
-  max-height: 240px;
-  border-radius: 8px;
-  object-fit: cover;
-  display: block;
 }
 
 /* Notion登録の確認・トピック選択ボタン行 */
