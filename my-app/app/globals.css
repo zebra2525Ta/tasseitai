@@ -4,6 +4,8 @@
   --background: #14141a;
   --foreground: #f2f1ee;
   --card-bg: #1d1d26;
+  --nav-mobile-height: 60px;
+  --nav-desktop-width: 88px;
 }
 
 @theme inline {

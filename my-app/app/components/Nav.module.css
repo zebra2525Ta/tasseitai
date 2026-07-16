@@ -1,0 +1,53 @@
+/* スマホ時：フッターの3ボタンナビ */
+.nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: var(--nav-mobile-height);
+  background: linear-gradient(0deg, #1d1d26, #232330);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 -8px 20px rgba(0, 0, 0, 0.25);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 1000;
+}
+
+.navItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  color: #8b8d99;
+  text-decoration: none;
+  font-size: 0.7rem;
+  transition: color 0.2s;
+}
+
+.navItemActive {
+  color: #e5c158;
+}
+
+/* PC時：左側の縦サイドバーに切り替える */
+@media (min-width: 768px) {
+  .nav {
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: var(--nav-desktop-width);
+    height: 100vh;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 40px;
+    padding-top: 40px;
+    border-top: none;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 8px 0 20px rgba(0, 0, 0, 0.25);
+  }
+
+  .navItem {
+    font-size: 0.75rem;
+  }
+}

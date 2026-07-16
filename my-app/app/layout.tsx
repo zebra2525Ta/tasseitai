@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Sans_JP } from "next/font/google";
 import "./globals.css";
+import Nav from "./components/Nav";
 
 const ibmPlexSansJP = IBM_Plex_Sans_JP({
   variable: "--font-sans",
@@ -34,6 +35,7 @@ export default function RootLayout({
   return (
     <html lang="ja" className={ibmPlexSansJP.variable}>
       <body className="min-h-full flex flex-col">
+        <Nav />
         {children}
       </body>
     </html>

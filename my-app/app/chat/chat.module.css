@@ -2,7 +2,7 @@
 .container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: calc(100vh - var(--nav-mobile-height)); /* スマホ時は下の共通ナビの高さを差し引く */
   background:
     radial-gradient(ellipse 600px 400px at 90% -5%, rgba(124, 92, 255, 0.13), transparent 60%),
     radial-gradient(ellipse 500px 400px at -5% 100%, rgba(240, 185, 62, 0.06), transparent 55%),
@@ -213,4 +213,12 @@
 .confirmYesBtn:hover,
 .confirmNoBtn:hover {
   opacity: 0.85;
+}
+
+/* PC時：下ではなく左に共通ナビ（サイドバー）が来るため、その分の余白を確保する */
+@media (min-width: 768px) {
+  .container {
+    height: 100vh;
+    padding-left: var(--nav-desktop-width);
+  }
 }

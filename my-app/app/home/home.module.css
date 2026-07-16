@@ -7,7 +7,7 @@
   width: 100%;       /* 画面の横幅いっぱいに広げる */
   margin: 0;         /* 中央寄せを解除 */
   padding: 16px;
-  padding-bottom: calc(60px + 16px); /* スマホ時は固定表示のbottomNav(高さ60px)の分、最後のカードが隠れないよう余白を足す */
+  padding-bottom: calc(var(--nav-mobile-height) + 16px); /* スマホ時は固定表示の共通ナビ(app/components/Nav)の分、最後のカードが隠れないよう余白を足す */
   background:
     radial-gradient(ellipse 700px 500px at 8% -10%, rgba(124, 92, 255, 0.14), transparent 60%),
     radial-gradient(ellipse 800px 600px at 100% 10%, rgba(240, 185, 62, 0.09), transparent 55%),
@@ -372,9 +372,10 @@
    💻 画面幅が広いPC用のスタイル（ブレイクポイント: 768px以上）
    ========================================================================== */
 @media (min-width: 768px) {
-  /* PC時はbottomNav自体が非表示になるため、余白調整も不要 */
+  /* PC時は下ではなく左に共通ナビ（サイドバー）が来るため、下余白は不要・左余白を確保する */
   .container {
     padding-bottom: 16px;
+    padding-left: calc(var(--nav-desktop-width) + 16px);
   }
 
   /* PC時は元の左右2カラム構造に戻す */
@@ -421,32 +422,4 @@
     gap: 16px;
   }
 
-}
-.bottomNav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 60px;
-  background: linear-gradient(0deg, #1d1d26, #232330);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 -8px 20px rgba(0, 0, 0, 0.25);
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  z-index: 1000;
-}
-/* PC時は下部ナビを非表示にする */
-@media (min-width: 768px) {
-  .bottomNav {
-    display: none;
-  }
-}
-.navItem {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  color: #8b8d99;
-  text-decoration: none;
-  font-size: 0.7rem;
 }

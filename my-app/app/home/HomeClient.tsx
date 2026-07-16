@@ -757,11 +757,6 @@ export default function HomeClient({
             </ul>
           </div>
         </div>
-        <nav className={styles.bottomNav}>
-        <Link href="/" className={styles.navItem}><span>🏠</span><span>ホーム</span></Link>
-        <Link href="/chat" className={styles.navItem}><span>💬</span><span>トーク</span></Link>
-        <Link href="/settings" className={styles.navItem}><span>⚙️</span><span>設定</span></Link>
-      </nav>
       </div>
     </div>
   );
